@@ -1,0 +1,30 @@
+#/usr/bin/env sh
+# -*- mode: sh  -*-
+
+if [ "$EMACS_CONF" = "" ] ; then
+    EMACS_CONF=$HOME/.emacs.d
+fi
+
+if [ ! -d $EMACS_CONF ] ; then
+   echo mkdir $EMACS_CONF
+fi
+
+if [ ! -L "$EMACS_CONF/init.el" ] ; then
+    echo "ln -s ./init.el $EMACS_CONF/init.el"
+else
+    echo "$EMACS_CONF/init.el exists"
+fi
+
+if [ ! -L "$EMACS_CONF/init_zsh.sh" ] ; then
+    echo "ln -s ./init_zsh.sh $EMACS_CONF/init_zsh.sh"
+else
+    echo "$EMACS_CONF/init_zsh.sh exists"
+fi
+
+if [ ! -d $EMACS_CONF/lib ] ; then
+   echo mkdir $EMACS_CONF/lib
+fi
+
+if [ ! -L $EMACS_CONF/lib/skj ] ; then
+   echo "ln -s ./lib/skj $EMACS_CONF/lib/skj"
+fi

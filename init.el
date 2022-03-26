@@ -39,7 +39,8 @@
 ;; --------------------------------------------------------------------------
 ;; Initialize Packages
 
-(add-to-list 'load-path (expand-file-name "~/.emacs.d/lib"))
+(add-to-list 'load-path (expand-file-name "~/.emacs.d/lib/"))
+(add-to-list 'load-path (expand-file-name "~/.emacs.d/lib/skj/"))
 
 (require 'skj-packages)
 
