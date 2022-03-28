@@ -1,5 +1,7 @@
 ;;; skj-ui.el -*- lexical-binding: t; -*-
 
+(init-message "[skj-ui] Entered")
+
 (set-language-environment "UTF-8")
 
 (setq inhibit-startup-screen t)

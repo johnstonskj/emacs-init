@@ -1,30 +1,35 @@
 #/usr/bin/env sh
 # -*- mode: sh  -*-
 
+MY_PATH=$(dirname "$0")            # relative
+MY_PATH=$(cd "$MY_PATH" && pwd)    # absolutized and normalized
+
 if [ "$EMACS_CONF" = "" ] ; then
     EMACS_CONF=$HOME/.emacs.d
 fi
 
 if [ ! -d $EMACS_CONF ] ; then
-   echo mkdir $EMACS_CONF
+   mkdir -p $EMACS_CONF
 fi
 
 if [ ! -L "$EMACS_CONF/init.el" ] ; then
-    echo "ln -s ./init.el $EMACS_CONF/init.el"
+    ln -s $MY_PATH/init.el $EMACS_CONF/init.el
 else
-    echo "$EMACS_CONF/init.el exists"
+    echo "$EMACS_CONF/init.el exists" >&2
 fi
 
 if [ ! -L "$EMACS_CONF/init_zsh.sh" ] ; then
-    echo "ln -s ./init_zsh.sh $EMACS_CONF/init_zsh.sh"
+    ln -s $MY_PATH/init_zsh.sh $EMACS_CONF/init_zsh.sh
 else
-    echo "$EMACS_CONF/init_zsh.sh exists"
+    echo "$EMACS_CONF/init_zsh.sh exists" >&2
 fi
 
 if [ ! -d $EMACS_CONF/lib ] ; then
-   echo mkdir $EMACS_CONF/lib
+   mkdir $EMACS_CONF/lib
 fi
 
 if [ ! -L $EMACS_CONF/lib/skj ] ; then
-   echo "ln -s ./lib/skj $EMACS_CONF/lib/skj"
+   ln -s $MY_PATH/lib/skj $EMACS_CONF/lib/skj
+else
+    echo $EMACS_CONF/lib/skj exists >&2
 fi

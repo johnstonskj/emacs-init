@@ -1,5 +1,7 @@
 ;;; skj-shell.el -*- lexical-binding: t; -*-
 
+(init-message "[skj-shell] Entered")
+
 ;; --------------------------------------------------------------------------
 ;; Shell editing
 

@@ -3,6 +3,17 @@
 ;;; -------------------------------------------------------------------------
 
 ;; --------------------------------------------------------------------------
+(defvar
+  skj-trace-init
+  nil
+  "Emit tracing messages during initialization.")
+
+(defun init-message (message)
+  (unless (eq skj-trace-init nil)
+    (message (format "init: %s", message))))
+  
+;; --------------------------------------------------------------------------
+(init-message "Setting custom variables")
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -39,15 +50,14 @@
 ;; --------------------------------------------------------------------------
 ;; Initialize Packages
 
-(add-to-list 'load-path (expand-file-name "~/.emacs.d/lib/"))
-(add-to-list 'load-path (expand-file-name "~/.emacs.d/lib/skj/"))
+(init-message "Setting load path")
+(add-to-list 'load-path (expand-file-name "~/.emacs.d/lib"))
+(add-to-list 'load-path (expand-file-name "~/.emacs.d/lib/skj"))
 
 (require 'skj-packages)
 
 ;; --------------------------------------------------------------------------
 ;; Generic Configuration
-
-(require 'skj)
 
 (require 'skj-location)
 
@@ -79,6 +89,7 @@
 (require 'skj-prog-services)
 
 ;; --------------------------------------------------------------------------
+(init-message "Setting custom faces")
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -92,6 +103,8 @@
 
 ;; --------------------------------------------------------------------------
 ;; One last thing, ...
+(init-message "Checking for server")
+
 (require 'server)
 (unless (and (fboundp 'server-running)
              (server-running-p))

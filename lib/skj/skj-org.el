@@ -1,5 +1,7 @@
 ;;; skj-org.el -*- lexical-binding: t; -*-
 
+(init-message "[skj-org] Entered")
+
 ;; --------------------------------------------------------------------------
 ;; Org mode
 

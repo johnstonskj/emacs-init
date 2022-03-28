@@ -1,5 +1,7 @@
 ;;; skj-dashboard.el -*- lexical-binding: t; -*-
 
+(init-message "[skj-dashboard] Entered")
+
 (require 'dashboard)
 (setq dashboard-items '((recents  . 10)
                         (projects . 15)

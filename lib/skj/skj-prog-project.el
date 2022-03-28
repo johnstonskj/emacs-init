@@ -1,5 +1,7 @@
 ;;; skj-prog-project.el -*- lexical-binding: t; -*-
 
+(init-message "[skj-prog-project] Entered")
+
 (require 'skj-prog-ui)
 
 ;; --------------------------------------------------------------------------

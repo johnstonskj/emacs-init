@@ -1,5 +1,7 @@
 ;;; skj-writing.el -*- lexical-binding: t; -*-
 
+(init-message "[skj-writing] Entered")
+
 (setq sentence-end-double-space nil)
 
 ;; --------------------------------------------------------------------------

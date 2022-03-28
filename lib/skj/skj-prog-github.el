@@ -1,5 +1,7 @@
 ;;; skj-prog-github.el -*- lexical-binding: t; -*-
 
+(init-message "[skj-prog-github] Entered")
+
 (require 'file-secrets)
 
 (defvar

@@ -2,6 +2,7 @@
 
 ;; --------------------------------------------------------------------------
 ;; Package Repository Configuration
+(init-message "[skj-packages] Entered")
 
 (require 'package)
 
@@ -223,10 +224,13 @@
         ))
 
 ;; refresh package list if it is not already available
-(when (not package-archive-contents) (package-refresh-contents))
+(when (not package-archive-contents)
+  (init-message "[skj-packages] Refreshing package list")
+  (package-refresh-contents))
 
 ;; install packages from the list that are not yet installed
 (dolist (pkg pfl-packages)
+  (init-message (format "[skj-packages] Checking for package %s" pkg))
   (when (and (not (package-installed-p pkg)) (assoc pkg package-archive-contents))
     (package-install pkg)))
 

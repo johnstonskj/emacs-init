@@ -1,5 +1,7 @@
 ;;; skj-prog-snippet.el -*- lexical-binding: t; -*-
 
+(init-message "[skj-prog-snippet] Entered")
+
 (require 'skj-prog-ui)
 
 (require 'yasnippet)

@@ -1,5 +1,7 @@
 ;;; skj-prog-services.el -*- lexical-binding: t; -*-
 
+(init-message "[skj-prog-services] Entered")
+
 ;; --------------------------------------------------------------------------
 ;; Wakatime customization
 ;; https://wakatime.com/emacs

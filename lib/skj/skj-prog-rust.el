@@ -1,6 +1,8 @@
 ;;; skj-prog-rust.el -*- lexical-binding: t; -*-
 ;;;  See: <https://github.com/rust-lang/rust-mode>
 
+(init-message "[skj-prog-rust] Entered")
+
 (require 'rust-mode)
 
 (autoload 'rust-mode "rust-mode" nil t)

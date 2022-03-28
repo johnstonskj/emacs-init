@@ -1,5 +1,7 @@
 ;;; skj-prog-lsp.el -*- lexical-binding: t; -*-
 
+(init-message "[skj-prog-lsp] Entered")
+
 ;; --------------------------------------------------------------------------
 ;; Generic dev-tool customization
 

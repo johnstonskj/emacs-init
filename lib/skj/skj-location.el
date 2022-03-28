@@ -1,5 +1,7 @@
 ;;; skj-org.el -*- lexical-binding: t; -*-
 
+(init-message "[skj-location] Entered")
+
 (setq calendar-latitude 47.6062)
 (setq calendar-longitude -122.3321)
 (setq calendar-location-name "Seattle, WA")
