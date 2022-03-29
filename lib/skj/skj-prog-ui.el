@@ -2,10 +2,12 @@
 
 (init-message "[skj-prog-ui] Entered")
 
-(defvar
+(defcustom
   skj-project-root
   (expand-file-name "~/Projects")
-  "Root directory to look for projects")
+  "Root directory to look for projects."
+  :group 'skj
+  :type 'directory)
 
 ;; --------------------------------------------------------------------------
 ;; Rainbow delimiters, yes!

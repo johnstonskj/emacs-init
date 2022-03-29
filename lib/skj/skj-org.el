@@ -149,7 +149,8 @@ PRIORITY must be an integer 1 <= p <= 5."
 (customize-set-variable 'holiday-bahai-holidays nil)
 
 (require 'mexican-holidays)
-(setq calendar-holidays (append calendar-holidays holiday-mexican-holidays))
+(setq calendar-holidays
+      (append calendar-holidays holiday-mexican-holidays))
 
 ;; --------------------------------------------------------------------------
 ;; Org Babel
@@ -176,21 +177,30 @@ PRIORITY must be an integer 1 <= p <= 5."
 ;; --------------------------------------------------------------------------
 ;; Google Calendar
 
-(require 'file-secrets)
-
 (require 'org-gcal)
 
-(defvar skj-org-gcal-file
+(defcustom skj-org-gcal-file
   (concat org-directory "/gcal.org")
-  "Location of file to sync with Google Calendar")
+  "Location of file to sync with Google Calendar"
+  :group 'skj
+  :type 'file)
 
-(setq org-gcal-client-id (read-secret-from-file (expand-file-name "~/.config/google/gcal.id")))
-(setq org-gcal-client-secret (read-secret-from-file (expand-file-name "~/.config/google/gcal.secret")))
-(setq org-gcal-fetch-file-alist (list (cons "johnstonskj@gmail.com" skj-org-gcal-file)
-                                      (cons "sandi.mills@gmail.com" (concat org-directory "/sandi.org"))))
-(setq org-gcal-file-alist (list (cons "johnstonskj@gmail.com" skj-org-gcal-file)
-                                (cons "sandi.mills@gmail.com" (concat org-directory "/sandi.org"))))
-(setq org-gcal-local-timezone "America/Los_Angeles")
+(require 'skj-secrets)
+
+(setq org-gcal-client-id (skj-secrets-value 'gcal-id))
+(setq org-gcal-client-secret (skj-secrets-value 'gcal-secret))
+
+(setq org-gcal-fetch-file-alist
+      (list (cons skj-primary-email skj-org-gcal-file)
+            (cons "sandi.mills@gmail.com" (concat org-directory "/sandi.org"))))
+
+(setq org-gcal-file-alist
+      (list (cons skj-primary-email skj-org-gcal-file)
+            (cons "sandi.mills@gmail.com" (concat org-directory "/sandi.org"))))
+
+(require 'skj-location)
+
+(setq org-gcal-local-timezone skj-calendar-time-zone-name)
 
 (message "execute org-gcal-fetch to fetch new calendar updates")
 (message "execute org-gcal-post-at-point to turn a TODO into a calendar entry")

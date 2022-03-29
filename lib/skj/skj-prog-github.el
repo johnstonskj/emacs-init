@@ -2,14 +2,9 @@
 
 (init-message "[skj-prog-github] Entered")
 
-(require 'file-secrets)
+(require 'skj-secrets)
 
-(defvar
-  skj-github-token
-  (read-secret-from-file (expand-file-name "~/.config/github-token"))
-  "Personal GitHub token, NOT included in repository")
-
-(setq github-notifier-token skj-github-token)
+(setq github-notifier-token (skj-secrets-value 'github-token))
 
 (add-hook 'prog-mode-hook #'github-notifier-mode)
 

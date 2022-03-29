@@ -2,12 +2,14 @@
 
 (init-message "[skj-location] Entered")
 
-(setq calendar-latitude 47.6062)
-(setq calendar-longitude -122.3321)
-(setq calendar-location-name "Seattle, WA")
+(setq calendar-latitude 47.6062
+      calendar-longitude -122.3321
+      calendar-location-name "Seattle, WA")
 
-(setq calendar-time-zone -480)
-(setq calendar-standard-time-zone-name "PST")
-(setq calendar-daylight-time-zone-name "PDT")
+(setq calendar-time-zone -480
+      calendar-standard-time-zone-name "PST"
+      calendar-daylight-time-zone-name "PDT")
+
+(setq skj-calendar-time-zone-name "America/Los_Angeles")
 
 (provide 'skj-location)

@@ -3,10 +3,26 @@
 ;;; -------------------------------------------------------------------------
 
 ;; --------------------------------------------------------------------------
-(defvar
+;; Initialize customization
+
+(defgroup skj nil
+  "Simon's personal environment settings."
+  :tag "skj"
+  :prefix "skj-")
+
+(defcustom
   skj-trace-init
   nil
-  "Emit tracing messages during initialization.")
+  "Emit tracing messages during initialization."
+  :group 'skj
+  :type 'boolean)
+
+(defcustom
+  skj-primary-email
+  "johnstonskj@gmail.com"
+  "Primary email address."
+  :group 'skj
+  :type 'string)
 
 (defun init-message (message)
   (unless (eq skj-trace-init nil)
