@@ -181,7 +181,8 @@ PRIORITY must be an integer 1 <= p <= 5."
 
 (defcustom skj-org-gcal-file
   (concat org-directory "/gcal.org")
-  "Location of file to sync with Google Calendar"
+  "Location of `org-mode' file to sync with Google Calendar"
+  :tag "Org file for Google Calendar"
   :group 'skj
   :type 'file)
 

@@ -5,7 +5,8 @@
 (defcustom
   skj-project-root
   (expand-file-name "~/Projects")
-  "Root directory to look for projects."
+  "Root directory for development projects."
+  :tag "Projects' root directory"
   :group 'skj
   :type 'directory)
 

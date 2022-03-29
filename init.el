@@ -13,20 +13,22 @@
 (defcustom
   skj-trace-init
   nil
-  "Emit tracing messages during initialization."
+  "Emit tracing messages during initialization, useful with --debug-init."
+  :tag "Trace initialization process"
   :group 'skj
   :type 'boolean)
 
 (defcustom
   skj-primary-email
   "johnstonskj@gmail.com"
-  "Primary email address."
+  "Primary, non-work, email address."
+  :tag "Primary email address"
   :group 'skj
   :type 'string)
 
 (defun init-message (message)
   (unless (eq skj-trace-init nil)
-    (message (format "init: %s", message))))
+    (message (format "Init %s", message))))
   
 ;; --------------------------------------------------------------------------
 (init-message "Setting custom variables")

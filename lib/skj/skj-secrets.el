@@ -3,19 +3,32 @@
 (init-message "[skj-secrets] Entered")
 
 ;; --------------------------------------------------------------------------
+(defcustom
+  skj-secrets-file
+  "~/.config/emacs/secrets.el.gpg"
+  "This is a GPG-encrypted Emacs lisp file that will be loaded to allow the
+addition of secret values securely. If set to nil no attempt to load any 
+external secrets will be attempted.
+
+The contents of this file can retrieve secrets from other applications or
+simply store them in source and use the function ‘skj-secrets-add’ to add 
+them to the secret store. The referenced file should have the extension 
+'.el.gpg' to enable auto decryption on load."
+  :tag "External, secure, secrets file"
+  :group 'skj
+  :type '(file :must-match t))
+
+;; --------------------------------------------------------------------------
 (defvar
   skj-secrets--alist
   '()
-  "An internal alist containing secrets. 
+  "The internal secret store, it is implemented as an association list. 
 
 The ‘car’ of each pair is expected to be a symbol, the ‘cdr’ is any
 value. The structure of this value can be validated by the function
 ‘skj-secrets--validate’ and a value can be retrieved using the 
 function ‘skj-secrets-value’. It is recommended to use the function
 ‘skj-secrets-add’ to add a new key and secret.")
-
-;; Load the encrypted data using GPG
-(load-file (expand-file-name "~/.config/emacs/secrets.el.gpg"))
 
 
 ;; --------------------------------------------------------------------------
@@ -29,26 +42,26 @@ correct or signal an error."
        (lambda (pair)
          (cond
           ((not (consp pair))
-           (error "[skj-secrets] ERR: pair (%s) is not a cons cell" pair))
+           (error "Error [skj-secrets] pair (%s) is not a cons cell" pair))
           ((not (symbolp (car pair)))
-           (error "[skj-secrets] ERR: pair's car (%s) is not a symbol" (car pair)))
+           (error "Error [skj-secrets] pair's car (%s) is not a symbol" (car pair)))
           (t)))
        skj-secrets--alist)
-    (error "[skj-secrets] ERR: the secrets list is not a proper list")))
+    (error "Error [skj-secrets] the secrets list is not a proper list")))
 
 
 ;; --------------------------------------------------------------------------
 (defun skj-secrets-add (key secret)
   "Associate the SECRET value with the provided symbol KEY.
 
-This function returns t if the value it is successful, else nil."
+This function returns t if the value is added successful, else nil."
   (skj-secrets--validate)
   (cond
    ((not (symbolp key))
-    (message "[skj-secrets] WARN: key (%s) is not a symbol" key)
+    (message "Warning [skj-secrets] key (%s) is not a symbol" key)
     nil)
    ((not (eq (assoc key skj-secrets--alist) nil))
-    (message "[skj-secrets] WARN: key (%s) already exists as a secret key" key)
+    (message "Warning [skj-secrets] key (%s) already exists as a secret key" key)
     nil)
    (t
     (progn
@@ -64,8 +77,16 @@ value DEFAULT."
   (skj-secrets--validate)
   (let ((value (alist-get key skj-secrets--alist default)))
     (when (called-interactively-p 'any)
-      (message "%s: %s" key value))
+      (message "Secret %s: %s" key value))
     value))
+
+
+;; --------------------------------------------------------------------------
+;; --------------------------------------------------------------------------
+(unless (not skj-secrets-file)
+  ;; Load the encrypted data using GPG integration.
+  (init-message "[skj-secrets] Loading external secrets (secure) file")
+  (load-file (expand-file-name skj-secrets-file)))
 
 
 (provide 'skj-secrets)
