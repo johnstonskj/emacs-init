@@ -11,6 +11,16 @@
   :type 'directory)
 
 ;; --------------------------------------------------------------------------
+;; Prettify Symbols
+
+(require 'datalog-mode)
+
+;; --------------------------------------------------------------------------
+;; Prettify Symbols
+
+(add-hook 'scheme-mode-hook #'prettify-symbols-mode)
+
+;; --------------------------------------------------------------------------
 ;; Rainbow delimiters, yes!
 
 (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)

@@ -44,6 +44,7 @@
  '(dir-treeview-show-in-side-window t)
  '(echo-keystrokes 0.5)
  '(fill-column 78)
+ '(holiday-bahai-holidays nil)
  '(indent-tabs-mode nil)
  '(indicate-empty-lines t)
  '(inhibit-startup-screen t)
@@ -52,7 +53,8 @@
  '(ns-right-command-modifier 'super)
  '(olivetti-body-width 82)
  '(package-selected-packages
-   '(persist bbdb-vcard bbdb-ext company-prescient project-explorer diff-hl magit-lfs magit-todos hl-todo forge org-sidebar osx-org-clock-menubar undo-tree company-web focus org-modern easy-jekyll dashboard-project-status dashboard-hackernews dashboard all-the-icons-dired all-the-icons-completion all-the-icons ## yasnippet-snippets yasnippet projectile marginalia selectrum-prescient selectrum dap-mode lsp-ui dir-treeview dired-sidebar github-pullrequest github-explorer git-link magithub magit-filenotify magit github-review github-notifier git-blamed git-attr scribble-mode smog latex-extra latex-math-preview latex-preview-pane lsp-mode flycheck-rust rustic rust-playground rust-auto-use wakatime-mode company rust-mode cargo-mode racket-mode))
+   '(consult-org-roam el-fetch emacsql-sqlite-module eslint-rc everlasting-scratch flymake-swi-prolog private-comments-mode shanty-themes tabspaces flycheck-package package-lint persist bbdb-vcard bbdb-ext company-prescient project-explorer diff-hl magit-lfs magit-todos hl-todo forge org-sidebar osx-org-clock-menubar undo-tree company-web focus org-modern easy-jekyll dashboard-project-status dashboard-hackernews dashboard all-the-icons-dired all-the-icons-completion all-the-icons ## yasnippet-snippets yasnippet projectile marginalia selectrum-prescient selectrum dap-mode lsp-ui dir-treeview dired-sidebar github-pullrequest github-explorer git-link magithub magit-filenotify magit github-review github-notifier git-blamed git-attr scribble-mode smog latex-extra latex-math-preview latex-preview-pane lsp-mode flycheck-rust rustic rust-playground rust-auto-use wakatime-mode company rust-mode cargo-mode racket-mode))
+ '(pe/omit-gitignore t)
  '(pixel-scroll-precision-mode 1 t)
  '(ring-bell-function 'ignore)
  '(save-place t t)

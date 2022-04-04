@@ -8,13 +8,13 @@
 
 (setq echo-keystrokes 0.5)
 
-(setq indent-tabs-mode nil
-      tab-always-indent 'complete
-      tab-width 4)
+(setq-default indent-tabs-mode nil
+              tab-always-indent 'complete
+              tab-width 4)
 
-(setq fill-column 78)
+(setq-default fill-column 78)
       
-(setq indicate-empty-lines t)
+(setq-default indicate-empty-lines t)
 
 (setq ring-bell-function 'ignore)
 

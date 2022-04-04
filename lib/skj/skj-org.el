@@ -1,6 +1,15 @@
 ;;; skj-org.el -*- lexical-binding: t; -*-
 
+;; See http://doc.norang.ca/org-mode.html
+
 (init-message "[skj-org] Entered")
+
+(require 'xdg)
+
+(setq org-directory
+      (expand-file-name (concat (xdg-user-dir "DOCUMENTS") "/emacs-org")))
+
+(setq org-default-notes-file (concat org-directory "/inbox.org")
 
 ;; --------------------------------------------------------------------------
 ;; Org mode
@@ -15,6 +24,8 @@
         ;; Meeting tracking
         (sequence "REQUESTED(r)" "MEET(m@/!)" "DEFERRED(f@/!)" "|" "CANCELED(x@/!)")
         ))
+
+(setq-default org-enforce-todo-dependencies t)
 
 (setq org-tag-alist
       '((:startgroup)
@@ -52,11 +63,16 @@
         ("coding" . ?o) ("meeting" . ?m) ("planning" . ?p) ("writing" . ?w)
         (:endgrouptag)))
 
-(setq org-todo-keyword-faces
-      '(("NEXT" . (:foreground "green" :weight bold))
-        ("PLAN" . (:foreground "green" :weight bold))
-        ("INPROGRESS" . (:foreground "blue" :weight bold))
-        ("ACTIVE" . (:foreground "blue" :weight bold))))
+;; Define the custum capture templates
+(setq org-capture-templates
+      '(("t" "Todo" entry (file+headline org-default-notes-file "Inbox")
+	     "* TODO %?\n%u\n%a\n" :clock-in t :clock-resume t)
+	    ("m" "Meeting" entry (file+headline org-default-notes-file "Inbox")
+	     "* MEETING with %? :MEETING:\n%t" :clock-in t :clock-resume t)
+	    ("i" "Idea" entry (file+headline org-default-notes-file "Inbox")
+	     "* %? :IDEA: \n%t" :clock-in t :clock-resume t)
+	    ("n" "Next Task" entry (file+headline org-default-notes-file "Inbox")
+	     "** NEXT %? \nDEADLINE: %t")))
 
 (setq org-log-into-drawer t)
 
@@ -64,15 +80,18 @@
       org-priority-lowest 5
       org-priority-default 3)
 
-(setq org-directory (expand-file-name "~/Documents/emacs-org"))
-(setq org-default-notes-file (concat org-directory "/notes.org"))
-
-;;This damn thing resets 'org-directory
-;;(org-clock-persistence-insinuate)
+(setq org-refile-targets (quote ((nil :maxlevel . 9)
+                                 (org-agenda-files :maxlevel . 9))))
 
 (global-set-key (kbd "C-c l") #'org-store-link)
 (global-set-key (kbd "C-c a") #'org-agenda)
 (global-set-key (kbd "C-c c") #'org-capture)
+
+(setq org-todo-keyword-faces
+      '(("NEXT" . (:foreground "green" :weight bold))
+        ("PLAN" . (:foreground "green" :weight bold))
+        ("INPROGRESS" . (:foreground "blue" :weight bold))
+        ("ACTIVE" . (:foreground "blue" :weight bold))))
 
 (add-hook 'org-mode-hook #'turn-on-font-lock)
 
@@ -82,7 +101,7 @@
 (require 'org-agenda)
 
 (setq org-agenda-files
-      (list (concat org-directory "/index.org")
+      (list (concat org-directory "/inbox.org")
             (concat org-directory "/notes.org")
             (concat org-directory "/gcal.org")
             (concat org-directory "/sandi.org")
@@ -205,5 +224,34 @@ PRIORITY must be an integer 1 <= p <= 5."
 
 (message "execute org-gcal-fetch to fetch new calendar updates")
 (message "execute org-gcal-post-at-point to turn a TODO into a calendar entry")
+
+
+;; --------------------------------------------------------------------------
+;; Appointment integration
+
+(require 'appt)
+
+(setq appt-display-format 'window
+      appt-display-duration 30
+      appt-audible t
+      appt-display-mode-line t)
+
+; Activate appointments so we get notifications
+(appt-activate t)
+
+; Erase all reminders and rebuilt reminders for today from the agenda
+(defun skj/org-agenda-to-appt ()
+  (interactive)
+  (setq appt-time-msg-list nil)
+  (org-agenda-to-appt))
+
+; Rebuild the reminders everytime the agenda is displayed
+(add-hook 'org-agenda-finalize-hook 'skj/org-agenda-to-appt 'append)
+
+; If we leave Emacs running overnight - reset the appointments one minute after midnight
+(run-at-time "24:01" nil 'skj/org-agenda-to-appt)
+
+; Run now so appointments are set up when Emacs starts
+(skj/org-agenda-to-appt)
 
 (provide 'skj-org)

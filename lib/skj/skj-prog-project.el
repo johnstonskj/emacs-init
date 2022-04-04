@@ -24,6 +24,12 @@
 ;; Project Explorer for sidebar
 
 (require 'project-explorer)
+(setq pe/filenotify-enabled t
+      pe/inline-folders t
+      pe/omit-gitignore t
+      pe/side 'left
+      pe/width 40)
+
 (global-set-key (kbd "<f8>") 'project-explorer-toggle)
 
 (provide 'skj-prog-project)

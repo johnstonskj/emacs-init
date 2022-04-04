@@ -212,11 +212,22 @@
 
         scheme-complete
 
+        package-lint
+        flycheck-package
+
         ;; ------------------------------------------------------------------
         ;; Data/Config file formats
         toml-mode
+        
         yaml-mode
+        flycheck-yamllint
+        
         json-mode
+
+        ;; ------------------------------------------------------------------
+        ;; Database
+        emacsql
+        emacsql-sqlite
 
         ;; ------------------------------------------------------------------
         ;; Hosted service integrations
