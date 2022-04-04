@@ -5,7 +5,7 @@
 ;; --------------------------------------------------------------------------
 (defcustom
   skj-secrets-file
-  "~/.config/emacs/secrets.el.gpg"
+  (concat-path (xdg-config-home) "emacs/secrets.el.gpg")
   "This is a GPG-encrypted Emacs lisp file that will be loaded to allow the
 addition of secret values securely. If set to nil no attempt to load any 
 external secrets will be attempted.
@@ -86,7 +86,7 @@ value DEFAULT."
 (unless (not skj-secrets-file)
   ;; Load the encrypted data using GPG integration.
   (init-message "[skj-secrets] Loading external secrets (secure) file")
-  (load-file (expand-file-name skj-secrets-file)))
+  (load-file skj-secrets-file))
 
 
 (provide 'skj-secrets)

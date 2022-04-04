@@ -35,6 +35,13 @@
 (buffer-expose-mode 1)
 
 ;; --------------------------------------------------------------------------
+;; Multiple Cursor support
+
+(require 'multiple-cursors)
+
+(global-set-key (kbd "C-c m c") 'mc/edit-lines)
+
+;; --------------------------------------------------------------------------
 ;; Set the global theme
 
 (require 'sanityinc-solarized-light-theme)

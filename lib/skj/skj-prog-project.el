@@ -10,10 +10,9 @@
 (require 'projectile)
 (setq projectile-require-project-root t)
 (setq projectile-project-search-path
-      (list (concat skj-project-root "/idea")
-            (concat skj-project-root "/racket")
-            (concat skj-project-root "/rust")
-            (concat skj-project-root "/Amazon")))
+      (mapcar (lambda (p)
+                (concat (file-name-as-directory skj/project-root-dir) p))
+              '("idea" "racket" "rust" "Amazon")))
 
 ;; Recommended keymap prefix on macOS
 (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)

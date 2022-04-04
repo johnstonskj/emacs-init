@@ -36,11 +36,14 @@
         all-the-icons-completion
         all-the-icons-dired
 
-        buffer-expose131;23M
+        buffer-expose131
         buffer-move
         
         color-theme-sanityinc-solarized64
 
+        multiple-cursors
+        mc-extras
+        
         rainbow-delimiters
         hl-todo
         
@@ -66,12 +69,12 @@
         dashboard-hackernews
         dashboard-project-status
 
-        ;; ------------------------------------------------------------------
-        ;; bbdb
-        bbdb-
-        bbdb-ext
-        bbdb-vcard
-        bbdb2erc
+        ;; ;; ------------------------------------------------------------------
+        ;; ;; bbdb
+        ;; bbdb-
+        ;; bbdb-ext
+        ;; bbdb-vcard
+        ;; bbdb2erc
 
         ;; ------------------------------------------------------------------
         ;; Org mode

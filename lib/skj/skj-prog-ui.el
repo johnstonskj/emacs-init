@@ -3,7 +3,7 @@
 (init-message "[skj-prog-ui] Entered")
 
 (defcustom
-  skj-project-root
+  skj/project-root-dir
   (expand-file-name "~/Projects")
   "Root directory for development projects."
   :tag "Projects' root directory"
@@ -11,7 +11,7 @@
   :type 'directory)
 
 ;; --------------------------------------------------------------------------
-;; Prettify Symbols
+;; My stuff.
 
 (require 'datalog-mode)
 
