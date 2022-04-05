@@ -123,6 +123,10 @@
       enable-recursive-minibuffers t
       ivy-count-format "(%d/%d) ")
 
+(require 'counsel)
+
+(setq counsel-find-file-ignore-regexp "\\(?:\\`\\|[/\\]\\)\\(?:[#.]\\)")
+
 ;; Ivy-based interface to standard commands
 (global-set-key (kbd "C-s") 'swiper-isearch)
 (global-set-key (kbd "M-x") 'counsel-M-x)
@@ -166,8 +170,6 @@
 
 ;; use ivy explorer for all file dialogs
 (ivy-explorer-mode 1)
-
-(require 'counsel)
 
 ;; not strictly necessary
 (counsel-mode 1)

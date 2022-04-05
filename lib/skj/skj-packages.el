@@ -112,10 +112,13 @@
         company-web
 
         counsel
+        counsel-org-capture-string
         counsel-osx-app
         counsel-projectile
         counsel-test
         counsel-web
+
+        smex
 
         ivy-action
         ivy-bibtex
