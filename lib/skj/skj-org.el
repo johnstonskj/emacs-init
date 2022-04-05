@@ -7,7 +7,7 @@
 (require 'xdg)
 
 (setq org-directory
-      (concat-path (xdg-user-dir "DOCUMENTS") "emacs-org"))
+      (concat-path "~/Projects" "emacs-org"))
 
 (setq org-default-notes-file (concat-path org-directory "inbox.org"))
 

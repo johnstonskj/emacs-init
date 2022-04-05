@@ -209,7 +209,6 @@
 
         ;; ------------------------------------------------------------------
         ;; Rust Development
-        cargo
         cargo-mode
         rust-auto-use
         rust-playground

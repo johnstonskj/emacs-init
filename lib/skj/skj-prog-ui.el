@@ -11,11 +11,6 @@
   :type 'directory)
 
 ;; --------------------------------------------------------------------------
-;; My stuff.
-
-(require 'datalog-mode)
-
-;; --------------------------------------------------------------------------
 ;; Prettify Symbols
 
 (add-hook 'scheme-mode-hook #'prettify-symbols-mode)

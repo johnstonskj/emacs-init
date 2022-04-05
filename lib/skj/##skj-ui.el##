@@ -32,38 +32,7 @@
 
 (require 'buffer-expose)
 
-(global-set-key (kbd "<esc> <tab>") 'buffer-expose)
-
 (buffer-expose-mode 1)
-
-;; (require 'ibuffer)
-;; 
-;; (setq ibuffer-formats
-;;       '((mark modified read-only " "
-;;               (name 18 18 :left :elide)
-;;               " "
-;;               (git-status 8 8 :right)
-;;               " "
-;;               (size 9 -1 :right)
-;;               " "
-;;               (mode 16 16 :left :elide)
-;;               " "
-;;               project-relative-file)))
-
-(require 'ibuffer-projectile)
-
-(add-hook 'ibuffer-hook
-          (lambda ()
-            (ibuffer-projectile-set-filter-groups)
-            (unless (eq ibuffer-sorting-mode 'alphabetic)
-              (ibuffer-do-sort-by-alphabetic))))
-
-;; (require 'ibuffer-sidebar)
-;; (require 'ibuffer-git)
-;; 
-;; (setq ibuffer-sidebar-formats '((mark " " git-status-mini " " name)))
-
-(global-set-key (kbd "C-x C-b") 'ibuffer-sidebar-toggle-sidebar)
 
 ;; --------------------------------------------------------------------------
 ;; Multiple Cursor support
@@ -154,10 +123,11 @@
       enable-recursive-minibuffers t
       ivy-count-format "(%d/%d) ")
 
-(require 'counsel)
-
-(setq counsel-find-file-ignore-regexp "\\(?:\\`\\|[/\\]\\)\\(?:[#.]\\)")
-
+(defcustom ivy-sort-matches-functions-alist
+  '((t . nil)
+    (ivy-completion-in-region . ivy--shorter-matches-first)
+    (ivy-switch-buffer . ivy-sort-function-buffer)))
+    
 ;; Ivy-based interface to standard commands
 (global-set-key (kbd "C-s") 'swiper-isearch)
 (global-set-key (kbd "M-x") 'counsel-M-x)
@@ -195,12 +165,17 @@
 (global-set-key (kbd "C-c t") 'counsel-load-theme)
 (global-set-key (kbd "C-c F") 'counsel-org-file)
 
+(ivy-set-display-transformer 'ivy-switch-buffer
+                             'ivy-rich-switch-buffer-transformer)
+
 (ivy-mode 1)
 
 (require 'ivy-explorer)
 
 ;; use ivy explorer for all file dialogs
 (ivy-explorer-mode 1)
+
+(require 'counsel)
 
 ;; not strictly necessary
 (counsel-mode 1)
