@@ -32,7 +32,38 @@
 
 (require 'buffer-expose)
 
+(global-set-key (kbd "<esc> <tab>") 'buffer-expose)
+
 (buffer-expose-mode 1)
+
+(require 'ibuffer)
+
+(setq ibuffer-formats
+      '((mark modified read-only " "
+              (name 18 18 :left :elide)
+              " "
+              (git-status 8 8 :right)
+              " "
+              (size 9 -1 :right)
+              " "
+              (mode 16 16 :left :elide)
+              " "
+              project-relative-file)))
+
+(require 'ibuffer-projectile)
+
+(add-hook 'ibuffer-hook
+          (lambda ()
+            (ibuffer-projectile-set-filter-groups)
+            (unless (eq ibuffer-sorting-mode 'alphabetic)
+              (ibuffer-do-sort-by-alphabetic))))
+
+(require 'ibuffer-sidebar)
+(require 'ibuffer-git)
+
+(setq ibuffer-sidebar-formats '((mark " " git-status-mini " " name)))
+
+(global-set-key (kbd "C-x C-b") 'ibuffer-sidebar-toggle-sidebar)
 
 ;; --------------------------------------------------------------------------
 ;; Multiple Cursor support

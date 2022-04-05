@@ -1,4 +1,4 @@
-1;4000;24c;;; skj-packages.el -*- lexical-binding: t; -*-
+;;; skj-packages.el -*- lexical-binding: t; -*-
 
 ;; --------------------------------------------------------------------------
 ;; Package Repository Configuration
@@ -36,8 +36,12 @@
         all-the-icons-completion
         all-the-icons-dired
 
-        buffer-expose131
+        buffer-expose
         buffer-move
+
+        ibuffer-git
+        ibuffer-projectile
+        ibuffer-sidebar
         
         color-theme-sanityinc-solarized64
 
@@ -112,6 +116,7 @@
         company-web
 
         counsel
+        counsel-fd
         counsel-org-capture-string
         counsel-osx-app
         counsel-projectile
