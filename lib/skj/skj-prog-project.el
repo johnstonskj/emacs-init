@@ -8,8 +8,10 @@
 ;; Projectile for project-awareness
 
 (require 'projectile)
-(setq projectile-require-project-root t)
-(setq projectile-project-search-path
+
+(setq projectile-completion-system 'ivy
+      projectile-require-project-root t
+      projectile-project-search-path
       (mapcar (lambda (p)
                 (concat (file-name-as-directory skj/project-root-dir) p))
               '("idea" "racket" "rust" "Amazon")))
@@ -23,6 +25,7 @@
 ;; Project Explorer for sidebar
 
 (require 'project-explorer)
+
 (setq pe/filenotify-enabled t
       pe/inline-folders t
       pe/omit-gitignore t

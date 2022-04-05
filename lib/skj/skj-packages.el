@@ -1,4 +1,4 @@
-;;; skj-packages.el -*- lexical-binding: t; -*-
+1;4000;24c;;; skj-packages.el -*- lexical-binding: t; -*-
 
 ;; --------------------------------------------------------------------------
 ;; Package Repository Configuration
@@ -41,6 +41,7 @@
         
         color-theme-sanityinc-solarized64
 
+        multicolumn
         multiple-cursors
         mc-extras
         
@@ -110,10 +111,26 @@
         company-quickhelp
         company-web
 
-        selectrum
-        selectrum-prescient
-        marginalia
+        counsel
+        counsel-osx-app
+        counsel-projectile
+        counsel-test
+        counsel-web
 
+        ivy-action
+        ivy-bibtex
+        ivy-emoji
+        ivy-explorer
+        ivy-file-preview
+        ivy-historian
+        ivy-omni-org
+        ivy-prescient
+        ivy-rich
+        ivy-yasnippet
+        ivy-todo
+        
+        flyspell-correct-ivy
+        
         yasnippet
         yasnippet-snippets
         gitignore-snippets

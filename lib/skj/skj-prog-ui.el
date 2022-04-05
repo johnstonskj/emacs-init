@@ -50,15 +50,10 @@
             (company-mode t)))
 
 ;; --------------------------------------------------------------------------
-;; Selectrum completion
+;; Magit
 
-(require 'prescient)
-;; to save your command history on disk, so the sorting gets more
-;; intelligent over time
-(prescient-persist-mode +1)
+(require 'magit)
 
-(require 'selectrum-prescient)
-;; to make sorting and filtering more intelligent
-(selectrum-prescient-mode +1)
+(setq magit-completing-read-function 'ivy-completing-read)
 
 (provide 'skj-prog-ui)
