@@ -20,6 +20,7 @@
 (setq yas-snippet-dirs
       (append yas-snippet-dirs
               (list (concat-path user-emacs-directory "snippets")
+                    (concat-path org-directory "snippets")
                     skj/snippet-repo-dir)))
 
 (message "%s" yas-snippet-dirs)
