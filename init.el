@@ -88,7 +88,7 @@ path, the result is relative to the current buffer path."
 
 (require 'skj-prog-rust)
 
-;; (require 'skj-prog-rest)
+(require 'skj-prog-rest)
 
 (require 'skj-prog-services)
 

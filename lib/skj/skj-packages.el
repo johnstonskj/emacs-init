@@ -179,17 +179,21 @@
         git-attr
         git-blamed
         git-link
+        git-timemachine
+
+        github
         github-browse-file
         github-explorer ; M-x github-explorer "txgvnn/github-explorer"
         github-notifier
         github-pullrequest
         github-review
-        github
         bug-reference-github
+
         magit
         magit-lfs
         magit-filenotify
         magit-todos
+
         forge
 
         diff-hl
@@ -200,8 +204,8 @@
 
         dap-mode
 
-        ;; restclient
-        
+        verb
+
         ;; ------------------------------------------------------------------
         ;; Project support
         projectile
