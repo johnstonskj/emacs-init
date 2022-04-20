@@ -1,6 +1,6 @@
 ;;; skj-prog-services.el -*- lexical-binding: t; -*-
 
-(init-message "[skj-prog-services] Entered")
+(init-message "Setting up external integrations" 'skj-prog-services)
 
 ;; --------------------------------------------------------------------------
 ;; Wakatime customization

@@ -1,6 +1,6 @@
 ;;; skj-prog-elisp.el -*- lexical-binding: t; -*-
 
-(init-message "[skj-prog-elisp] Entered")
+(init-message "Setting up Emacs Lisp mode" 'skj-prog-elisp)
 
 (require 'checkdoc)
 (add-hook 'emacs-lisp-mode-hook 'checkdoc-minor-mode)

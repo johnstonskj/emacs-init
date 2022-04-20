@@ -1,6 +1,9 @@
 ;;; skj-prog-dap.el -*- lexical-binding: t; -*-
 
+(init-message "Setting debugger (dap) mode!" 'skj-prog-dap)
+
 (require 'dap-mode)
+
 (setq dap-auto-configure-features '(sessions locals controls tooltip))
 
 (dap-register-debug-template "Rust::GDB Run Configuration"

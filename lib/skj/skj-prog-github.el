@@ -1,6 +1,6 @@
 ;;; skj-prog-github.el -*- lexical-binding: t; -*-
 
-(init-message "[skj-prog-github] Entered")
+(init-message "Setting up GitHub integrations" 'skj-prog-github)
 
 (require 'skj-secrets)
 

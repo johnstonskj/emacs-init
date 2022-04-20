@@ -1,6 +1,6 @@
 ;;; skj-prog-snippet.el -*- lexical-binding: t; -*-
 
-(init-message "[skj-prog-snippet] Entered")
+(init-message "Setting up snippets" 'skj-prog-snippet)
 
 (require 'skj-prog-ui)
 
@@ -28,6 +28,5 @@
 (yas-global-mode 1)
 
 (add-hook 'prog-mode-hook #'yas-minor-mode)
-
 
 (provide 'skj-prog-snippet)

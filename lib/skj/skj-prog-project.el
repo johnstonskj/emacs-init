@@ -1,11 +1,13 @@
 ;;; skj-prog-project.el -*- lexical-binding: t; -*-
 
-(init-message "[skj-prog-project] Entered")
+(init-message "Setting up project support" 'skj-prog-project)
 
 (require 'skj-prog-ui)
 
 ;; --------------------------------------------------------------------------
 ;; Projectile for project-awareness
+
+(init-message "project support > projectile" 'skj-prog-project)
 
 (require 'projectile)
 
@@ -23,6 +25,8 @@
 
 ;; --------------------------------------------------------------------------
 ;; Project Explorer for sidebar
+
+(init-message "project support > projectileproject explorer" 'skj-prog-project)
 
 (require 'project-explorer)
 

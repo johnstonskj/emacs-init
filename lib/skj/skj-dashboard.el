@@ -1,6 +1,6 @@
 ;;; skj-dashboard.el -*- lexical-binding: t; -*-
 
-(init-message "[skj-dashboard] Entered")
+(init-message "Setting up Dashboard" 'skj-dashboard)
 
 (require 'dashboard)
 (setq dashboard-items '((recents  . 10)

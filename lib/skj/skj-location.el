@@ -1,6 +1,6 @@
 ;;; skj-org.el -*- lexical-binding: t; -*-
 
-(init-message "[skj-location] Entered")
+(init-message "Setting location/time-zone" 'skj-location)
 
 (setq calendar-latitude 47.6062
       calendar-longitude -122.3321

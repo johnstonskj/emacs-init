@@ -1,6 +1,6 @@
 ;;; skj-ui.el -*- lexical-binding: t; -*-
 
-(init-message "[skj-ui] Entered")
+(init-message "Setting up common UI" 'skj-ui)
 
 (set-language-environment "UTF-8")
 
@@ -36,20 +36,6 @@
 
 (buffer-expose-mode 1)
 
-;; (require 'ibuffer)
-;; 
-;; (setq ibuffer-formats
-;;       '((mark modified read-only " "
-;;               (name 18 18 :left :elide)
-;;               " "
-;;               (git-status 8 8 :right)
-;;               " "
-;;               (size 9 -1 :right)
-;;               " "
-;;               (mode 16 16 :left :elide)
-;;               " "
-;;               project-relative-file)))
-
 (require 'ibuffer-projectile)
 
 (add-hook 'ibuffer-hook
@@ -57,11 +43,6 @@
             (ibuffer-projectile-set-filter-groups)
             (unless (eq ibuffer-sorting-mode 'alphabetic)
               (ibuffer-do-sort-by-alphabetic))))
-
-;; (require 'ibuffer-sidebar)
-;; (require 'ibuffer-git)
-;; 
-;; (setq ibuffer-sidebar-formats '((mark " " git-status-mini " " name)))
 
 (global-set-key (kbd "C-x C-b") 'ibuffer-sidebar-toggle-sidebar)
 
@@ -79,6 +60,7 @@
 ;; Set the global theme
 
 (require 'sanityinc-solarized-light-theme)
+
 (setq
  color-theme-is-global t
  custom-enabled-themes '(sanityinc-solarized-light)
@@ -104,6 +86,16 @@
 (line-number-mode t)
 (column-number-mode t)
 (display-battery-mode t)
+
+
+(when (display-graphic-p)
+  (require 'major-mode-icons)
+
+  (major-mode-icons-mode 1)
+
+  (require 'mode-icons)
+
+  (mode-icons-mode 1))
 
 ;; --------------------------------------------------------------------------
 ;; Keyboard

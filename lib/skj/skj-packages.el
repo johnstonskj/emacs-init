@@ -2,7 +2,7 @@
 
 ;; --------------------------------------------------------------------------
 ;; Package Repository Configuration
-(init-message "[skj-packages] Entered")
+(init-message "Loading expected packages" 'skj-packages)
 
 (require 'package)
 
@@ -57,7 +57,11 @@
         undo-tree
 
         page-break-lines
+
+        mode-icons
+        major-mode-icons
         
+        highlight-indent-guides
         aggressive-indent
 
         ;; ------------------------------------------------------------------
@@ -211,6 +215,8 @@
         projectile
         project-explorer
 
+        find-file-in-project
+
         ;; ------------------------------------------------------------------
         ;; Rust Development
         cargo-mode
@@ -267,12 +273,12 @@
 
 ;; refresh package list if it is not already available
 (when (not package-archive-contents)
-  (init-message "[skj-packages] Refreshing package list")
+  (init-message "Refreshing package list" 'skj-packages)
   (package-refresh-contents))
 
 ;; install packages from the list that are not yet installed
 (dolist (pkg pfl-packages)
-  (init-message (format "[skj-packages] Checking for package %s" pkg))
+  (init-message (format "Checking for package %s" pkg) 'skj-packages)
   (when (and (not (package-installed-p pkg)) (assoc pkg package-archive-contents))
     (package-install pkg)))
 

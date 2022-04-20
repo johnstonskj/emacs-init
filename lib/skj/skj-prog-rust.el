@@ -1,7 +1,7 @@
 ;;; skj-prog-rust.el -*- lexical-binding: t; -*-
 ;;;  See: <https://github.com/rust-lang/rust-mode>
 
-(init-message "[skj-prog-rust] Entered")
+(init-message "Setting up Rust mode(s)" 'skj-prog-rust)
 
 (require 'rustic)
 

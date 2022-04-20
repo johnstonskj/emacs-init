@@ -12,7 +12,7 @@
 
 (defcustom
   skj-trace-init
-  nil
+  t
   "Emit tracing messages during initialization, useful with --debug-init."
   :tag "Trace initialization process"
   :group 'skj
@@ -26,9 +26,11 @@
   :group 'skj
   :type 'string)
 
-(defun init-message (message)
+(defun init-message (message &optional module)
   (unless (eq skj-trace-init nil)
-    (message (format "Init %s", message))))
+    (if module
+        (message "Init [%s] %s" module message)
+      (message "Init %s" message))))
 
 (defun concat-path (base-dir path)
   "Concatenate path components, returning an expanded path.
@@ -47,7 +49,7 @@ path, the result is relative to the current buffer path."
 ;; Assuming that the code in custom-file is execute before the code
 ;; ahead of this line is not a safe assumption. So load this file
 ;; proactively.
-(load-file "custom.el")
+(load-file (concat-path user-emacs-directory "custom.el"))
 
 ;; --------------------------------------------------------------------------
 ;; Initialize Packages

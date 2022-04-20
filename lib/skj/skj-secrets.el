@@ -1,6 +1,6 @@
 ;;; skj-secrets.el -*- lexical-binding: t; -*-
 
-(init-message "[skj-secrets] Entered")
+(init-message "Setting up secrets manager" 'skj-secrets)
 
 ;; --------------------------------------------------------------------------
 (defcustom

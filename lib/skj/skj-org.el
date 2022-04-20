@@ -2,7 +2,7 @@
 
 ;; See http://doc.norang.ca/org-mode.html
 
-(init-message "[skj-org] Entered")
+(init-message "Setting up org mode" 'skj-org)
 
 (require 'xdg)
 
@@ -98,6 +98,8 @@
 ;; --------------------------------------------------------------------------
 ;; Org Agenda
 
+(init-message "org mode > agenda" 'skj-org)
+
 (require 'org-agenda)
 
 (setq org-agenda-files
@@ -184,6 +186,8 @@ PRIORITY must be an integer 1 <= p <= 5."
 ;; --------------------------------------------------------------------------
 ;; Company integration
 
+(init-message "org mode > company" 'skj-org)
+
 (require 'company-org-block)
 
 (setq company-org-block-edit-style 'auto) ;; 'auto, 'prompt, or 'inline
@@ -195,6 +199,8 @@ PRIORITY must be an integer 1 <= p <= 5."
 
 ;; --------------------------------------------------------------------------
 ;; Google Calendar
+
+(init-message "org mode > gcal" 'skj-org)
 
 (require 'org-gcal)
 
@@ -228,6 +234,8 @@ PRIORITY must be an integer 1 <= p <= 5."
 
 ;; --------------------------------------------------------------------------
 ;; Appointment integration
+
+(init-message "org mode > appt" 'skj-org)
 
 (require 'appt)
 
