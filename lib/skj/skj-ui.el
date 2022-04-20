@@ -65,6 +65,9 @@
 
 (global-set-key (kbd "C-x C-b") 'ibuffer-sidebar-toggle-sidebar)
 
+(when (fboundp 'windmove-default-keybindings)
+  (windmove-default-keybindings))
+
 ;; --------------------------------------------------------------------------
 ;; Multiple Cursor support
 
