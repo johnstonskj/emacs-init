@@ -25,6 +25,12 @@
 
 (require 'highlight-indent-guides)
 
+(setq
+ highlight-indent-guides-method 'character
+ highlight-indent-guides-responsive 'stack)
+
+(set-face-foreground 'highlight-indent-guides-character-face "brightmagenta")
+
 (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
 
 (require 'aggressive-indent)
