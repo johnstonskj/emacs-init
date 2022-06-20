@@ -184,6 +184,7 @@
         git-blamed
         git-link
         git-timemachine
+        git-modes
 
         github
         github-browse-file

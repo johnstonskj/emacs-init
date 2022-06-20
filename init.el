@@ -12,7 +12,7 @@
 
 (defcustom
   skj-trace-init
-  t
+  nil
   "Emit tracing messages during initialization, useful with --debug-init."
   :tag "Trace initialization process"
   :group 'skj
@@ -38,8 +38,12 @@
 Note that if BASE-DIR is not absolute, or expands to an absolute
 path, the result is relative to the current buffer path."
   (expand-file-name (concat (file-name-as-directory base-dir) path)))
-  
-  
+
+(setq
+ user-login-name "johnstonskj"
+ user-full-name "Simon Johnston"
+ user-mail-address "johnstonskj@gmail.com")
+
 ;; --------------------------------------------------------------------------
 (init-message "Setting customize values")
 
