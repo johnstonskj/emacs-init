@@ -29,4 +29,12 @@
 
 (add-hook 'prog-mode-hook #'yas-minor-mode)
 
+;; --------------------------------------------------------------------------
+;; Individual package configuration
+
+(require 'yasnippet)
+
+(require 'gitignore-snippets)
+(gitignore-snippets-init)
+
 (provide 'skj-prog-snippet)
