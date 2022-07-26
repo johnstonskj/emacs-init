@@ -39,6 +39,23 @@
 ;; LaTeX
 
 (add-hook 'LaTeX-mode-hook #'latex-extra-mode)
+(add-hook 'LaTeX-mode-hook #'flymake-mode)
+
+(defun flymake-get-tex-args (file-name)
+  (list "pdflatex"
+        (list "-file-line-error"
+              "-draftmode"
+              "-interaction=nonstopmode"
+              file-name)))
+
+;; To disable a checker:
+;;   M-x flycheck-disable-checker
+;; To enable a checker:
+;;   C-u M-x flycheck-disable-checker
+
+(setq
+ flycheck-tex-chktex-executable "chktex"
+ flycheck-tex-lacheck-executable "lacheck")
 
 ;; --------------------------------------------------------------------------
 ;; LaTeX math

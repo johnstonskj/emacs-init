@@ -2,6 +2,12 @@
 
 (init-message "Setting up secrets manager" 'skj-secrets)
 
+(setq
+ epg-gpg-program "gpg2"
+ epg-gpg-home-directory (expand-file-name "~/.gnupg"))
+
+(init-message (format "Using command: %s, as %s" epg-gpg-program (executable-find epg-gpg-program)) 'skj-secrets)
+
 ;; --------------------------------------------------------------------------
 (defcustom
   skj-secrets-file

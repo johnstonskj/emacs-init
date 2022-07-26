@@ -39,10 +39,36 @@ Note that if BASE-DIR is not absolute, or expands to an absolute
 path, the result is relative to the current buffer path."
   (expand-file-name (concat (file-name-as-directory base-dir) path)))
 
+;; --------------------------------------------------------------------------
+(init-message "Configure execution path")
+
+;; (defun shell-path->list (&optional varname)
+;;   (split-string (delete-dups (getenv (if varname varname "PATH")) ":")))
+
+(defun exec-path-prepend (path)
+  "Add PATH to the beginning of the current `exec-path` variable
+and the shell's `$PATH` variable."
+  (unless (member path exec-path)
+    (setq exec-path (cons path exec-path))
+    (setenv "PATH" (concat path ":" (getenv "PATH")))))
+
+(defun exec-path-append (path)
+  "Add PATH to the end of the current `exec-path` variable and
+the shell's `$PATH` variable."
+  (unless (member path exec-path)
+    (setq exec-path (append exec-path (list path)))
+    (setenv "PATH" (concat (getenv "PATH") ":" path))))
+
+(init-message (format "exec-path: %s" exec-path))
+
+;; --------------------------------------------------------------------------
+(init-message "Override default user details")
+
 (setq
  user-login-name "johnstonskj"
  user-full-name "Simon Johnston"
- user-mail-address "johnstonskj@gmail.com")
+ user-mail-address "johnstonskj@gmail.com"
+ user-home-directory (expand-file-name "~"))
 
 ;; --------------------------------------------------------------------------
 (init-message "Setting customize values")
@@ -63,6 +89,12 @@ path, the result is relative to the current buffer path."
 (add-to-list 'load-path (concat-path user-emacs-directory "lib/skj"))
 
 (require 'skj-packages)
+
+;; --------------------------------------------------------------------------
+;; Generic Executable Paths
+
+(when (display-graphic-p)
+  (exec-path-prepend "usr/local/bin"))
 
 ;; --------------------------------------------------------------------------
 ;; Generic Configuration

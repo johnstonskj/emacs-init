@@ -17,13 +17,16 @@
 
 (require 'yasnippet)
 
-(setq yas-snippet-dirs
-      (append yas-snippet-dirs
-              (list (concat-path user-emacs-directory "snippets")
-                    (concat-path org-directory "snippets")
-                    skj/snippet-repo-dir)))
+(dolist (path (list
+               (concat-path user-emacs-directory "snippets")
+               (concat-path org-directory "snippets")
+               skj/snippet-repo-dir))
+  (unless (member path yas-snippet-dirs)
+    (init-message "Adding %s to yas-snippet-dirs" path 'skj-prog-snippets)
+    (setq yas-snippet-dirs
+          (cons path yas-snippet-dirs))))
 
-(message "%s" yas-snippet-dirs)
+(init-message "%s" yas-snippet-dirs 'skj-prog-snippets)
 
 (yas-global-mode 1)
 
@@ -36,5 +39,7 @@
 
 (require 'gitignore-snippets)
 (gitignore-snippets-init)
+
+;; on changes: yas-reload-all
 
 (provide 'skj-prog-snippet)
