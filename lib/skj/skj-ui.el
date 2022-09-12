@@ -59,7 +59,7 @@
 ;; --------------------------------------------------------------------------
 ;; Set the global theme
 
-(require 'sanityinc-solarized-light-theme)
+(require 'color-theme-sanityinc-solarized)
 
 (setq
  color-theme-is-global t

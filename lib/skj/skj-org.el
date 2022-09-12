@@ -176,12 +176,16 @@ PRIORITY must be an integer 1 <= p <= 5."
 ;; --------------------------------------------------------------------------
 ;; Org Babel
 
-;;(org-babel-do-load-languages
-;; 'org-babel-load-languages
-;; '((plantuml . t))) ; this line activates plantuml
+(setq org-plantuml-jar-path
+      (expand-file-name "/usr/local/Cellar/plantuml/1.2022.6/libexec/plantuml.jar"))
 
-;;(setq org-plantuml-jar-path
-;;      (expand-file-name "/usr/local/Cellar/plantuml/1.2022.2_1/libexec/plantuml.jar"))
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((plantuml . t))) ; this line activates plantuml
+
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((dot . t))) ; this line activates dot
 
 ;; --------------------------------------------------------------------------
 ;; Company integration

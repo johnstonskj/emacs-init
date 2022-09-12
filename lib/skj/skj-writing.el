@@ -35,6 +35,7 @@
   "Major mode for editing GitHub Flavored Markdown files" t)
 (add-to-list 'auto-mode-alist '("README\\.md\\'" . gfm-mode))
 
+
 ;; --------------------------------------------------------------------------
 ;; LaTeX
 
@@ -57,6 +58,7 @@
  flycheck-tex-chktex-executable "chktex"
  flycheck-tex-lacheck-executable "lacheck")
 
+
 ;; --------------------------------------------------------------------------
 ;; LaTeX math
 
@@ -67,12 +69,31 @@
 ;; global activation of the unicode symbol completion 
 (add-to-list 'company-backends 'company-math-symbols-unicode)
 
+
+;; --------------------------------------------------------------------------
+;; Spell check
+
+(require 'flyspell)
+
+(setq flyspell-issue-message-flag nil
+      ispell-program-name "aspell")
+
+(let* ((env-language (getenv "LANG"))
+       (dictionary (first (split-string env-language "\\."))))
+  (init-message (format "flyspell using dictionary %s from $LANG" dictionary) 'skj-writing)
+  (setq ispell-extra-args (list (concat "--lang=" dictionary))))
+
+(add-hook 'text-mode-hook 'flyspell-mode)
+(add-hook 'prog-mode-hook 'flyspell-prog-mode)
+
+
 ;; --------------------------------------------------------------------------
 ;; Bibliography
 
 (require 'company-bibtex)
 
 (add-to-list 'company-backends 'company-bibtex)
+
 
 ;; --------------------------------------------------------------------------
 ;; Olivetti

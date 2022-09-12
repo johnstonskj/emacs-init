@@ -22,11 +22,11 @@
                (concat-path org-directory "snippets")
                skj/snippet-repo-dir))
   (unless (member path yas-snippet-dirs)
-    (init-message "Adding %s to yas-snippet-dirs" path 'skj-prog-snippets)
+    (init-message (format "Adding %s to yas-snippet-dirs" path) 'skj-prog-snippets)
     (setq yas-snippet-dirs
           (cons path yas-snippet-dirs))))
 
-(init-message "%s" yas-snippet-dirs 'skj-prog-snippets)
+(init-message yas-snippet-dirs 'skj-prog-snippets)
 
 (yas-global-mode 1)
 

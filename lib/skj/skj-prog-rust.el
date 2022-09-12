@@ -6,17 +6,6 @@
 (require 'rustic)
 
 (setq
- rustic-cargo-directory
- (concat-path user-home-directory ".cargo"))
-
-(setq
- rustic-cargo-bin-directory
- (concat-path rustic-cargo-directory "bin"))
-
-(exec-path-append rustic-cargo-bin-directory)
-
-
-(setq
  rustic-format-on-save t
  rustic-babel-format-src-block t
  rustic-babel-auto-wrap-main t
@@ -24,7 +13,8 @@
 
 (setq
  lsp-rust-analyzer-server-display-inlay-hints t
- lsp-rust-analyzer-cargo-watch-command "cargo-clippy")
+ lsp-rust-analyzer-display-parameter-hints t
+ lsp-rust-analyzer-display-chaining-hints t)
 
 (defun rustic-mode-auto-save-hook ()
   "Enable auto-saving in rustic-mode buffers."
@@ -33,9 +23,9 @@
 
 (add-hook 'rustic-mode-hook 'rustic-mode-auto-save-hook)
 
-(setq flycheck-rustic-clippy-executable "cargo-clippy")
-
-(unless (member 'rustic-clippy flycheck-checkers)
-  (setq flycheck-checkers (cons 'rustic-clippy flycheck-checkers)))
+;; (setq flycheck-rustic-clippy-executable "cargo-clippy")
+;; 
+;; (unless (member 'rustic-clippy flycheck-checkers)
+;;   (setq flycheck-checkers (cons 'rustic-clippy flycheck-checkers)))
 
 (provide 'skj-prog-rust)

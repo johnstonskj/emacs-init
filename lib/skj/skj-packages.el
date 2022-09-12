@@ -1,5 +1,5 @@
 ;;; skj-packages.el -*- lexical-binding: t; -*-
-
+ 
 ;; --------------------------------------------------------------------------
 ;; Package Repository Configuration
 (init-message "Loading expected packages" 'skj-packages)
@@ -36,33 +36,35 @@
         all-the-icons-completion
         all-the-icons-dired
 
+        mode-icons
+        major-mode-icons
+
         buffer-expose
         buffer-move
 
+        dir-treeview
+        dired-sidebar
+        
         ibuffer-git
         ibuffer-projectile
         ibuffer-sidebar
         
-        color-theme-sanityinc-solarized64
+        color-theme-sanityinc-solarized
 
         multicolumn
         multiple-cursors
         mc-extras
-        
-        rainbow-delimiters
-        hl-todo
-        
-        smart-tabs-mode
 
+        everlasting-scratch
+        persist        
         undo-tree
 
-        page-break-lines
-
-        mode-icons
-        major-mode-icons
-        
         highlight-indent-guides
         aggressive-indent
+
+        rainbow-delimiters
+        smart-tabs-mode
+        page-break-lines
 
         ;; ------------------------------------------------------------------
         ;; macOS specifics
@@ -72,19 +74,6 @@
         reveal-in-osx-finder
         osx-trash
         
-        ;; ------------------------------------------------------------------
-        ;; Dashboard
-        dashboard
-        dashboard-hackernews
-        dashboard-project-status
-
-        ;; ;; ------------------------------------------------------------------
-        ;; ;; bbdb
-        ;; bbdb-
-        ;; bbdb-ext
-        ;; bbdb-vcard
-        ;; bbdb2erc
-
         ;; ------------------------------------------------------------------
         ;; Org mode
         org-alert
@@ -105,6 +94,10 @@
 
         ox-gfm
         ox-wk
+        
+        graphviz-dot-mode
+        plantuml-mode
+        flycheck-plantuml
 
         mexican-holidays
 
@@ -142,6 +135,10 @@
         ivy-todo
         
         flyspell-correct-ivy
+
+        ;; ------------------------------------------------------------------
+        ;; Generic development-like
+        hl-todo
         
         yasnippet
         yasnippet-snippets
@@ -172,13 +169,6 @@
         smog               ; check writing style: M-x smog-check-buffer
 
         ;; ------------------------------------------------------------------
-        ;; Terminal Stuff
-        ;; vterm
-        ;; vterm-toggle
-        ;; vtm
-        ;; multi-vterm
-        
-        ;; ------------------------------------------------------------------
         ;; Git interfaces
         git-attr
         git-blamed
@@ -198,26 +188,35 @@
         magit-lfs
         magit-filenotify
         magit-todos
-
+        magithub
+        
         forge
 
         diff-hl
 
         ;; ------------------------------------------------------------------
         ;; Core out-of-process integrations
+        lsp-mode
         lsp-ui
 
         dap-mode
 
         verb
+        
+        ;; cov
 
         ;; ------------------------------------------------------------------
         ;; Project support
         projectile
-        project-explorer
+        projectile-git-autofetch
+        projectile-ripgrep
 
+        project-explorer
+        project-persist
         find-file-in-project
 
+        tabspaces
+        
         ;; ------------------------------------------------------------------
         ;; Rust Development
         cargo-mode
@@ -229,8 +228,6 @@
         pest-mode
         
         toml
-        
-        ;; cov
 
         ;; ------------------------------------------------------------------
         ;; Scheme/Lisp Development
@@ -255,17 +252,20 @@
 
         ;; ------------------------------------------------------------------
         ;; Data/Config file formats
-        toml-mode
+        pcsv
+        csv-mode
+        
+        json-mode
         
         yaml-mode
         flycheck-yamllint
         
-        json-mode
+        toml-mode
 
         ;; ------------------------------------------------------------------
         ;; Database
         emacsql
-        emacsql-sqlite
+        emacsql-sqlite-module
 
         ;; ------------------------------------------------------------------
         ;; Hosted service integrations
