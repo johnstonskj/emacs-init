@@ -16,7 +16,7 @@
       projectile-project-search-path
       (mapcar (lambda (p)
                 (concat (file-name-as-directory skj/project-root-dir) p))
-              '("idea" "racket" "rust" "Amazon")))
+              '("emacs-little-packages" "racket" "rust" "Amazon")))
 
 ;; Recommended keymap prefix on macOS
 (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)

@@ -7,21 +7,22 @@
 ;; --------------------------------------------------------------------------
 ;; Emoji support
 
-(add-to-list 'company-backends 'company-emoji)
+(when (display-graphic-p)
+  (add-to-list 'company-backends 'company-emoji)
 
-(defun --set-emoji-font (frame)
-  "Adjust the font settings of FRAME so Emacs can display emoji properly."
-  (if (eq system-type 'darwin)
-      ;; For NS/Cocoa
-      (set-fontset-font t 'symbol (font-spec :family "Apple Color Emoji") frame 'prepend)
-    ;; For Linux
-    (set-fontset-font t 'symbol (font-spec :family "Symbola") frame 'prepend)))
-
-;; For when Emacs is started in GUI mode:
-(--set-emoji-font nil)
-;; Hook for when a frame is created with emacsclient
-;; see https://www.gnu.org/software/emacs/manual/html_node/elisp/Creating-Frames.html
-(add-hook 'after-make-frame-functions '--set-emoji-font)
+  (defun --set-emoji-font (frame)
+    "Adjust the font settings of FRAME so Emacs can display emoji properly."
+    (if (eq system-type 'darwin)
+        ;; For NS/Cocoa
+        (set-fontset-font t 'symbol (font-spec :family "Apple Color Emoji") frame 'prepend)
+      ;; For Linux
+      (set-fontset-font t 'symbol (font-spec :family "Symbola") frame 'prepend)))
+  
+  ;; For when Emacs is started in GUI mode:
+  (--set-emoji-font nil)
+  ;; Hook for when a frame is created with emacsclient
+  ;; see https://www.gnu.org/software/emacs/manual/html_node/elisp/Creating-Frames.html
+  (add-hook 'after-make-frame-functions '--set-emoji-font))
 
 ;; --------------------------------------------------------------------------
 ;; Markdown
@@ -98,7 +99,8 @@
 ;; --------------------------------------------------------------------------
 ;; Olivetti
 
-(require 'olivetti)
-(setq olivetti-body-width 82)
+;; Disable for now, has a mouse event error on load
+;; (require 'olivetti)
+;; (setq olivetti-body-width 82)
 
 (provide 'skj-writing)

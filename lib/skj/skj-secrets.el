@@ -92,6 +92,7 @@ value DEFAULT."
 (unless (not skj-secrets-file)
   ;; Load the encrypted data using GPG integration.
   (init-message "[skj-secrets] Loading external secrets (secure) file")
+  ;; TODO: test whether this file exists, OR create?
   (load-file skj-secrets-file))
 
 

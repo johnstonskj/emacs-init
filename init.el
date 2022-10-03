@@ -12,7 +12,9 @@
 
 (defcustom
   skj-trace-init
-  nil
+  (if (and (boundp debug-on-error) debug-on-error)
+      debug-on-error
+    nil)
   "Emit tracing messages during initialization, useful with --debug-init."
   :tag "Trace initialization process"
   :group 'skj
@@ -102,8 +104,6 @@ the shell's `$PATH` variable."
 (require 'skj-location)
 
 (require 'skj-ui)
-
-(require 'skj-dashboard)
 
 (require 'skj-org)
 
