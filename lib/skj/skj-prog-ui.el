@@ -69,4 +69,14 @@
 
 (setq magit-completing-read-function 'ivy-completing-read)
 
+;; --------------------------------------------------------------------------
+;; Add Diff highlighting
+
+(require 'diff-hl)
+
+(add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
+(add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
+
+(global-diff-hl-mode)
+
 (provide 'skj-prog-ui)
