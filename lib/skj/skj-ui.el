@@ -34,6 +34,24 @@
 
 
 ;; --------------------------------------------------------------------------
+;; Set the global theme
+
+(init-message "ui > themes" 'skj-ui)
+
+(skj-package-install 'color-theme-sanityinc-solarized)
+
+(require 'color-theme-sanityinc-solarized)
+
+(setq
+ color-theme-is-global t
+ custom-enabled-themes '(sanityinc-solarized-light)
+ custom-safe-themes
+ '("4cf3221feff536e2b3385209e9b9dc4c2e0818a69a1cdb4b522756bcdf4e00a4" default))
+
+(color-theme-sanityinc-solarized-light)
+
+
+;; --------------------------------------------------------------------------
 ;; Buffer Tools
 
 (init-message "ui > buffers" 'skj-ui)
@@ -63,24 +81,6 @@
 (require 'multiple-cursors)
 
 (global-set-key (kbd "C-c m c") 'mc/edit-lines)
-
-
-;; --------------------------------------------------------------------------
-;; Set the global theme
-
-(init-message "ui > themes" 'skj-ui)
-
-(skj-package-install 'color-theme-sanityinc-solarized)
-
-(require 'color-theme-sanityinc-solarized)
-
-(setq
- color-theme-is-global t
- custom-enabled-themes '(sanityinc-solarized-light)
- custom-safe-themes
- '("4cf3221feff536e2b3385209e9b9dc4c2e0818a69a1cdb4b522756bcdf4e00a4" default))
-
-(color-theme-sanityinc-solarized-light)
 
 
 ;; --------------------------------------------------------------------------

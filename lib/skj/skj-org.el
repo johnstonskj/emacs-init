@@ -21,9 +21,7 @@
 
 (require 'skj-packages)
 
-(skj-package-install
- '(org-clock-reminder
-   org-ql))
+(skj-package-install 'org-ql)
 
 (require 'org)
 
@@ -115,6 +113,21 @@
 
 (add-to-list 'auto-mode-alist '("\\.org\\'" . org-mode))
 
+
+;; --------------------------------------------------------------------------
+;; Clock
+
+(skj-package-install 'org-clock-reminder)
+
+(require 'org-clock-reminder)
+
+(org-clock-reminder-mode)
+
+;; ; By default, notifications (active, inactive) are shown every 10 minutes
+(setq org-clock-reminder-interval 10)
+
+;; Active notifications are shown every 3 minute, inactive every 3
+(setq org-clock-reminder-interval (cons 3 10))
 
 ;; --------------------------------------------------------------------------
 ;; UI
