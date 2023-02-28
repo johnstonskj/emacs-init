@@ -13,8 +13,7 @@
  '(counsel-tramp
    docker-tramp))
 
-(use-package tramp
-             :config (setq tramp-default-method "ssh"))
+(setq tramp-default-method "ssh")
 
 (provide 'skj-remote)
 ;;; skj-remote.el ends here

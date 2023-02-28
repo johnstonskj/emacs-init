@@ -29,7 +29,7 @@
 ;; Save place in files between Sessions
 (save-place-mode 1)
 
-(when (>= (emacs-major-version) 29)
+(when (>= emacs-major-version 29)
   (setq pixel-scroll-precision-mode 1))
 
 

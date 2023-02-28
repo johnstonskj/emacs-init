@@ -17,8 +17,8 @@
    magit-diff-flycheck
    magit-lfs
    magit-filenotify
-   magit-todos
-   magithub
+   magit-org-todos
+   magit-todos  
 
    code-review
    diff-hl))
@@ -34,10 +34,23 @@
 
 (require 'magit)
 
-(magithub-feature-autoinject t)
-
 (setq magit-completing-read-function 'ivy-completing-read)
 
+(require 'magit-org-todos)
+
+;; Add contents of TODO.org file from project root into Magit buffers
+(magit-org-todos-autoinsert)
+
+(require 'magit-todos)
+
+;; --------------------------------------------------------------------------
+;; Insert Issues as 'Fixes #' in commits
+
+(skj-package-install 'git-commit-insert-issue)
+
+(require 'git-commit-insert-issue)
+
+(add-hook 'git-commit-mode-hook 'git-commit-insert-issue-mode)
 
 ;; --------------------------------------------------------------------------
 ;; Add Diff highlighting
@@ -51,4 +64,4 @@
 
 
 (provide 'skj-git)
-;;; skj-prog-git.el ends here
+;;; skj-git.el ends here

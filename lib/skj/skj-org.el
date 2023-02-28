@@ -7,11 +7,7 @@
 
 (init-message "Setting up org mode" 'skj-org)
 
-(require 'xdg)
-(require 'skj-prog-ui)
-
-(setq org-directory
-      (concat-path skj-project-root-dir "emacs-org"))
+(require 'skj-dirs)
 
 (setq org-default-notes-file (concat-path org-directory "inbox.org"))
 
@@ -334,20 +330,20 @@ PRIORITY must be an integer 1 <= p <= 5."
 (init-message "org mode > references" 'skj-org)
 
 (skj-package-install
- '((org-ref
+ '(org-ref
     org-ref-prettify))
 
  
 ;; --------------------------------------------------------------------------
- ;; Company integration
+;; Company integration
 
- (init-message "org mode > company" 'skj-org)
+(init-message "org mode > company" 'skj-org)
 
- (skj-package-install 'company-org-block)
- 
- (require 'company-org-block)
+(skj-package-install 'company-org-block)
 
- (setq company-org-block-edit-style 'auto) ;; 'auto, 'prompt, or 'inline
+(require 'company-org-block)
+
+(setq company-org-block-edit-style 'auto) ;; 'auto, 'prompt, or 'inline
 
 (add-hook 'org-mode-hook
           (lambda ()
@@ -360,6 +356,11 @@ PRIORITY must be an integer 1 <= p <= 5."
 
 (init-message "org mode > gcal" 'skj-org)
 
+(require 'skj-secrets)
+
+(setq org-gcal-client-id (skj-secrets-value 'gcal-id))
+(setq org-gcal-client-secret (skj-secrets-value 'gcal-secret))
+
 (skj-package-install 'org-gcal)
 
 (require 'org-gcal)
@@ -370,11 +371,6 @@ PRIORITY must be an integer 1 <= p <= 5."
   :tag "Org file for Google Calendar"
   :group 'skj
   :type 'file)
-
-(require 'skj-secrets)
-
-(setq org-gcal-client-id (skj-secrets-value 'gcal-id))
-(setq org-gcal-client-secret (skj-secrets-value 'gcal-secret))
 
 (setq org-gcal-fetch-file-alist
       (list (cons skj-primary-email skj-org-gcal-file)))
@@ -408,20 +404,20 @@ PRIORITY must be an integer 1 <= p <= 5."
 ; Activate appointments so we get notifications
 (appt-activate t)
 
-; Erase all reminders and rebuilt reminders for today from the agenda
-(defun skj/org-agenda-to-appt ()
+(defun skj-org-agenda-to-appt ()
+  "Erase all reminders and rebuilt reminders for today from the agenda."
   (interactive)
   (setq appt-time-msg-list nil)
   (org-agenda-to-appt))
 
 ; Rebuild the reminders everytime the agenda is displayed
-(add-hook 'org-agenda-finalize-hook 'skj/org-agenda-to-appt 'append)
+(add-hook 'org-agenda-finalize-hook 'skj-org-agenda-to-appt 'append)
 
 ; If we leave Emacs running overnight - reset the appointments one minute after midnight
-(run-at-time "24:01" nil 'skj/org-agenda-to-appt)
+(run-at-time "24:01" nil 'skj-org-agenda-to-appt)
 
 ; Run now so appointments are set up when Emacs starts
-(skj/org-agenda-to-appt)
+(skj-org-agenda-to-appt)
 
 
 ;; --------------------------------------------------------------------------
@@ -429,9 +425,7 @@ PRIORITY must be an integer 1 <= p <= 5."
 
 (init-message "org mode > exports" 'skj-org)
 
-(skj-package-install
- '(ox-gfm
-   ox-wk))
+(skj-package-install '(ox-gfm ox-wk))
 
 
 ;; --------------------------------------------------------------------------

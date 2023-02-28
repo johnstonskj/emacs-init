@@ -8,7 +8,7 @@
 
 (require 'skj-packages)
 
-(skj-package-install focus)     ;; distraction-free editing: M-x focus-mode
+(skj-package-install 'focus)     ;; distraction-free editing: M-x focus-mode
 
 ;; --------------------------------------------------------------------------
 ;; Emoji support
@@ -106,7 +106,11 @@
 (add-hook 'text-mode-hook 'flyspell-mode)
 (add-hook 'prog-mode-hook 'flyspell-prog-mode)
 
-(skj-package-install smog)      ;; check writing style: M-x smog-check-buffer
+(skj-package-install 'smog)      ;; check writing style: M-x smog-check-buffer
+
+(require 'smog)
+
+(setq smog-command "style -L en")
 
 
 ;; --------------------------------------------------------------------------

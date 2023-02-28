@@ -4,14 +4,6 @@
 
 (init-message "Setting up common programming UI" 'skj-prog-ui)
 
-(defcustom
-  skj-project-root-dir
-  (expand-file-name "~/Projects")
-  "Root directory for development projects."
-  :tag "Projects' root directory"
-  :group 'skj
-  :type 'directory)
-
 
 ;; --------------------------------------------------------------------------
 ;; Symbols
@@ -21,7 +13,8 @@
    prettify-greek
    prettify-math))
 
-(add-hook 'prog-mode-hook 'fira-code-mode)
+(when (display-graphic-p)
+  (add-hook 'prog-mode-hook 'fira-code-mode))
 
 (add-hook 'scheme-mode-hook #'prettify-symbols-mode)
 
