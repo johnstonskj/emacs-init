@@ -1,6 +1,10 @@
-;;; skj-secrets.el -*- lexical-binding: t; -*-
+;;; skj-secrets.el --- Another secrets manager -*- lexical-binding: t; -*-
+
+;;; Code:
 
 (init-message "Setting up secrets manager" 'skj-secrets)
+
+(require 'epg-config)
 
 (setq
  epg-gpg-program "gpg2"
@@ -9,16 +13,19 @@
 (init-message (format "Using command: %s, as %s" epg-gpg-program (executable-find epg-gpg-program)) 'skj-secrets)
 
 ;; --------------------------------------------------------------------------
+
+(require 'xdg)
+
 (defcustom
   skj-secrets-file
   (concat-path (xdg-config-home) "emacs/secrets.el.gpg")
-  "This is a GPG-encrypted Emacs lisp file that will be loaded to allow the
-addition of secret values securely. If set to nil no attempt to load any 
+  "This is a GPG-encrypted Emacs Lisp file that will be loaded to allow the
+addition of secret values securely. If set to nil no attempt to load any
 external secrets will be attempted.
 
 The contents of this file can retrieve secrets from other applications or
-simply store them in source and use the function ‘skj-secrets-add’ to add 
-them to the secret store. The referenced file should have the extension 
+simply store them in source and use the function ‘skj-secrets-add’ to add
+them to the secret store. The referenced file should have the extension
 '.el.gpg' to enable auto decryption on load."
   :tag "External, secure, secrets file"
   :group 'skj
@@ -28,11 +35,11 @@ them to the secret store. The referenced file should have the extension
 (defvar
   skj-secrets--alist
   '()
-  "The internal secret store, it is implemented as an association list. 
+  "The internal secret store, it is implemented as an association list.
 
 The ‘car’ of each pair is expected to be a symbol, the ‘cdr’ is any
 value. The structure of this value can be validated by the function
-‘skj-secrets--validate’ and a value can be retrieved using the 
+‘skj-secrets--validate’ and a value can be retrieved using the
 function ‘skj-secrets-value’. It is recommended to use the function
 ‘skj-secrets-add’ to add a new key and secret.")
 
@@ -41,8 +48,8 @@ function ‘skj-secrets-value’. It is recommended to use the function
 (require 'seq)
 
 (defun skj-secrets--validate ()
-  "Returns t if the value of the variable ‘skj-secrets-alist’ is 
-correct or signal an error."
+  "Return t if the value of the variable ‘skj-secrets-alist’ is
+correct, or signal an error."
   (if (proper-list-p skj-secrets--alist)
       (seq-every-p
        (lambda (pair)
@@ -77,7 +84,7 @@ This function returns t if the value is added successful, else nil."
 
 ;; --------------------------------------------------------------------------
 (defun skj-secrets-value (key &optional default)
-  "Return the secret value associated with the symbol KEY, or the 
+  "Return the secret value associated with the symbol KEY, or the
 value DEFAULT."
   (interactive "SKey: ")
   (skj-secrets--validate)

@@ -1,6 +1,15 @@
-;;; skj-shell.el -*- lexical-binding: t; -*-
+;;; skj-shell.el --- Terminals and shells -*- lexical-binding: t; -*-
+
+;;; Code:
 
 (init-message "Setting up shell mode(s)" 'skj-shell)
+
+;; --------------------------------------------------------------------------
+;; Internal terminal
+
+(require 'skj-packages)
+
+(skj-package-install 'vterm)
 
 ;; --------------------------------------------------------------------------
 ;; Shell editing
@@ -13,3 +22,4 @@
                 (sh-set-shell "zsh"))))
 
 (provide 'skj-shell)
+;;; skj-shell.el ends here

@@ -1,19 +1,28 @@
-;;; skj-prog-dap.el -*- lexical-binding: t; -*-
+;;; skj-prog-dap.el --- Debugger Protocol -*- lexical-binding: t; -*-
+
+;;; Code:
 
 (init-message "Setting debugger (dap) mode!" 'skj-prog-dap)
+
+(require 'skj-packages)
+
+(skj-package-install '(dap-mode))
 
 (require 'dap-mode)
 
 (setq dap-auto-configure-features '(sessions locals controls tooltip))
 
-(dap-register-debug-template "Rust::GDB Run Configuration"
-                             (list :type "gdb"
-                                   :request "launch"
-                                   :name "GDB::Run"
-                           :gdbpath "rust-gdb"
-                                   :target nil
-                                   :cwd nil))
+(dap-register-debug-template
+ "Rust::GDB Run Configuration"
+ (list :type "gdb"
+       :request "launch"
+       :name "GDB::Run"
+       :gdbpath "rust-gdb"
+       :target nil
+       :cwd nil))
+
 (require 'dap-ui)
+
 (setq dap-ui-controls-mode 1)
 
 (dap-ui-mode 1)
@@ -26,9 +35,9 @@
 (tooltip-mode 1)
 
 ;; displays floating panel with debug buttons
-;; requies emacs 26+
 (dap-ui-controls-mode 1)
 
 ;;(require 'dap-cpptools)
 
 (provide 'skj-prog-dap)
+;;; skj-prog-dap.el ends here

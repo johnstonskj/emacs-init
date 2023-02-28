@@ -1,4 +1,6 @@
-;;; skj-prog-snippet.el -*- lexical-binding: t; -*-
+;;; skj-prog-snippet.el --- Snippet configuration -*- lexical-binding: t; -*-
+
+;;; Code:
 
 (init-message "Setting up snippets" 'skj-prog-snippet)
 
@@ -6,7 +8,7 @@
 
 (defcustom
   skj/snippet-repo-dir
-  (concat-path skj/project-root-dir "emacs-snippets")
+  (concat-path skj-project-root-dir "emacs-snippets")
   "Snippet repository local path."
   :tag "Snippet repository local path"
   :group 'skj
@@ -14,6 +16,15 @@
 
 ;; --------------------------------------------------------------------------
 ;; yasnippet is the core here
+
+(require 'skj-packages)
+
+(skj-package-install
+ '(yasnippet
+   yasnippet-snippets
+   gitignore-snippets
+   license-snippets
+   ivy-yasnippet))
 
 (require 'yasnippet)
 
@@ -38,8 +49,10 @@
 (require 'yasnippet)
 
 (require 'gitignore-snippets)
+
 (gitignore-snippets-init)
 
 ;; on changes: yas-reload-all
 
 (provide 'skj-prog-snippet)
+;;; skj-snippets.el ends here

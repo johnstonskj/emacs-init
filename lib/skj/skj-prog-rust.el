@@ -1,7 +1,24 @@
-;;; skj-prog-rust.el -*- lexical-binding: t; -*-
-;;;  See: <https://github.com/rust-lang/rust-mode>
+;;; skj-prog-rust.el --- Rust language support -*- lexical-binding: t; -*-
+;;;
+;;; Commentary:
+;;;   See: <https://github.com/rust-lang/rust-mode>
+
+;;; Code:
 
 (init-message "Setting up Rust mode(s)" 'skj-prog-rust)
+
+(require 'skj-packages)
+
+(skj-package-install
+ '(cargo-mode
+   rust-auto-use
+   rust-playground
+   rustic
+
+   ob-rust))
+
+;; --------------------------------------------------------------------------
+;; Generic customization
 
 (require 'rustic)
 
@@ -25,6 +42,7 @@
  lsp-rust-analyzer-server-display-inlay-hints t)
 
 ;; --------------------------------------------------------------------------
+;; Basic hooks
 
 (defun rustic-mode-auto-save-hook ()
   "Enable auto-saving in rustic-mode buffers."
@@ -34,12 +52,16 @@
 (add-hook 'rustic-mode-hook 'rustic-mode-auto-save-hook)
 
 ;; --------------------------------------------------------------------------
+;; LSP Integration
 
 (require 'lsp-lens)
 
 (add-hook 'rustic-mode-hook 'lsp-lens-mode)
 
 ;; --------------------------------------------------------------------------
+;; Flycheck!
+
+(skj-package-install 'flycheck-rust)
 
 (require 'flycheck)
 
@@ -48,4 +70,16 @@
 (unless (member 'rustic-clippy flycheck-checkers)
   (setq flycheck-checkers (cons 'rustic-clippy flycheck-checkers)))
 
+;; --------------------------------------------------------------------------
+;; PEST
+
+(skj-package-install
+ '(flycheck-pest pest-mode))
+
+;; --------------------------------------------------------------------------
+;; TOML
+
+(skj-package-install 'toml)
+
 (provide 'skj-prog-rust)
+;;; skj-prog-rust.el ends here

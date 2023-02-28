@@ -1,8 +1,14 @@
-;;; skj-writing.el -*- lexical-binding: t; -*-
+;;; skj-writing.el --- Generic writing tools -*- lexical-binding: t; -*-
+
+;;; Code:
 
 (init-message "Setting up writing modes" 'skj-writing)
 
 (setq sentence-end-double-space nil)
+
+(require 'skj-packages)
+
+(skj-package-install focus)     ;; distraction-free editing: M-x focus-mode
 
 ;; --------------------------------------------------------------------------
 ;; Emoji support
@@ -27,6 +33,8 @@
 ;; --------------------------------------------------------------------------
 ;; Markdown
 
+(skj-package-install '(markdown-mode markdown-mode+))
+
 (autoload 'markdown-mode "markdown-mode"
   "Major mode for editing Markdown files" t)
 (add-to-list 'auto-mode-alist '("\\.markdown\\'" . markdown-mode))
@@ -38,27 +46,33 @@
 
 
 ;; --------------------------------------------------------------------------
+;; Blogging
+
+(skj-package-install '(easy-jekyll jinja2-mode))
+
+;; --------------------------------------------------------------------------
 ;; LaTeX
 
+(skj-package-install
+ '(auctex
+   auctex-latexmk
+   company-auctex
+   latex-math-preview ; M-x latex-math-preview-expression
+   latex-pretty-symbols
+   latex-preview-pane ; (latex-preview-pane-enable)
+   latex-extra
+   biblio
+   bibretrieve
+   bibtex-utils))
+
 (add-hook 'LaTeX-mode-hook #'latex-extra-mode)
-(add-hook 'LaTeX-mode-hook #'flymake-mode)
 
-(defun flymake-get-tex-args (file-name)
-  (list "pdflatex"
-        (list "-file-line-error"
-              "-draftmode"
-              "-interaction=nonstopmode"
-              file-name)))
+(setq latex-run-command "xelatex")
 
-;; To disable a checker:
-;;   M-x flycheck-disable-checker
-;; To enable a checker:
-;;   C-u M-x flycheck-disable-checker
+(setq TeX-auto-save t)
+(setq TeX-parse-self t)
 
-(setq
- flycheck-tex-chktex-executable "chktex"
- flycheck-tex-lacheck-executable "lacheck")
-
+(latex-preview-pane-enable)
 
 ;; --------------------------------------------------------------------------
 ;; LaTeX math
@@ -67,12 +81,17 @@
 
 (setq company-tooltip-align-annotations t)
 
-;; global activation of the unicode symbol completion 
+;; global activation of the unicode symbol completion
 (add-to-list 'company-backends 'company-math-symbols-unicode)
 
-
 ;; --------------------------------------------------------------------------
-;; Spell check
+;; Spell & style check
+
+(skj-package-install
+ '(auto-dictionary flyspell-correct-ivy))
+
+(require 'auto-dictionary)
+(add-hook 'flyspell-mode-hook (lambda () (auto-dictionary-mode 1)))
 
 (require 'flyspell)
 
@@ -87,25 +106,18 @@
 (add-hook 'text-mode-hook 'flyspell-mode)
 (add-hook 'prog-mode-hook 'flyspell-prog-mode)
 
+(skj-package-install smog)      ;; check writing style: M-x smog-check-buffer
+
 
 ;; --------------------------------------------------------------------------
 ;; Bibliography
+
+(skj-package-install '(company-bibtexivy-bibtex ))
 
 (require 'company-bibtex)
 
 (add-to-list 'company-backends 'company-bibtex)
 
 
-;; --------------------------------------------------------------------------
-;; Hyde -- for Jekyll blogs
-
-;; (require 'hyde)
-
-;; --------------------------------------------------------------------------
-;; Olivetti
-
-;; Disable for now, has a mouse event error on load
-;; (require 'olivetti)
-;; (setq olivetti-body-width 82)
-
 (provide 'skj-writing)
+;;; skj-writing.el ends here
