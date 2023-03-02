@@ -8,39 +8,39 @@ hard to find a good implementation.
 
 * Utility Functions
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § Utility Functions")
+(message "INIT: § Utility Functions")
 #+END_SRC
 
 The functions manipulate the path for executable commands outside of Emacs.
-They affect both Emacs src_elisp[:exports code]{exec-path} variable and the
+They affect both Emacs =exec-path= variable and the
 =PATH= environment variable.
 
 #+BEGIN_SRC emacs-lisp
-  (defun exec-path-prepend (path)
-    "Add PATH to the beginning of the current `exec-path` variable,
+(defun exec-path-prepend (path)
+  "Add PATH to the beginning of the current `exec-path` variable,
   and the shell's `$PATH` variable."
-    (unless (member path exec-path)
-      (setq exec-path (cons path exec-path))
-      (setenv "PATH" (concat path ":" (getenv "PATH")))))
+  (unless (member path exec-path)
+    (setq exec-path (cons path exec-path))
+    (setenv "PATH" (concat path ":" (getenv "PATH")))))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (defun exec-path-append (path)
-    "Add PATH to the end of the current `exec-path` variable, and
+(defun exec-path-append (path)
+  "Add PATH to the end of the current `exec-path` variable, and
   the shell's `$PATH` variable."
-    (unless (member path exec-path)
-      (setq exec-path (append exec-path (list path)))
-      (setenv "PATH" (concat (getenv "PATH") ":" path))))
+  (unless (member path exec-path)
+    (setq exec-path (append exec-path (list path)))
+    (setenv "PATH" (concat (getenv "PATH") ":" path))))
 #+END_SRC
 
 The following is a simple predicate that allows for us to add others and be
-more descriptive than dealing with the src_elisp[:exports code]{system-type}
+more descriptive than dealing with the =system-type=
 (and other) variables directly.
 
 #+BEGIN_SRC emacs-lisp
-  (defun system-mac-p ()
-    "Return `t` if this is Darwin, else nil."
-    (eq system-type 'darwin))
+(defun system-mac-p ()
+  "Return `t` if this is Darwin, else nil."
+  (eq system-type 'darwin))
 #+END_SRC
 
 
@@ -319,30 +319,30 @@ Set the root for all my projects, home and work.
 
 * Generic Configuration
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § Generic Configuration")
+(message "INIT: § Generic Configuration")
 #+END_SRC
 
 ** Core UI Settings
 
 *** Input Encoding
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Input Encoding")
+(message "INIT: § ▶ ⁋ Input Encoding")
 #+END_SRC
 
 We really like UTF-8!
 
 #+BEGIN_SRC emacs-lisp
-  (set-locale-environment "en_US.UTF-8")
-  (set-language-environment "UTF-8")
-  (setq-default buffer-file-coding-system 'utf-8
-                coding-system-for-read 'utf-8
-                coding-system-for-write 'utf-8
-                file-name-coding-system 'utf-8
-                keyboard-coding-system 'utf-8
-                locale-coding-system 'utf-8
-                prefer-coding-system 'utf-8
-                require-final-newline t
-                terminal-coding-system 'utf-8)
+(set-locale-environment "en_US.UTF-8")
+(set-language-environment "UTF-8")
+(setq-default buffer-file-coding-system 'utf-8
+              coding-system-for-read 'utf-8
+              coding-system-for-write 'utf-8
+              file-name-coding-system 'utf-8
+              keyboard-coding-system 'utf-8
+              locale-coding-system 'utf-8
+              prefer-coding-system 'utf-8
+              require-final-newline t
+              terminal-coding-system 'utf-8)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -353,16 +353,16 @@ We really like UTF-8!
 
 *** Basic Editing Customization
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Generic Customization")
+(message "INIT: § ▶ ⁋ Generic Customization")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (setq sentence-end-double-space nil)
-  (setq-default fill-column 78
-                indent-tabs-mode nil
-                indicate-empty-lines t
-                tab-always-indent 'complete
-                tab-width 4)
+(setq sentence-end-double-space nil)
+(setq-default fill-column 78
+              indent-tabs-mode nil
+              indicate-empty-lines t
+              tab-always-indent 'complete
+              tab-width 4)
 #+END_SRC
 
 Don't use it, and it takes up space
@@ -386,50 +386,50 @@ Save place in files between Sessions
 
 *** Theme Support
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Theme Support")
+(message "INIT: § ▶ ⁋ Theme Support")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'color-theme-sanityinc-solarized)
+(skj/package-install 'color-theme-sanityinc-solarized)
 
-  (require 'color-theme-sanityinc-solarized)
+(require 'color-theme-sanityinc-solarized)
 
-  (setq color-theme-is-global t
-        custom-enabled-themes '(sanityinc-solarized-light)
-        custom-safe-themes
-        '("4cf3221feff536e2b3385209e9b9dc4c2e0818a69a1cdb4b522756bcdf4e00a4" default))
+(setq color-theme-is-global t
+      custom-enabled-themes '(sanityinc-solarized-light)
+      custom-safe-themes
+      '("4cf3221feff536e2b3385209e9b9dc4c2e0818a69a1cdb4b522756bcdf4e00a4" default))
 
-  (color-theme-sanityinc-solarized-light)
+(color-theme-sanityinc-solarized-light)
 #+END_SRC
 
 *** Mode Line
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Mode Line")
+(message "INIT: § ▶ ⁋ Mode Line")
 #+END_SRC
 
 I like to keep this pretty simple, certainly no powerline!.
 
 #+BEGIN_SRC emacs-lisp
-  (setq display-time-string-forms
-        '((propertize (concat " " 24-hours ":" minutes " "))))
+(setq display-time-string-forms
+      '((propertize (concat " " 24-hours ":" minutes " "))))
 
-  (display-time-mode t)
-  (line-number-mode t)
-  (column-number-mode t)
-  (display-battery-mode t)
+(display-time-mode t)
+(line-number-mode t)
+(column-number-mode t)
+(display-battery-mode t)
 #+END_SRC
 
 *** Icons
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Icons")
+(message "INIT: § ▶ ⁋ Icons")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install
-   '(all-the-icons
-     all-the-icons-completion
-     all-the-icons-dired
-     all-the-icons-ibuffer))
+(skj/package-install
+ '(all-the-icons
+   all-the-icons-completion
+   all-the-icons-dired
+   all-the-icons-ibuffer))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -461,24 +461,24 @@ I like to keep this pretty simple, certainly no powerline!.
 
 *** Mouse
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Mouse")
+(message "INIT: § ▶ ⁋ Mouse")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (require 'mouse)
-  (setq mouse-wheel-follow-mouse 't
-        mouse-wheel-scroll-amount '(1 ((shift) . 1)))
+(require 'mouse)
+(setq mouse-wheel-follow-mouse 't
+      mouse-wheel-scroll-amount '(1 ((shift) . 1)))
 
-  (xterm-mouse-mode t)
+(xterm-mouse-mode t)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (global-set-key [mouse-4] (lambda ()
-                              (interactive)
-                              (scroll-down 1)))
-  (global-set-key [mouse-5] (lambda ()
-                              (interactive)
-                              (scroll-up 1)))
+(global-set-key [mouse-4] (lambda ()
+                            (interactive)
+                            (scroll-down 1)))
+(global-set-key [mouse-5] (lambda ()
+                            (interactive)
+                            (scroll-up 1)))
 #+END_SRC
 
 *** Buffers
@@ -524,29 +524,29 @@ I like to keep this pretty simple, certainly no powerline!.
 
 *** Multiple Cursors
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Multiple Cursors")
+(message "INIT: § ▶ ⁋ Multiple Cursors")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install
-   '(multicolumn
-     multiple-cursors
-     mc-extras))
+(skj/package-install
+ '(multicolumn
+   multiple-cursors
+   mc-extras))
 
-  (require 'multiple-cursors)
+(require 'multiple-cursors)
 #+END_SRC
 
 *** Undo Tree
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Undo Tree")
+(message "INIT: § ▶ ⁋ Undo Tree")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'undo-tree)
+(skj/package-install 'undo-tree)
 
-  (require 'undo-tree)
+(require 'undo-tree)
 
-  (global-undo-tree-mode)
+(global-undo-tree-mode)
 #+END_SRC
 
 *** Key Bindings
@@ -586,26 +586,26 @@ I like to keep this pretty simple, certainly no powerline!.
 
 *** Company
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Company")
+(message "INIT: § ▶ ⁋ Company")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install
-   '(company
-     company-emoji
-     company-math
-     company-prescient
-     company-quickhelp
-     company-web))
+(skj/package-install
+ '(company
+   company-emoji
+   company-math
+   company-prescient
+   company-quickhelp
+   company-web))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (require 'company)
+(require 'company)
 
-  (setq company-files-exclusions '(".DS_Store")
-        company-tooltip-align-annotations t)
+(setq company-files-exclusions '(".DS_Store")
+      company-tooltip-align-annotations t)
 
-  (add-hook 'after-init-hook 'global-company-mode)
+(add-hook 'after-init-hook 'global-company-mode)
 #+END_SRC
 
 *** Ivy
@@ -642,24 +642,24 @@ I like to keep this pretty simple, certainly no powerline!.
 
 *** Counsel
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Counsel")
+(message "INIT: § ▶ ⁋ Counsel")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install
-   '(counsel
-     counsel-fd
-     counsel-osx-app
-     counsel-tramp
-     counsel-web))
+(skj/package-install
+ '(counsel
+   counsel-fd
+   counsel-osx-app
+   counsel-tramp
+   counsel-web))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (require 'counsel)
+(require 'counsel)
 
-  (setq counsel-find-file-ignore-regexp "\\(?:\\`\\|[/\\]\\)\\(?:[#.]\\)")
+(setq counsel-find-file-ignore-regexp "\\(?:\\`\\|[/\\]\\)\\(?:[#.]\\)")
 
-  (counsel-mode 1)
+(counsel-mode 1)
 #+END_SRC
 
 *** Key Bindings
@@ -667,134 +667,135 @@ I like to keep this pretty simple, certainly no powerline!.
 Ivy-based interface to standard commands
 
 #+BEGIN_SRC emacs-lisp
-  (global-set-key (kbd "C-s") 'swiper-isearch)
-  (global-set-key (kbd "M-x") 'counsel-M-x)
-  (global-set-key (kbd "C-x C-f") 'counsel-find-file)
-  (global-set-key (kbd "M-y") 'counsel-yank-pop)
-  (global-set-key (kbd "<f1> f") 'counsel-describe-function)
-  (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
-  (global-set-key (kbd "<f1> l") 'counsel-find-library)
-  (global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
-  (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
-  (global-set-key (kbd "<f2> j") 'counsel-set-variable)
-  (global-set-key (kbd "C-x b") 'ivy-switch-buffer)
-  (global-set-key (kbd "C-c v") 'ivy-push-view)
-  (global-set-key (kbd "C-c V") 'ivy-pop-view)
+(global-set-key (kbd "C-s") 'swiper-isearch)
+(global-set-key (kbd "M-x") 'counsel-M-x)
+(global-set-key (kbd "C-x C-f") 'counsel-find-file)
+(global-set-key (kbd "M-y") 'counsel-yank-pop)
+(global-set-key (kbd "<f1> f") 'counsel-describe-function)
+(global-set-key (kbd "<f1> v") 'counsel-describe-variable)
+(global-set-key (kbd "<f1> l") 'counsel-find-library)
+(global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
+(global-set-key (kbd "<f2> u") 'counsel-unicode-char)
+(global-set-key (kbd "<f2> j") 'counsel-set-variable)
+(global-set-key (kbd "C-x b") 'ivy-switch-buffer)
+(global-set-key (kbd "C-c v") 'ivy-push-view)
+(global-set-key (kbd "C-c V") 'ivy-pop-view)
 #+END_SRC
 
 Ivy-based interface to shell and system tools
 
 #+BEGIN_SRC emacs-lisp
-  (global-set-key (kbd "C-c c") 'counsel-compile)
-  (global-set-key (kbd "C-c g") 'counsel-git)
-  (global-set-key (kbd "C-c j") 'counsel-git-grep)
-  (global-set-key (kbd "C-c L") 'counsel-git-log)
-  (global-set-key (kbd "C-c k") 'counsel-rg)
-  (global-set-key (kbd "C-c m") 'counsel-linux-app)
-  (global-set-key (kbd "C-c n") 'counsel-fzf)
-  (global-set-key (kbd "C-x l") 'counsel-locate)
-  (global-set-key (kbd "C-c J") 'counsel-file-jump)
-  (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
-  (global-set-key (kbd "C-c w") 'counsel-wmctrl)
+(global-set-key (kbd "C-c c") 'counsel-compile)
+(global-set-key (kbd "C-c g") 'counsel-git)
+(global-set-key (kbd "C-c j") 'counsel-git-grep)
+(global-set-key (kbd "C-c L") 'counsel-git-log)
+(global-set-key (kbd "C-c k") 'counsel-rg)
+(global-set-key (kbd "C-c m") 'counsel-linux-app)
+(global-set-key (kbd "C-c n") 'counsel-fzf)
+(global-set-key (kbd "C-x l") 'counsel-locate)
+(global-set-key (kbd "C-c J") 'counsel-file-jump)
+(global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
+(global-set-key (kbd "C-c w") 'counsel-wmctrl)
 #+END_SRC
 
 Ivy-resume (resumes the last Ivy-based completion) and other commands
 
 #+BEGIN_SRC emacs-lisp
-  (global-set-key (kbd "C-c C-r") 'ivy-resume)
-  (global-set-key (kbd "C-c b") 'counsel-bookmark)
-  (global-set-key (kbd "C-c d") 'counsel-descbinds)
-  (global-set-key (kbd "C-c g") 'counsel-git)
-  (global-set-key (kbd "C-c o") 'counsel-outline)
-  (global-set-key (kbd "C-c t") 'counsel-load-theme)
-  (global-set-key (kbd "C-c F") 'counsel-org-file)
+(global-set-key (kbd "C-c C-r") 'ivy-resume)
+(global-set-key (kbd "C-c b") 'counsel-bookmark)
+(global-set-key (kbd "C-c d") 'counsel-descbinds)
+(global-set-key (kbd "C-c g") 'counsel-git)
+(global-set-key (kbd "C-c o") 'counsel-outline)
+(global-set-key (kbd "C-c t") 'counsel-load-theme)
+(global-set-key (kbd "C-c F") 'counsel-org-file)
 #+END_SRC
 
 ** O/S Specific UI Settings
 
 *** macOS System Integration
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ macOS System Integration")
+(message "INIT: § ▶ ⁋ macOS System Integration")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (when (system-mac-p)
-     (skj/package-install
-      '(osx-lib
-        osx-org-clock-menubar
-        osx-plist
-        osx-trash
-        reveal-in-osx-finder)))
+(when (system-mac-p)
+  (skj/package-install
+   '(osx-lib
+     osx-org-clock-menubar
+     osx-plist
+     osx-trash
+     reveal-in-osx-finder)))
 #+END_SRC
 
 *** macOS Keyboard Settings
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ macOS Keyboard Settings")
+(message "INIT: § ▶ ⁋ macOS Keyboard Settings")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (when (system-mac-p)
-    (setq mac-command-modifier 'super
-          mac-right-command-modifier 'super
-          mac-option-modifier 'meta
-          mac-right-option-modifier 'meta
-          mac-control-modifier 'control
-          ns-command-modifier 'super
-          ns-right-command-modifier 'super
-          ns-alternate-modifier 'meta
-          ns-function-modifier 'hyper))
+(when (system-mac-p)
+  (setq mac-command-modifier 'super
+        mac-control-modifier 'control
+        mac-option-modifier 'meta
+        mac-right-command-modifier 'super
+        mac-right-option-modifier 'meta)
+  
+  (setq ns-alternate-modifier mac-option-modifier
+        ns-command-modifier mac-command-modifier
+        ns-function-modifier 'hyper
+        ns-right-command-modifier mac-right-command-modifier))
 #+END_SRC
 
 ** Initial Flycheck Settings
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'flycheck)
+(skj/package-install 'flycheck)
 
-  (require 'flycheck)
-  (add-hook 'after-init-hook #'global-flycheck-mode)
+(require 'flycheck)
+(add-hook 'after-init-hook #'global-flycheck-mode)
 #+END_SRC
 
 ** Shell & Terminal Settings
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'vterm)
+(skj/package-install 'vterm)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (add-to-list 'auto-mode-alist '("\\.zsh\\'" . sh-mode))
+(add-to-list 'auto-mode-alist '("\\.zsh\\'" . sh-mode))
 
-  (add-hook 'sh-mode-hook
-            (lambda ()
-              (if (string-match "\\.zsh$" buffer-file-name)
-                  (sh-set-shell "zsh"))))
+(add-hook 'sh-mode-hook
+          (lambda ()
+            (if (string-match "\\.zsh$" buffer-file-name)
+                (sh-set-shell "zsh"))))
 #+END_SRC
 
 ** Remote (TRAMP) Editing
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install
-   '(counsel-tramp
-     docker-tramp))
+(skj/package-install
+ '(counsel-tramp
+   docker-tramp))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (setq tramp-default-method "ssh")
+(setq tramp-default-method "ssh")
 #+END_SRC
 
 ** Version Control
 
 *** Core Git
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Core Git")
+(message "INIT: § ▶ ⁋ Core Git")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install
-   '(git-attr
-     git-blamed
-     git-link
-     git-timemachine
-     git-modes))
+(skj/package-install
+ '(git-attr
+   git-blamed
+   git-link
+   git-timemachine
+   git-modes))
 #+END_SRC
 
 *** Git and iBuffer
@@ -808,111 +809,111 @@ Ivy-resume (resumes the last Ivy-based completion) and other commands
 
 *** Git Issues
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Git Issues")
+(message "INIT: § ▶ ⁋ Git Issues")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'git-commit-insert-issue)
+(skj/package-install 'git-commit-insert-issue)
 
-  (require 'git-commit-insert-issue)
+(require 'git-commit-insert-issue)
 
-  (add-hook 'git-commit-mode-hook 'git-commit-insert-issue-mode)
+(add-hook 'git-commit-mode-hook 'git-commit-insert-issue-mode)
 #+END_SRC
 
 *** Magit
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Magit")
+(message "INIT: § ▶ ⁋ Magit")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install
-     '(magit
-       magit-diff-flycheck
-       magit-lfs
-       magit-filenotify))
+(skj/package-install
+ '(magit
+   magit-diff-flycheck
+   magit-lfs
+   magit-filenotify))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (require 'magit)
-  
-  (setq magit-completing-read-function 'ivy-completing-read)
+(require 'magit)
+
+(setq magit-completing-read-function 'ivy-completing-read)
 #+END_SRC
 
 Add contents of TODO.org file from project root into Magit buffers
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'magit-org-todos)
-  
-  (require 'magit-org-todos)
+(skj/package-install 'magit-org-todos)
 
-  (magit-org-todos-autoinsert)
+(require 'magit-org-todos)
+
+(magit-org-todos-autoinsert)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'magit-todos)
+(skj/package-install 'magit-todos)
 
-  (require 'magit-todos)
+(require 'magit-todos)
 #+END_SRC
 
 *** Diff Highlighting
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Diff Highlighting")
+(message "INIT: § ▶ ⁋ Diff Highlighting")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'diff-hl)
+(skj/package-install 'diff-hl)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (require 'diff-hl)
-  
-  (add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
-  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
-  
-  (global-diff-hl-mode)
+(require 'diff-hl)
+
+(add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
+(add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
+
+(global-diff-hl-mode)
 #+END_SRC
 
 *** Code Reviews
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Code Reviews")
+(message "INIT: § ▶ ⁋ Code Reviews")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'code-review)
+(skj/package-install 'code-review)
 #+END_SRC
 
 *** Github Integration
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Github Integration")
+(message "INIT: § ▶ ⁋ Github Integration")
 #+END_SRC
 
 M-x github-explorer "txgvnn/github-explorer"
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install
-   '(github
-     github-browse-file
-     github-explorer
-     github-pullrequest
-     github-review))
+(skj/package-install
+ '(github
+   github-browse-file
+   github-explorer
+   github-pullrequest
+   github-review))
 #+END_SRC
 
 *** Github Bug References
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Github Bug References")
+(message "INIT: § ▶ ⁋ Github Bug References")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'bug-reference-github)
+(skj/package-install 'bug-reference-github)
 
-  (require 'bug-reference-github)
+(require 'bug-reference-github)
 
-  (add-hook 'prog-mode-hook 'bug-reference-github-set-url-format)
+(add-hook 'prog-mode-hook 'bug-reference-github-set-url-format)
 #+END_SRC
 
 *** Github Bug Notifications
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Github Bug Notifications")
+(message "INIT: § ▶ ⁋ Github Bug Notifications")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -925,17 +926,31 @@ M-x github-explorer "txgvnn/github-explorer"
 ;; (add-hook 'prog-mode-hook #'github-notifier-mode)
 #+END_SRC
 
+*** iBuffer Integration
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'ibuffer-vc)
+
+(add-hook 'ibuffer-hook
+          (lambda ()
+            (ibuffer-vc-set-filter-groups-by-vc-root)
+            (unless (eq ibuffer-sorting-mode 'alphabetic)
+              (ibuffer-do-sort-by-alphabetic))))
+#+END_SRC
+
 
 * Org-Mode
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § Org-Mode")
+(message "INIT: § Org-Mode")
 #+END_SRC
 
+The almighty [[https://orgmode.org/][Emacs Org Mode]]!
+
 #+BEGIN_SRC emacs-lisp
-  (let ((org-dir (concat-path skj/project-root-dir "emacs-org")))
-    (if (boundp 'org-directory)
-        (setq org-directory org-dir)
-      (defvar org-directory org-dir)))
+(let ((org-dir (concat-path skj/project-root-dir "emacs-org")))
+  (if (boundp 'org-directory)
+      (setq org-directory org-dir)
+    (defvar org-directory org-dir)))
 #+END_SRC
 
 See http://doc.norang.ca/org-mode.html
@@ -944,32 +959,32 @@ Also https://orgmode.org/worg/org-tutorials/encrypting-files.html
 
 ** Initial Configuration
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Initial Configuration")
+(message "INIT: § ▶ ⁋ Initial Configuration")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (require 'org)
-  
-  (setq org-confirm-babel-evaluate nil
-        org-cycle-separator-lines 2
-        org-default-notes-file (concat-path org-directory "inbox.org")
-        org-edit-src-content-indentation 2
-        org-ellipsis " ▾"
-        org-enforce-todo-dependencies t
-        org-fontify-quote-and-verse-blocks t
-        org-hide-emphasis-markers t
-        org-image-actual-width '(550)
-        org-log-done 'time
-        org-log-into-drawer t
-        org-src-fontify-natively t
-        org-src-preserve-indentation t
-        org-src-tab-acts-natively t
-        org-startup-folded 'content
-        org-startup-indented t)
+(require 'org)
+
+(setq org-confirm-babel-evaluate nil
+      org-cycle-separator-lines 2
+      org-default-notes-file (concat-path org-directory "inbox.org")
+      org-edit-src-content-indentation 2
+      org-ellipsis " ▾"
+      org-enforce-todo-dependencies t
+      org-fontify-quote-and-verse-blocks t
+      org-hide-emphasis-markers t
+      org-image-actual-width '(550)
+      org-log-done 'time
+      org-log-into-drawer t
+      org-src-fontify-natively t
+      org-src-preserve-indentation t
+      org-src-tab-acts-natively t
+      org-startup-folded 'content
+      org-startup-indented t)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (add-to-list 'auto-mode-alist '("\\.org\\'" . org-mode))
+(add-to-list 'auto-mode-alist '("\\.org\\'" . org-mode))
 #+END_SRC
 
 *** Org Query Language (ql)
@@ -1116,16 +1131,16 @@ Better Task Dependencies
 
 ** Core UI Additions
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Core UI Additions")
+(message "INIT: § ▶ ⁋ Core UI Additions")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install
-   '(org-alert
-     org-beautify-theme
-     org-modern
-     org-sidebar
-     org-superstar))
+(skj/package-install
+ '(org-alert
+   org-beautify-theme
+   org-modern
+   org-sidebar
+   org-superstar))
 #+END_SRC
 
 *** Prettier Bullets
@@ -1140,71 +1155,71 @@ Better Task Dependencies
 
 ** Agenda
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Agenda")
+(message "INIT: § ▶ ⁋ Agenda")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install
-   '(org-agenda-property
-     org-super-agenda))
+(skj/package-install
+ '(org-agenda-property
+   org-super-agenda))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (require 'org-agenda)
-  
-  (setq org-agenda-files
-        (list (concat org-directory "/inbox.org")
-              (concat org-directory "/notes.org")
-              (concat org-directory "/gcal.org")
-              (concat org-directory "/birthdays.org")
-              (concat org-directory "/holidays.org"))
-        org-agenda-hide-tags-regexp "."
-        org-agenda-log-mode-items '(closed clock state))
+(require 'org-agenda)
+
+(setq org-agenda-files
+      (list (concat org-directory "/inbox.org")
+            (concat org-directory "/notes.org")
+            (concat org-directory "/gcal.org")
+            (concat org-directory "/birthdays.org")
+            (concat org-directory "/holidays.org"))
+      org-agenda-hide-tags-regexp "."
+      org-agenda-log-mode-items '(closed clock state))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (defun skj/org-skip-subtree-if-priority (priority)
-    "Skip an agenda subtree if it has a priority of PRIORITY.
+(defun skj/org-skip-subtree-if-priority (priority)
+  "Skip an agenda subtree if it has a priority of PRIORITY.
   
   PRIORITY must be an integer 1 <= p <= 5."
-    (let ((subtree-end (save-excursion (org-end-of-subtree t)))
-          (pri-current (org-get-priority (thing-at-point 'line t))))
-      (if (= priority pri-current)
-          subtree-end
-        nil)))
-  
-  (defun skj/org-skip-subtree-if-habit ()
-    "Skip an agenda entry if it has a STYLE property equal to \"habit\"."
-    (let ((subtree-end (save-excursion (org-end-of-subtree t))))
-      (if (string= (org-entry-get nil "STYLE") "habit")
-          subtree-end
-        nil)))
+  (let ((subtree-end (save-excursion (org-end-of-subtree t)))
+        (pri-current (org-get-priority (thing-at-point 'line t))))
+    (if (= priority pri-current)
+        subtree-end
+      nil)))
+
+(defun skj/org-skip-subtree-if-habit ()
+  "Skip an agenda entry if it has a STYLE property equal to \"habit\"."
+  (let ((subtree-end (save-excursion (org-end-of-subtree t))))
+    (if (string= (org-entry-get nil "STYLE") "habit")
+        subtree-end
+      nil)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (setq org-agenda-custom-commands
-        '(("m"
-           "ALL Meetings"
-           ((tags "CATEGORY=\"Meetings\""
-                  ((org-agenda-overriding-header "Meetings:")
-                   (org-tags-match-list-sublevels t)))))
-          ("d"
-           "Daily agenda review"
-           ((tags "PRIORITY=1"
-                  ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
-                   (org-agenda-overriding-header "High-priority unfinished tasks:")))
-            (agenda "")
-            (alltodo ""
-                     ((org-agenda-skip-function
-                       '(or (skj/org-skip-subtree-if-priority 1)
-                            (org-agenda-skip-if nil '(scheduled deadline)))))))
-           nil
-           ("~/daily-agenda.html"))))
+(setq org-agenda-custom-commands
+      '(("m"
+         "ALL Meetings"
+         ((tags "CATEGORY=\"Meetings\""
+                ((org-agenda-overriding-header "Meetings:")
+                 (org-tags-match-list-sublevels t)))))
+        ("d"
+         "Daily agenda review"
+         ((tags "PRIORITY=1"
+                ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                 (org-agenda-overriding-header "High-priority unfinished tasks:")))
+          (agenda "")
+          (alltodo ""
+                   ((org-agenda-skip-function
+                     '(or (skj/org-skip-subtree-if-priority 1)
+                          (org-agenda-skip-if nil '(scheduled deadline)))))))
+         nil
+         ("~/daily-agenda.html"))))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (setq org-columns-default-format-for-agenda
-        "%35ITEM(Task) %10TODO(State) %3PRIORITY(P) %30ALLTAGS(All Tags) %23SCHEDULED(Scheduled to Start) %22DEADLINE(Deadline) %6EFFORT(Effort){:}")
+(setq org-columns-default-format-for-agenda
+      "%35ITEM(Task) %10TODO(State) %3PRIORITY(P) %30ALLTAGS(All Tags) %23SCHEDULED(Scheduled to Start) %22DEADLINE(Deadline) %6EFFORT(Effort){:}")
 #+END_SRC
 
 *** Clock Tracking
@@ -1353,73 +1368,73 @@ If we leave Emacs running overnight - reset the appointments one minute after mi
 
 ** Babel
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Babel")
+(message "INIT: § ▶ ⁋ Babel")
 #+END_SRC
 
-Always redisplay images after C-c C-c (org-ctrl-c-ctrl-c)
+Always redisplay images after =C-c C-c=
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'ob-latex-as-png)
+(skj/package-install 'ob-latex-as-png)
 
-  (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
-  (skj/package-install 'graphviz-dot-mode)
-
-  (require 'graphviz-dot-mode)
-
-  (unless (version<= emacs-version "26")
-    (setq graphviz-dot-indent-width tab-width))
-
-  (add-hook 'org-babel-after-execute-hook 'org-display-inline-images)
-
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((dot . t))) ; this line activates dot
+(add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'plantuml-mode)
+(skj/package-install 'graphviz-dot-mode)
 
-  (setq org-plantuml-jar-path
-        (expand-file-name "/usr/local/Cellar/plantuml/1.2022.6/libexec/plantuml.jar"))
+(require 'graphviz-dot-mode)
 
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((plantuml . t))) ; this line activates plantuml
+(unless (version<= emacs-version "26")
+  (setq graphviz-dot-indent-width tab-width))
 
-  (skj/package-install 'flycheck-plantuml)
+(add-hook 'org-babel-after-execute-hook 'org-display-inline-images)
 
-  (require 'flycheck-plantuml)
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((dot . t))) ; this line activates dot
+#+END_SRC
 
-  (flycheck-plantuml-setup)
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'plantuml-mode)
+
+(setq org-plantuml-jar-path
+      (expand-file-name "/usr/local/Cellar/plantuml/1.2022.6/libexec/plantuml.jar"))
+
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((plantuml . t))) ; this line activates plantuml
+
+(skj/package-install 'flycheck-plantuml)
+
+(require 'flycheck-plantuml)
+
+(flycheck-plantuml-setup)
 #+END_SRC
 
 ** Other Stuff
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Other Stuff")
+(message "INIT: § ▶ ⁋ Other Stuff")
 #+END_SRC
 
 *** References
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install
-   '(org-ref
-     org-ref-prettify))
+(skj/package-install
+ '(org-ref
+   org-ref-prettify))
 #+END_SRC
 
 *** Exporting
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install '(ox-md ox-gfm ox-wk))
+(skj/package-install '(ox-md ox-gfm ox-wk))
 #+END_SRC
 
 *** Refile
 
 #+BEGIN_SRC emacs-lisp
-  (setq org-refile-targets (quote ((nil :maxlevel . 9)
-                                   (org-agenda-files :maxlevel . 9))))
+(setq org-refile-targets (quote ((nil :maxlevel . 9)
+                                 (org-agenda-files :maxlevel . 9))))
 #+END_SRC
 
 *** Completion Integration
@@ -1443,21 +1458,21 @@ Always redisplay images after C-c C-c (org-ctrl-c-ctrl-c)
 
 ** Key Bindings
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Key Bindings")
+(message "INIT: § ▶ ⁋ Key Bindings")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (global-set-key (kbd "C-c l") #'org-store-link)
-  (global-set-key (kbd "C-c a") #'org-agenda)
-  (global-set-key (kbd "C-c c") #'org-capture)
+(global-set-key (kbd "C-c l") #'org-store-link)
+(global-set-key (kbd "C-c a") #'org-agenda)
+(global-set-key (kbd "C-c c") #'org-capture)
 
-  (global-set-key (kbd "<f5>") 'org-agenda)
-  (global-set-key (kbd "C-<f5>") 'org-store-agenda-views)
+(global-set-key (kbd "<f5>") 'org-agenda)
+(global-set-key (kbd "C-<f5>") 'org-store-agenda-views)
 
-  (global-set-key (kbd "<f6> i") 'org-clock-in)
-  (global-set-key (kbd "<f6> o") 'org-clock-out)
-  (global-set-key (kbd "<f6> g") 'org-clock-goto)
-  (global-set-key (kbd "<f6> <f6>") 'org-clock-menu)
+(global-set-key (kbd "<f6> i") 'org-clock-in)
+(global-set-key (kbd "<f6> o") 'org-clock-out)
+(global-set-key (kbd "<f6> g") 'org-clock-goto)
+(global-set-key (kbd "<f6> <f6>") 'org-clock-menu)
 
 (global-set-key (kbd "C-c p") 'org-pomodoro)
 #+END_SRC
@@ -1465,19 +1480,19 @@ Always redisplay images after C-c C-c (org-ctrl-c-ctrl-c)
 
 * Other Writing Modes
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § Other Writing Modes")
+(message "INIT: § Other Writing Modes")
 #+END_SRC
 
 ** Focus Mode
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Focus Mode")
+(message "INIT: § ▶ ⁋ Focus Mode")
 #+END_SRC
 
 For distraction-free editing, use the command /=M-x focus-mode=/ which will dim
 all but the block of text/code you are currently within.
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'focus)
+(skj/package-install 'focus)
 #+END_SRC
 
 ** Emoji Support
@@ -1487,232 +1502,243 @@ all but the block of text/code you are currently within.
 
 #+BEGIN_SRC emacs-lisp
 (when (display-graphic-p)
-   (add-to-list 'company-backends 'company-emoji)
- 
-   (defun --set-emoji-font (frame)
-     "Adjust the font settings of FRAME so Emacs can display emoji properly."
-     (if (system-mac-p)
-         ;; For NS/Cocoa
-         (set-fontset-font t 'symbol (font-spec :family "Apple Color Emoji") frame 'prepend)
-       ;; For Linux
-       (set-fontset-font t 'symbol (font-spec :family "Symbola") frame 'prepend)))
- 
-   ;; For when Emacs is started in GUI mode:
-   (--set-emoji-font nil)
-   ;; Hook for when a frame is created with emacsclient
-   ;; see https://www.gnu.org/software/emacs/manual/html_node/elisp/Creating-Frames.html
-   (add-hook 'after-make-frame-functions '--set-emoji-font))
+  (add-to-list 'company-backends 'company-emoji)
+  
+  (defun --set-emoji-font (frame)
+    "Adjust the font settings of FRAME so Emacs can display emoji properly."
+    (if (system-mac-p)
+        ;; For NS/Cocoa
+        (set-fontset-font t 'symbol (font-spec :family "Apple Color Emoji") frame 'prepend)
+      ;; For Linux
+      (set-fontset-font t 'symbol (font-spec :family "Symbola") frame 'prepend)))
+  
+  ;; For when Emacs is started in GUI mode:
+  (--set-emoji-font nil)
+  ;; Hook for when a frame is created with emacsclient
+  ;; see https://www.gnu.org/software/emacs/manual/html_node/elisp/Creating-Frames.html
+  (add-hook 'after-make-frame-functions '--set-emoji-font))
 #+END_SRC
 
 ** Markdown
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Markdown")
+(message "INIT: § ▶ ⁋ Markdown")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install '(markdown-mode markdown-mode+))
- 
-   (autoload 'markdown-mode "markdown-mode"
-     "Major mode for editing Markdown files" t)
-   (add-to-list 'auto-mode-alist '("\\.markdown\\'" . markdown-mode))
-   (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
- 
-   (autoload 'gfm-mode "markdown-mode"
-     "Major mode for editing GitHub Flavored Markdown files" t)
-   (add-to-list 'auto-mode-alist '("README\\.md\\'" . gfm-mode))
+(skj/package-install '(markdown-mode markdown-mode+))
+
+(autoload 'markdown-mode "markdown-mode"
+  "Major mode for editing Markdown files" t)
+(add-to-list 'auto-mode-alist '("\\.markdown\\'" . markdown-mode))
+(add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
+
+(autoload 'gfm-mode "markdown-mode"
+  "Major mode for editing GitHub Flavored Markdown files" t)
+(add-to-list 'auto-mode-alist '("README\\.md\\'" . gfm-mode))
 #+END_SRC
 
 ** Blogging
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Blogging")
+(message "INIT: § ▶ ⁋ Blogging")
+#+END_SRC
+
+Emacs major mode for managing [[https://jekyllrb.com/][jekyll]] blogs ([[https://github.com/masasam/emacs-easy-jekyll][repo]]).
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'easy-jekyll)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'easy-jekyll)
-#+END_SRC
+;; thanks to https://cute-jumper.github.io/emacs/2013/10/06/orgmode-to-github-pages-with-jekyll
+(defun org-jekyll-post-link-follow (path)
+  (org-open-file-with-emacs path))
 
-#+BEGIN_SRC emacs-lisp
-  ; thanks to https://cute-jumper.github.io/emacs/2013/10/06/orgmode-to-github-pages-with-jekyll
-  (defun org-jekyll-post-link-follow (path)
-    (org-open-file-with-emacs path))
-  
-  (defun org-jekyll-post-link-export (path desc format)
-    (cond
-     ((eq format 'html)
-      (format "<a href=\"{%% post_url %s %%}\">%s</a>" (file-name-sans-extension path) desc))))
-  
-  (org-add-link-type "jekyll-post" 'org-jekyll-post-link-follow 'org-jekyll-post-link-export)
+(defun org-jekyll-post-link-export (path desc format)
+  (cond
+   ((eq format 'html)
+    (format "<a href=\"{%% post_url %s %%}\">%s</a>" (file-name-sans-extension path) desc))))
+
+(org-add-link-type "jekyll-post" 'org-jekyll-post-link-follow 'org-jekyll-post-link-export)
 #+END_SRC
 
 ** LaTeX
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ LaTeX")
+(message "INIT: § ▶ ⁋ LaTeX")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install
-    '(auctex
-      auctex-latexmk
-      company-auctex
-      
-      latex-pretty-symbols
-      latex-extra
-      
-      biblio
-      bibretrieve
-      bibtex-utils))
- 
-   (add-hook 'LaTeX-mode-hook #'latex-extra-mode)
- 
-   (setq latex-run-command "xelatex"
-         TeX-auto-save t
-         TeX-parse-self t)
+(skj/package-install
+ '(auctex
+   auctex-latexmk
+   
+   latex-pretty-symbols
+   latex-extra
+   
+   biblio
+   bibretrieve
+   bibtex-utils))
+
+(add-hook 'LaTeX-mode-hook #'latex-extra-mode)
+
+(setq latex-run-command "xelatex"
+      TeX-auto-save t
+      TeX-parse-self t)
+#+END_SRC
+
+Backends for =company-mode= providing auto-completion for [[https://www.gnu.org/software/auctex/][AUCTeX]].
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'company-auctex)
+
+(require ''company-auctex)
+
+('company-auctex-init)
 #+END_SRC
 
 Use /=M-x latex-math-preview-expression=/
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install
-    '(latex-math-preview ;
-      latex-preview-pane))
- 
-   (latex-preview-pane-enable)
+(skj/package-install
+ '(latex-math-preview ;
+   latex-preview-pane))
+
+(latex-preview-pane-enable)
 #+END_SRC
 
 ** Spell and Style Checking
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Spell and Style Checking")
+(message "INIT: § ▶ ⁋ Spell and Style Checking")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'auto-dictionary)
+(skj/package-install 'auto-dictionary)
 
-  (require 'auto-dictionary)
+(require 'auto-dictionary)
 
-  (add-hook 'flyspell-mode-hook (lambda () (auto-dictionary-mode 1)))
+(add-hook 'flyspell-mode-hook (lambda () (auto-dictionary-mode 1)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'flyspell-correct-ivy)
+(skj/package-install 'flyspell-correct-ivy)
 
-  (require 'flyspell)
+(require 'flyspell)
 
-  (setq flyspell-issue-message-flag nil
-	ispell-program-name "aspell")
+(setq flyspell-issue-message-flag nil
+	  ispell-program-name "aspell")
 
-  (let* ((env-language (getenv "LANG"))
-	 (dictionary (first (split-string env-language "\\."))))
-    (setq ispell-extra-args (list (concat "--lang=" dictionary))))
+(let* ((env-language (getenv "LANG"))
+	   (dictionary (first (split-string env-language "\\."))))
+  (setq ispell-extra-args (list (concat "--lang=" dictionary))))
 
-  (add-hook 'text-mode-hook 'flyspell-mode)
-  (add-hook 'prog-mode-hook 'flyspell-prog-mode)
+(add-hook 'text-mode-hook 'flyspell-mode)
+(add-hook 'prog-mode-hook 'flyspell-prog-mode)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'smog)      ;; check writing style: M-x smog-check-buffer
+(skj/package-install 'smog)      ;; check writing style: M-x smog-check-buffer
 
-  (require 'smog)
+(require 'smog)
 
-  (setq smog-command "style -L en")
+(setq smog-command "style -L en")
 #+END_SRC
 
 ** LaTeX Math Completion
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ LaTeX Math Completion")
+(message "INIT: § ▶ ⁋ LaTeX Math Completion")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'company-math)
+(skj/package-install 'company-math)
 
-  (require 'company-math)
+(require 'company-math)
 
-  (setq company-tooltip-align-annotations t)
+(setq company-tooltip-align-annotations t)
 
-  ;; global activation of the unicode symbol completion
-  (add-to-list 'company-backends 'company-math-symbols-unicode)
+;; global activation of the unicode symbol completion
+(add-to-list 'company-backends 'company-math-symbols-unicode)
 #+END_SRC
 
 ** Bibliography Completion
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Bibliography")
+(message "INIT: § ▶ ⁋ Bibliography")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install '(company-bibtex ivy-bibtex ))
- 
-  (require 'company-bibtex)
- 
-  (add-to-list 'company-backends 'company-bibtex)
+(skj/package-install '(company-bibtex ivy-bibtex ))
+
+(require 'company-bibtex)
+
+(add-to-list 'company-backends 'company-bibtex)
 #+END_SRC
 
 
 * Snippet Support
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § Snippet Support")
+(message "INIT: § Snippet Support")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (defcustom
-    skj/snippet-repo-dir
-    (concat-path skj/project-root-dir "emacs-snippets")
-    "Snippet repository local path."
-    :tag "Snippet repository local path"
-    :group 'skj
-    :type 'directory)
+(defcustom
+  skj/snippet-repo-dir
+  (concat-path skj/project-root-dir "emacs-snippets")
+  "Snippet repository local path."
+  :tag "Snippet repository local path"
+  :group 'skj
+  :type 'directory)
 #+END_SRC
 
 ** Core Snippet Support
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Core Snippet Support")
+(message "INIT: § ▶ ⁋ Core Snippet Support")
+#+END_SRC
+
+First of all, the primary snippet tool is =yasnippet=.
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'yasnippet)
 #+END_SRC
 
 on changes: yas-reload-all
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'yasnippet)
-#+END_SRC
+(require 'yasnippet)
 
-TODO: move snippet dir here
+(dolist (path (list
+               (concat-path user-emacs-directory "snippets")
+               (concat-path org-directory "snippets")
+               skj/snippet-repo-dir))
+  (unless (member path yas-snippet-dirs)
+    (setq yas-snippet-dirs
+          (cons path yas-snippet-dirs))))
 
-#+BEGIN_SRC emacs-lisp
-  (require 'yasnippet)
+(yas-global-mode 1)
 
-  (dolist (path (list
-                 (concat-path user-emacs-directory "snippets")
-                 (concat-path org-directory "snippets")
-                 skj/snippet-repo-dir))
-    (unless (member path yas-snippet-dirs)
-      (setq yas-snippet-dirs
-            (cons path yas-snippet-dirs))))
-
-  (yas-global-mode 1)
-
-  (add-hook 'prog-mode-hook #'yas-minor-mode)
+(add-hook 'prog-mode-hook #'yas-minor-mode)
 #+END_SRC
 
 ** Snippet Collections
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Snippet Collections")
+(message "INIT: § ▶ ⁋ Snippet Collections")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install
-   '(yasnippet-snippets
-     gitignore-snippets
-     license-snippets))
+(skj/package-install
+ '(yasnippet-snippets
+   gitignore-snippets
+   license-snippets))
 
-  (require 'gitignore-snippets)
+(require 'gitignore-snippets)
 
-  (gitignore-snippets-init)
+(gitignore-snippets-init)
 #+END_SRC
 
 ** Snippet Completion
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Snippet Completion")
+(message "INIT: § ▶ ⁋ Snippet Completion")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'ivy-yasnippet)
+(skj/package-install 'ivy-yasnippet)
 #+END_SRC
 
 
@@ -1824,11 +1850,11 @@ TODO: move snippet dir here
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install subword)
+  (skj/package-install 'subword)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install eldoc)
+  (skj/package-install 'eldoc)
 
   (add-hook 'prog-mode-hook 'turn-on-eldoc-mode)
 #+END_SRC
@@ -2224,7 +2250,7 @@ projects and what tools you use as an engineer. Set the API key in =~/.wakatime.
 
 * Work Configuration
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § Work Configuration")
+(message "INIT: § Work Configuration")
 #+END_SRC
 
 Only basic information should exist in here, put the rest in external
@@ -2236,80 +2262,80 @@ resources referenced in [[*Work Packages]].
 
 ** Customization
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Customization")
+(message "INIT: § ▶ ⁋ Customization")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (defcustom
-    skj/work-email
-    "simonjo@amazon.com"
-    "Work email address."
-    :tag "Primary email address"
-    :group 'skj
-    :type 'string)
+(defcustom
+  skj/work-email
+  "simonjo@amazon.com"
+  "Work email address."
+  :tag "Primary email address"
+  :group 'skj
+  :type 'string)
 
-  (defcustom
-    skj/work-project-root-dir
-    (expand-file-name (concat-path skj/project-root-dir "Amazon"))
-    "Root directory for work development projects."
-    :tag "Work projects' root directory"
-    :group 'skj
-    :type 'directory)
+(defcustom
+  skj/work-project-root-dir
+  (expand-file-name (concat-path skj/project-root-dir "Amazon"))
+  "Root directory for work development projects."
+  :tag "Work projects' root directory"
+  :group 'skj
+  :type 'directory)
 #+END_SRC
 
 ** Work Packages
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Work Packages")
+(message "INIT: § ▶ ⁋ Work Packages")
 #+END_SRC
 
 The =work= directory should be a symlink to a Git repository containing any
 work-specific packages.
 
 #+BEGIN_SRC emacs-lisp
- (add-to-list 'load-path (concat-path user-emacs-directory "lib/work"))
+(add-to-list 'load-path (concat-path user-emacs-directory "lib/work"))
 #+END_SRC
 
 ** Org Mode
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Org Mode")
+(message "INIT: § ▶ ⁋ Org Mode")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (setq work-org-directory
-        (concat-path skj/work-project-root-dir "/SimonjoDocuments/emacs-org"))
+(setq work-org-directory
+      (concat-path skj/work-project-root-dir "/SimonjoDocuments/emacs-org"))
 
-  (setq org-agenda-files
-        (append org-agenda-files
-                (list (concat work-org-directory "/notes.org")
-                      (concat work-org-directory "/notes.org"))))
+(setq org-agenda-files
+      (append org-agenda-files
+              (list (concat work-org-directory "/notes.org")
+                    (concat work-org-directory "/people.org"))))
 #+END_SRC
 
 
 * Finishing Up
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § Finishing Up")
+(message "INIT: § Finishing Up")
 #+END_SRC
 
 These things need to be last!
 
 ** Run Emacs as a Server
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Run Emacs as a Server")
+(message "INIT: § ▶ ⁋ Run Emacs as a Server")
 #+END_SRC
 
 Pretty self-explanatory, if we aren't already running as a client, start the
 server process.
 
 #+BEGIN_SRC emacs-lisp
-  (require 'server)
+(require 'server)
 
-  (unless (and (fboundp 'server-running) (server-running-p))
-    (message "INIT: § ▶ † Starting Emacs server")
-    (server-start))
+(unless (and (fboundp 'server-running) (server-running-p))
+  (message "INIT: § ▶ † Starting Emacs server")
+  (server-start))
 #+END_SRC
 
 ** Set the GC Threshold
 
 #+BEGIN_SRC emacs-lisp
-  (setq gc-cons-threshold (* 2 1000 1000))
+(setq gc-cons-threshold (* 2 1000 1000))
 #+END_SRC
