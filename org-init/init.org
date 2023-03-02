@@ -953,9 +953,11 @@ The almighty [[https://orgmode.org/][Emacs Org Mode]]!
     (defvar org-directory org-dir)))
 #+END_SRC
 
-See http://doc.norang.ca/org-mode.html
-Look at https://github.com/zzamboni/dot-emacs/blob/master/init.org
-Also https://orgmode.org/worg/org-tutorials/encrypting-files.html
+The following are worth reading for more details and future ideas:
+
+- http://doc.norang.ca/org-mode.html
+- https://github.com/zzamboni/dot-emacs/blob/master/init.org
+- https://orgmode.org/worg/org-tutorials/encrypting-files.html
 
 ** Initial Configuration
 #+BEGIN_SRC emacs-lisp :exports none
