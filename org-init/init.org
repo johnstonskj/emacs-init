@@ -566,7 +566,6 @@ I like to keep this pretty simple, certainly no powerline!.
 #+END_SRC
 
 # Check this out sometime:
-#
 # ;; Fix M-<arrow key> in terminals
 # (if (eq window-system nil)
 #     (progn (define-key input-decode-map "\e[1;9A" [(meta up)])
@@ -1220,23 +1219,29 @@ Better Task Dependencies
 
 #+BEGIN_SRC emacs-lisp
 (setq org-columns-default-format-for-agenda
-      "%35ITEM(Task) %10TODO(State) %3PRIORITY(P) %30ALLTAGS(All Tags) %23SCHEDULED(Scheduled to Start) %22DEADLINE(Deadline) %6EFFORT(Effort){:}")
+      (string-join '("%35ITEM(Task)"
+                     "%10TODO(State)"
+                     "%3PRIORITY(P)"
+                     "%30ALLTAGS(All Tags)"
+                     "%23SCHEDULED(Scheduled to Start)"
+                     "%22DEADLINE(Deadline)"
+                     "%6EFFORT(Effort){:}")
+                   " "))
 #+END_SRC
 
 *** Clock Tracking
 
 #+BEGIN_SRC emacs-lisp
-  (setq org-clock-persist 'history
-        org-remember-clock-out-on-exit t)
-
+(setq org-clock-persist 'history
+      org-remember-clock-out-on-exit t)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'org-clock-reminder)
+(skj/package-install 'org-clock-reminder)
 
-  (require 'org-clock-reminder)
+(require 'org-clock-reminder)
 
-  (org-clock-reminder-mode)
+(org-clock-reminder-mode)
 #+END_SRC
 
 By default, notifications (active, inactive) are shown every 10 minutes
@@ -1248,123 +1253,123 @@ By default, notifications (active, inactive) are shown every 10 minutes
 Active notifications are shown every 3 minute, inactive every 3
 
 #+BEGIN_SRC emacs-lisp
-  (setq org-clock-reminder-interval (cons 3 10))
+(setq org-clock-reminder-interval (cons 3 10))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'org-pomodoro)
-  (setq org-pomodoro-manual-break t)
+(skj/package-install 'org-pomodoro)
+(setq org-pomodoro-manual-break t)
 #+END_SRC
 
 *** Habit Tracking
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'org-habit-stats)
+(skj/package-install 'org-habit-stats)
 
-  (require 'org-habit)
+(require 'org-habit)
 
-  (add-to-list 'org-modules 'org-habit t)
+(add-to-list 'org-modules 'org-habit t)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (setq org-habit-following-days 7
-        org-habit-graph-column 60
-        org-habit-preceding-days 28
-        org-habit-show-all-today t
-        org-habit-show-done-always-green t
-        org-habit-show-habits-only-for-today t)
+(setq org-habit-following-days 7
+      org-habit-graph-column 60
+      org-habit-preceding-days 28
+      org-habit-show-all-today t
+      org-habit-show-done-always-green t
+      org-habit-show-habits-only-for-today t)
 #+END_SRC
 
 *** Standard Calendars
 
 #+BEGIN_SRC emacs-lisp
-  (customize-set-variable 'holiday-bahai-holidays nil)
+(customize-set-variable 'holiday-bahai-holidays nil)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'mexican-holidays)
+(skj/package-install 'mexican-holidays)
 
-  (require 'mexican-holidays)
+(require 'mexican-holidays)
 
-  (setq calendar-holidays
-        (append calendar-holidays holiday-mexican-holidays))
+(setq calendar-holidays
+      (append calendar-holidays holiday-mexican-holidays))
 #+END_SRC
 
 *** Google Calendar
 
 #+BEGIN_SRC emacs-lisp
-  (require 'skj-secrets)
+(require 'skj-secrets)
 
-  (setq org-gcal-client-id (skj/secrets-value 'gcal-id))
-  (setq org-gcal-client-secret (skj/secrets-value 'gcal-secret))
+(setq org-gcal-client-id (skj/secrets-value 'gcal-id))
+(setq org-gcal-client-secret (skj/secrets-value 'gcal-secret))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'org-gcal)
+(skj/package-install 'org-gcal)
 
-  (require 'org-gcal)
+(require 'org-gcal)
 
-  (defcustom skj/org-gcal-file
-    (concat org-directory "/gcal.org")
-    "Location of `org-mode' file to sync with Google Calendar."
-    :tag "Org file for Google Calendar"
-    :group 'skj
-    :type 'file)
+(defcustom skj/org-gcal-file
+  (concat org-directory "/gcal.org")
+  "Location of `org-mode' file to sync with Google Calendar."
+  :tag "Org file for Google Calendar"
+  :group 'skj
+  :type 'file)
 
-  (setq org-gcal-fetch-file-alist
-	(list (cons skj/primary-email skj/org-gcal-file)))
+(setq org-gcal-fetch-file-alist
+	  (list (cons skj/primary-email skj/org-gcal-file)))
 #+END_SRC
 
 TODO: Use calendar TZ
 
 #+BEGIN_SRC emacs-lisp
-  (setq org-gcal-local-timezone calendar-time-zone-name)
+(setq org-gcal-local-timezone calendar-time-zone-name)
 #+END_SRC
 
-Execute org-gcal-fetch to fetch new calendar updates
+Execute /=M-x org-gcal-fetch=/ to fetch new calendar updates
 
-Execute org-gcal-post-at-point to turn a TODO into a calendar entry
+Execute /=M-x org-gcal-post-at-point=/ to turn a TODO into a calendar entry
 
 *** Appointment Integration
 
 #+BEGIN_SRC emacs-lisp
-  (require 'appt)
+(require 'appt)
 
-  (setq appt-audible t
-	    appt-display-duration 30
-	    appt-display-format 'window
-	    appt-display-mode-line t)
+(setq appt-audible t
+	  appt-display-duration 30
+	  appt-display-format 'window
+	  appt-display-mode-line t)
 #+END_SRC
 
 Activate appointments so we get notifications
 #+BEGIN_SRC emacs-lisp
-  (appt-activate t)
+(appt-activate t)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (defun skj-org-agenda-to-appt ()
-    "Erase all reminders and rebuilt reminders for today from the agenda."
-    (interactive)
-    (setq appt-time-msg-list nil)
-    (org-agenda-to-appt))
+(defun skj-org-agenda-to-appt ()
+  "Erase all reminders and rebuilt reminders for today from the agenda."
+  (interactive)
+  (setq appt-time-msg-list nil)
+  (org-agenda-to-appt))
 #+END_SRC
 
 Rebuild the reminders everytime the agenda is displayed
  
 #+BEGIN_SRC emacs-lisp
-  (add-hook 'org-agenda-finalize-hook 'skj-org-agenda-to-appt 'append)
+(add-hook 'org-agenda-finalize-hook 'skj-org-agenda-to-appt 'append)
 #+END_SRC
 
 If we leave Emacs running overnight - reset the appointments one minute after midnight
 
 #+BEGIN_SRC emacs-lisp
-  (run-at-time "24:01" nil 'skj-org-agenda-to-appt)
+(run-at-time "24:01" nil 'skj-org-agenda-to-appt)
 #+END_SRC
 
  Run now so appointments are set up when Emacs starts
  
 #+BEGIN_SRC emacs-lisp
-  (skj-org-agenda-to-appt)
+(skj-org-agenda-to-appt)
 #+END_SRC
 
 ** Babel
