@@ -7,6 +7,7 @@ is super useful. Also, I do like literate programming in general although it's
 hard to find a good implementation.
 
 * Utility Functions
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § Utility Functions")
 #+END_SRC
@@ -189,7 +190,6 @@ like a good idea. See also [[*Google Calendar]].
 (setq calendar-time-zone-name "America/Los_Angeles")
 #+END_SRC
 
-
 ** Package Management Setup
 
 Using the basic package management, =package=, as it does all I need.
@@ -252,7 +252,6 @@ package is not already installed.
 #+END_SRC
 
 ** More Paths
-
 *** Command Execution Paths
 
 [[https://brew.sh/][Homebrew]] is great, but just in case it isn't on the path, this helps a lot.
@@ -293,13 +292,14 @@ Set the root for all my projects, home and work.
 
 
 * Generic Configuration
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § Generic Configuration")
 #+END_SRC
 
-** Core UI Settings
-
+** Core UI Settin
 *** Input Encoding
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Input Encoding")
 #+END_SRC
@@ -327,6 +327,7 @@ We really like UTF-8!
 #+END_SRC
 
 *** Basic Editing Customization
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Basic Editing Customization")
 #+END_SRC
@@ -387,6 +388,7 @@ correctly so I can't use Fira Code Light.
 #+END_SRC
 
 *** Theme Support
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Theme Support")
 #+END_SRC
@@ -405,6 +407,7 @@ correctly so I can't use Fira Code Light.
 #+END_SRC
 
 *** Mode Line
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Mode Line")
 #+END_SRC
@@ -422,9 +425,12 @@ I like to keep this pretty simple, certainly no powerline!.
 #+END_SRC
 
 *** Notifications
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Notifications")
 #+END_SRC
+
+Generally use the `alert' package for notifications.
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/package-install 'alert)
@@ -436,8 +442,8 @@ I like to keep this pretty simple, certainly no powerline!.
 
 Maybe add [[https://github.com/djcb/sauron][Sauron]] some day.
 
-
 *** Icons
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Icons")
 #+END_SRC
@@ -478,6 +484,7 @@ Maybe add [[https://github.com/djcb/sauron][Sauron]] some day.
 #+END_SRC
 
 *** Mouse
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Mouse")
 #+END_SRC
@@ -500,6 +507,7 @@ Maybe add [[https://github.com/djcb/sauron][Sauron]] some day.
 #+END_SRC
 
 *** Buffers
+
 #+BEGIN_SRC emacs-lisp :exports none
   (message "INIT: § ▶ ⁋ Buffers")
 #+END_SRC
@@ -541,6 +549,7 @@ Maybe add [[https://github.com/djcb/sauron][Sauron]] some day.
 #+END_SRC
 
 *** Multiple Cursors
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Multiple Cursors")
 #+END_SRC
@@ -555,6 +564,7 @@ Maybe add [[https://github.com/djcb/sauron][Sauron]] some day.
 #+END_SRC
 
 *** Undo Tree
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Undo Tree")
 #+END_SRC
@@ -568,6 +578,7 @@ Maybe add [[https://github.com/djcb/sauron][Sauron]] some day.
 #+END_SRC
 
 *** Key Bindings
+
 #+BEGIN_SRC emacs-lisp :exports none
   (message "INIT: § ▶ ⁋ Key Bindings")
 #+END_SRC
@@ -600,8 +611,8 @@ Maybe add [[https://github.com/djcb/sauron][Sauron]] some day.
 #            (define-key input-decode-map "\e[1;5C" [(ctrl right)])))
 
 ** Completion UI Settings
-
 *** Company
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Company")
 #+END_SRC
@@ -624,6 +635,7 @@ Maybe add [[https://github.com/djcb/sauron][Sauron]] some day.
 #+END_SRC
 
 *** Ivy
+
 #+BEGIN_SRC emacs-lisp :exports none
   (message "INIT: § ▶ ⁋ Ivy")
 #+END_SRC
@@ -656,6 +668,7 @@ Maybe add [[https://github.com/djcb/sauron][Sauron]] some day.
 #+END_SRC
 
 *** Counsel
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Counsel")
 #+END_SRC
@@ -728,6 +741,7 @@ Ivy-resume (resumes the last Ivy-based completion) and other commands
 ** O/S Specific UI Settings
 
 *** macOS System Integration
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ macOS System Integration")
 #+END_SRC
@@ -743,6 +757,7 @@ Ivy-resume (resumes the last Ivy-based completion) and other commands
 #+END_SRC
 
 *** macOS Keyboard Settings
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ macOS Keyboard Settings")
 #+END_SRC
@@ -826,6 +841,7 @@ And of course, more icons!
 ** Version Control
 
 *** Core Git
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Core Git")
 #+END_SRC
@@ -840,6 +856,7 @@ And of course, more icons!
 #+END_SRC
 
 *** Git and iBuffer
+
 #+BEGIN_SRC emacs-lisp :exports none
   (message "INIT: § ▶ ⁋ Git and iBuffer")
 #+END_SRC
@@ -849,6 +866,7 @@ And of course, more icons!
 #+END_SRC
 
 *** Git Issues
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Git Issues")
 #+END_SRC
@@ -862,6 +880,7 @@ And of course, more icons!
 #+END_SRC
 
 *** Magit
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Magit")
 #+END_SRC
@@ -897,6 +916,7 @@ Add contents of TODO.org file from project root into Magit buffers
 #+END_SRC
 
 *** Diff Highlighting
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Diff Highlighting")
 #+END_SRC
@@ -915,6 +935,7 @@ Add contents of TODO.org file from project root into Magit buffers
 #+END_SRC
 
 *** Code Reviews
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Code Reviews")
 #+END_SRC
@@ -924,6 +945,7 @@ Add contents of TODO.org file from project root into Magit buffers
 #+END_SRC
 
 *** Github Integration
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Github Integration")
 #+END_SRC
@@ -940,6 +962,7 @@ M-x github-explorer "txgvnn/github-explorer"
 #+END_SRC
 
 *** Github Bug References
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Github Bug References")
 #+END_SRC
@@ -953,6 +976,7 @@ M-x github-explorer "txgvnn/github-explorer"
 #+END_SRC
 
 *** Github Notifications
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Github Notifications")
 #+END_SRC
@@ -982,7 +1006,82 @@ This gets to be a pain if it is disconnected. Consider trying =gh-notify=.
 #+END_SRC
 
 
+* Snippet Support
+
+#+BEGIN_SRC emacs-lisp :exports none
+(message "INIT: § Snippet Support")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(defcustom
+  skj/snippet-repo-dir
+  (concat-path skj/project-root-dir "emacs-snippets")
+  "Snippet repository local path."
+  :tag "Snippet repository local path"
+  :group 'skj
+  :type 'directory)
+#+END_SRC
+
+** Core Snippet Support
+
+#+BEGIN_SRC emacs-lisp :exports none
+(message "INIT: § ▶ ⁋ Core Snippet Support")
+#+END_SRC
+
+First of all, the primary snippet tool is =yasnippet=.
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'yasnippet)
+#+END_SRC
+
+on changes: yas-reload-all
+
+#+BEGIN_SRC emacs-lisp
+(require 'yasnippet)
+
+(dolist (path (list
+               (concat-path user-emacs-directory "snippets")
+               (concat-path org-directory "snippets")
+               skj/snippet-repo-dir))
+  (unless (member path yas-snippet-dirs)
+    (setq yas-snippet-dirs
+          (cons path yas-snippet-dirs))))
+
+(yas-global-mode 1)
+
+(add-hook 'prog-mode-hook #'yas-minor-mode)
+#+END_SRC
+
+** Snippet Collections
+
+#+BEGIN_SRC emacs-lisp :exports none
+(message "INIT: § ▶ ⁋ Snippet Collections")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install
+ '(yasnippet-snippets
+   gitignore-snippets
+   license-snippets))
+
+(require 'gitignore-snippets)
+
+(gitignore-snippets-init)
+#+END_SRC
+
+** Snippet Completion
+
+#+BEGIN_SRC emacs-lisp :exports none
+(message "INIT: § ▶ ⁋ Snippet Completion")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'ivy-yasnippet)
+#+END_SRC
+
+
 * Org-Mode
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § Org-Mode")
 #+END_SRC
@@ -1003,6 +1102,7 @@ The following are worth reading for more details and future ideas:
 - https://orgmode.org/worg/org-tutorials/encrypting-files.html
 
 ** Initial Configuration
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Initial Configuration")
 #+END_SRC
@@ -1175,6 +1275,7 @@ Better Task Dependencies
 #+END_SRC
 
 ** Core UI Additions
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Core UI Additions")
 #+END_SRC
@@ -1194,6 +1295,7 @@ Use /=C-c C-s=/ to use a relative time for schedule.
 #+END_SRC
 
 *** Notifications
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Notifications")
 #+END_SRC
@@ -1229,6 +1331,7 @@ Use /=C-c C-s=/ to use a relative time for schedule.
 #+END_SRC
 
 ** Agenda
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Agenda")
 #+END_SRC
@@ -1448,6 +1551,7 @@ If we leave Emacs running overnight - reset the appointments one minute after mi
 #+END_SRC
 
 ** Babel
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Babel")
 #+END_SRC
@@ -1459,6 +1563,8 @@ Always redisplay images after =C-c C-c=
 
 (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
 #+END_SRC
+
+*** GraphViz
 
 #+BEGIN_SRC emacs-lisp
 (skj/package-install 'graphviz-dot-mode)
@@ -1474,6 +1580,8 @@ Always redisplay images after =C-c C-c=
  'org-babel-load-languages
  '((dot . t))) ; this line activates dot
 #+END_SRC
+
+*** PlantUML
 
 #+BEGIN_SRC emacs-lisp
 (skj/package-install 'plantuml-mode)
@@ -1493,6 +1601,7 @@ Always redisplay images after =C-c C-c=
 #+END_SRC
 
 ** Other Stuff
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Other Stuff")
 #+END_SRC
@@ -1538,6 +1647,7 @@ Always redisplay images after =C-c C-c=
 #+END_SRC
 
 ** Key Bindings
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Key Bindings")
 #+END_SRC
@@ -1561,11 +1671,13 @@ Always redisplay images after =C-c C-c=
 
 
 * Other Writing Modes
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § Other Writing Modes")
 #+END_SRC
 
 ** Focus Mode
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Focus Mode")
 #+END_SRC
@@ -1578,6 +1690,7 @@ all but the block of text/code you are currently within.
 #+END_SRC
 
 ** Emoji Support
+
 #+BEGIN_SRC emacs-lisp :exports none
   (message "INIT: § ▶ ⁋ Emoji Support")
 #+END_SRC
@@ -1604,6 +1717,7 @@ all but the block of text/code you are currently within.
 #+END_SRC
 
 ** Markdown
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Markdown")
 #+END_SRC
@@ -1622,6 +1736,7 @@ all but the block of text/code you are currently within.
 #+END_SRC
 
 ** Blogging
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Blogging")
 #+END_SRC
@@ -1656,6 +1771,7 @@ Emacs major mode for managing [[https://jekyllrb.com/][jekyll]] blogs ([[https:/
 #+END_SRC
 
 ** LaTeX
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ LaTeX")
 #+END_SRC
@@ -1700,6 +1816,7 @@ Use /=M-x latex-math-preview-expression=/
 #+END_SRC
 
 ** Spell and Style Checking
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Spell and Style Checking")
 #+END_SRC
@@ -1737,6 +1854,7 @@ Use /=M-x latex-math-preview-expression=/
 #+END_SRC
 
 ** LaTeX Math Completion
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ LaTeX Math Completion")
 #+END_SRC
@@ -1753,6 +1871,7 @@ Use /=M-x latex-math-preview-expression=/
 #+END_SRC
 
 ** Bibliography Completion
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Bibliography")
 #+END_SRC
@@ -1766,77 +1885,8 @@ Use /=M-x latex-math-preview-expression=/
 #+END_SRC
 
 
-* Snippet Support
-#+BEGIN_SRC emacs-lisp :exports none
-(message "INIT: § Snippet Support")
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
-(defcustom
-  skj/snippet-repo-dir
-  (concat-path skj/project-root-dir "emacs-snippets")
-  "Snippet repository local path."
-  :tag "Snippet repository local path"
-  :group 'skj
-  :type 'directory)
-#+END_SRC
-
-** Core Snippet Support
-#+BEGIN_SRC emacs-lisp :exports none
-(message "INIT: § ▶ ⁋ Core Snippet Support")
-#+END_SRC
-
-First of all, the primary snippet tool is =yasnippet=.
-
-#+BEGIN_SRC emacs-lisp
-(skj/package-install 'yasnippet)
-#+END_SRC
-
-on changes: yas-reload-all
-
-#+BEGIN_SRC emacs-lisp
-(require 'yasnippet)
-
-(dolist (path (list
-               (concat-path user-emacs-directory "snippets")
-               (concat-path org-directory "snippets")
-               skj/snippet-repo-dir))
-  (unless (member path yas-snippet-dirs)
-    (setq yas-snippet-dirs
-          (cons path yas-snippet-dirs))))
-
-(yas-global-mode 1)
-
-(add-hook 'prog-mode-hook #'yas-minor-mode)
-#+END_SRC
-
-** Snippet Collections
-#+BEGIN_SRC emacs-lisp :exports none
-(message "INIT: § ▶ ⁋ Snippet Collections")
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
-(skj/package-install
- '(yasnippet-snippets
-   gitignore-snippets
-   license-snippets))
-
-(require 'gitignore-snippets)
-
-(gitignore-snippets-init)
-#+END_SRC
-
-** Snippet Completion
-#+BEGIN_SRC emacs-lisp :exports none
-(message "INIT: § ▶ ⁋ Snippet Completion")
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
-(skj/package-install 'ivy-yasnippet)
-#+END_SRC
-
-
 * Developer Configuration
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § Developer Configuration")
 #+END_SRC
@@ -1844,6 +1894,7 @@ on changes: yas-reload-all
 ** UI Settings
 
 *** Prettify Things
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Prettify Things")
 #+END_SRC
@@ -1878,6 +1929,7 @@ on changes: yas-reload-all
 #+END_SRC
 
 *** Delimiters/Parenthesis
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Delimiters/Parenthesis")
 #+END_SRC
@@ -1891,6 +1943,7 @@ on changes: yas-reload-all
 #+END_SRC
 
 *** Indentation
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Indentation")
 #+END_SRC
@@ -1918,6 +1971,7 @@ on changes: yas-reload-all
 #+END_SRC
 
 *** Completion
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Completion")
 #+END_SRC
@@ -1935,6 +1989,7 @@ on changes: yas-reload-all
 #+END_SRC
 
 *** Odds & Ends
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Odds & Ends")
 #+END_SRC
@@ -1956,6 +2011,7 @@ on changes: yas-reload-all
 ** Project Support
 
 *** Projectile
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Projectile")
 #+END_SRC
@@ -1997,6 +2053,7 @@ Recommended keymap prefix on macOS
 #+END_SRC
 
 *** iBuffer Integration
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ iBuffer Integration")
 #+END_SRC
@@ -2014,6 +2071,7 @@ Recommended keymap prefix on macOS
 #+END_SRC
 
 *** Project Explorer
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Project Explorer")
 #+END_SRC
@@ -2075,6 +2133,7 @@ Recommended keymap prefix on macOS
 #+END_SRC
 
 *** Mode Settings
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Mode Settings")
 #+END_SRC
@@ -2086,6 +2145,7 @@ Recommended keymap prefix on macOS
 #+END_SRC
 
 *** UI Settings
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ UI Settings")
 #+END_SRC
@@ -2129,6 +2189,7 @@ Recommended keymap prefix on macOS
 ** Language Environments
 
 *** Emacs Lisp
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Emacs Lisp")
 #+END_SRC
@@ -2143,6 +2204,7 @@ Recommended keymap prefix on macOS
 #+END_SRC
 
 *** Common Lisp
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Common Lisp")
 #+END_SRC
@@ -2158,6 +2220,7 @@ Recommended keymap prefix on macOS
 #+END_SRC
 
 *** Scheme
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Scheme")
 #+END_SRC
@@ -2185,6 +2248,7 @@ Recommended keymap prefix on macOS
 #+END_SRC
 
 *** Racket
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Racket")
 #+END_SRC
@@ -2197,6 +2261,7 @@ Recommended keymap prefix on macOS
 #+END_SRC
 
 *** Rust Language
+
 #+BEGIN_SRC emacs-lisp :exports none
   ((message "message" format-args)essage "INIT: § ▶ ⁋ Rust Language")
 #+END_SRC
@@ -2282,6 +2347,7 @@ Org-Babel Integration
 #+END_SRC
 
 *** PEST Mode
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ PEST Mode")
 #+END_SRC
@@ -2293,6 +2359,7 @@ Org-Babel Integration
 #+END_SRC
 
 *** SQL Stuff
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ SQL")
 #+END_SRC
@@ -2321,6 +2388,7 @@ Emacs own interface for SQL databases.
 #+END_SRC
 
 *** Web Development
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Web Development")
 #+END_SRC
@@ -2378,6 +2446,7 @@ Template page support.
 #+END_SRC
 
 *** JavaScript
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ JavaScript")
 #+END_SRC
@@ -2415,6 +2484,7 @@ Integration of [[https://beautifier.io/][beautifier.io]].
 The underlying command-line tool is  installed by typing: =npm -g install js-beautify=.
 
 *** Typescript
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Typescript")
 #+END_SRC
@@ -2438,6 +2508,7 @@ Use =typescript-mode= in Org blocks.
 #+END_SRC
 
 *** Semantic Web
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Semantic Web")
 #+END_SRC
@@ -2529,6 +2600,7 @@ Emacs screen saver, note that both of the configuration values are in seconds.
 
 
 * Work Configuration
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § Work Configuration")
 #+END_SRC
@@ -2538,9 +2610,17 @@ resources referenced in [[*Work Packages]].
 
 ** Paths
 
-;; add "~/bin" "~/.toolbox/bin"
+#+BEGIN_SRC emacs-lisp :exports none
+(message "INIT: § ▶ ⁋ Paths")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+(dolist (path '("~/bin" "~/.toolbox/bin"))
+  (exec-path-prepend path))
+#+END_SRC
 
 ** Customization
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Customization")
 #+END_SRC
@@ -2564,6 +2644,7 @@ resources referenced in [[*Work Packages]].
 #+END_SRC
 
 ** Work Packages
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Work Packages")
 #+END_SRC
@@ -2576,6 +2657,7 @@ work-specific packages.
 #+END_SRC
 
 ** Org Mode
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Org Mode")
 #+END_SRC
@@ -2592,6 +2674,7 @@ work-specific packages.
 
 
 * Finishing Up
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § Finishing Up")
 #+END_SRC
@@ -2599,6 +2682,7 @@ work-specific packages.
 These things need to be last!
 
 ** Run Emacs as a Server
+
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Run Emacs as a Server")
 #+END_SRC
