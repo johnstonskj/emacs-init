@@ -189,32 +189,6 @@ like a good idea. See also [[*Google Calendar]].
 (setq calendar-time-zone-name "America/Los_Angeles")
 #+END_SRC
 
-** Default Face
-
-This isn't so useful on macOS as it doesn't seem to decode weight and width
-correctly so I can't use Fira Code Light.
-
-#+BEGIN_SRC emacs-lisp
-(set-face-attribute
- 'default
- nil
- :inherit nil
- :extend nil
- :stipple nil
- :background "#fdf6e3"
- :foreground "#657b83"
- :inverse-video nil
- :box nil
- :strike-through nil
- :overline nil
- :underline nil
- :slant 'normal
- :weight 'light
- :height 130
- :width 'normal
- :foundry "nil"
- :family "Fira Code Light")
-#+END_SRC
 
 ** Package Management Setup
 
@@ -354,7 +328,7 @@ We really like UTF-8!
 
 *** Basic Editing Customization
 #+BEGIN_SRC emacs-lisp :exports none
-(message "INIT: § ▶ ⁋ Generic Customization")
+(message "INIT: § ▶ ⁋ Basic Editing Customization")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -383,6 +357,33 @@ Save place in files between Sessions
     (pixel-scroll-mode))
   (when (>= emacs-major-version 29)
     (setq pixel-scroll-precision-mode 1))
+#+END_SRC
+
+*** Default Face
+
+This isn't so useful on macOS as it doesn't seem to decode weight and width
+correctly so I can't use Fira Code Light.
+
+#+BEGIN_SRC emacs-lisp
+(set-face-attribute
+ 'default
+ nil
+ :inherit nil
+ :extend nil
+ :stipple nil
+ :background "#fdf6e3"
+ :foreground "#657b83"
+ :inverse-video nil
+ :box nil
+ :strike-through nil
+ :overline nil
+ :underline nil
+ :slant 'normal
+ :weight 'light
+ :height 130
+ :width 'normal
+ :foundry "nil"
+ :family "Fira Code Light")
 #+END_SRC
 
 *** Theme Support
@@ -427,9 +428,14 @@ I like to keep this pretty simple, certainly no powerline!.
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/package-install 'alert)
+
+(require 'alert)
+(setq alert-fade-time 10 ;; seconds
+      alert-default-style 'osx-notifier)
 #+END_SRC
 
 Maybe add [[https://github.com/djcb/sauron][Sauron]] some day.
+
 
 *** Icons
 #+BEGIN_SRC emacs-lisp :exports none
