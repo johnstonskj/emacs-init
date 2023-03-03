@@ -420,6 +420,17 @@ I like to keep this pretty simple, certainly no powerline!.
 (display-battery-mode t)
 #+END_SRC
 
+*** Notifications
+#+BEGIN_SRC emacs-lisp :exports none
+(message "INIT: § ▶ ⁋ Notifications")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/package-install 'alert)
+#+END_SRC
+
+Maybe add [[https://github.com/djcb/sauron][Sauron]] some day.
+
 *** Icons
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Icons")
@@ -592,11 +603,9 @@ I like to keep this pretty simple, certainly no powerline!.
 #+BEGIN_SRC emacs-lisp
 (skj/package-install
  '(company
-   company-emoji
    company-math
    company-prescient
-   company-quickhelp
-   company-web))
+   company-quickhelp))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -769,6 +778,32 @@ Ivy-resume (resumes the last Ivy-based completion) and other commands
             (if (string-match "\\.zsh$" buffer-file-name)
                 (sh-set-shell "zsh"))))
 #+END_SRC
+** Gnus
+
+Basic [[https://www.gnu.org/software/emacs/manual/html_node/gnus/][Gnus Newsreader]] configuration. Enter Gnus with /=M-x gnus=/.
+
+
+#+BEGIN_SRC emacs-lisp
+(setq gnus-select-method '(nntp "news.gnus.org"))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'nnhackernews)
+
+(add-to-list 'gnus-secondary-select-methods '(nnhackernews ""))
+#+END_SRC
+
+Enter the =nnhackernews:news= newsgroup with /=RET=/.
+
+And of course, more icons!
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'all-the-icons-gnus)
+
+(when (display-graphic-p)
+  (require 'all-the-icons-gnus)
+  (all-the-icons-gnus-setup))
+#+END_SRC
 
 ** Remote (TRAMP) Editing
 
@@ -911,10 +946,12 @@ M-x github-explorer "txgvnn/github-explorer"
 (add-hook 'prog-mode-hook 'bug-reference-github-set-url-format)
 #+END_SRC
 
-*** Github Bug Notifications
+*** Github Notifications
 #+BEGIN_SRC emacs-lisp :exports none
-(message "INIT: § ▶ ⁋ Github Bug Notifications")
+(message "INIT: § ▶ ⁋ Github Notifications")
 #+END_SRC
+
+This gets to be a pain if it is disconnected. Consider trying =gh-notify=.
 
 #+BEGIN_SRC emacs-lisp
 ;; (skj/package-install 'github-notifier)
@@ -1138,21 +1175,51 @@ Better Task Dependencies
 
 #+BEGIN_SRC emacs-lisp
 (skj/package-install
- '(org-alert
-   org-beautify-theme
+ '(org-beautify-theme
    org-modern
    org-sidebar
    org-superstar))
 #+END_SRC
 
+Use /=C-c C-s=/ to use a relative time for schedule.
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/package-install 'orgbox)
+#+END_SRC
+
+*** Notifications
+#+BEGIN_SRC emacs-lisp :exports none
+(message "INIT: § ▶ ⁋ Notifications")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'org-notify)
+
+(require 'org-notify)
+
+(org-notify-start)
+
+(org-notify-add 'appt
+                '(:time "-1s" :period "20s" :duration 10
+                  :actions (-message -ding))
+                '(:time "15m" :period "2m" :duration 100
+                  :actions -notify)
+                '(:time "2h" :period "5m" :actions -message)
+                '(:time "3d" :actions -email))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(require 'org-alert)
+#+END_SRC
+
 *** Prettier Bullets
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'org-bullets)
+(skj/package-install 'org-bullets)
 
-  (require 'org-bullets)
+(require 'org-bullets)
 
-  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
 #+END_SRC
 
 ** Agenda
@@ -1486,6 +1553,7 @@ Always redisplay images after =C-c C-c=
 #+END_SRC
 
 
+
 * Other Writing Modes
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § Other Writing Modes")
@@ -1509,6 +1577,8 @@ all but the block of text/code you are currently within.
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
+(skj/package-install 'company-emoji)
+   
 (when (display-graphic-p)
   (add-to-list 'company-backends 'company-emoji)
   
@@ -1548,6 +1618,16 @@ all but the block of text/code you are currently within.
 ** Blogging
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Blogging")
+#+END_SRC
+
+Editing jekyll files, using =polymode= for the mix of YAML and Markdown.
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'poly-markdown)
+(skj/package-install 'jekyll-modes)
+
+;;(require 'jekyll-markdown-mode)
+;;(add-to-list 'auto-mode-alist '("\\.md$" . jekyll-markdown-mode))
 #+END_SRC
 
 Emacs major mode for managing [[https://jekyllrb.com/][jekyll]] blogs ([[https://github.com/masasam/emacs-easy-jekyll][repo]]).
@@ -2128,24 +2208,22 @@ See: <https://github.com/rust-lang/rust-mode>
 #+BEGIN_SRC emacs-lisp
 (require 'rustic)
 
-(setq
- rustic-format-on-save t
- rustic-babel-format-src-block t
- rustic-babel-auto-wrap-main t
- rustic-lsp-server 'rust-analyzer)
+(setq rustic-babel-format-src-block t
+      rustic-babel-auto-wrap-main t
+      rustic-format-on-save t
+      rustic-lsp-server 'rust-analyzer)
 
-(setq
- lsp-rust-analyzer-cargo-load-out-dirs-from-check t
- lsp-rust-analyzer-cargo-watch-enable t
- lsp-rust-analyzer-cargo-watch-command "clippy"
- lsp-rust-analyzer-display-chaining-hints t
- lsp-rust-analyzer-display-closure-return-type-hints t
- lsp-rust-analyzer-display-lifetime-elision-hints-use-parameter-names nil
- lsp-rust-analyzer-display-parameter-hints t
- lsp-rust-analyzer-display-reborrow-hints t
- lsp-rust-analyzer-inlay-hints-mode t
- lsp-rust-analyzer-proc-macro-enable t
- lsp-rust-analyzer-server-display-inlay-hints t)
+(setq lsp-rust-analyzer-cargo-load-out-dirs-from-check t
+      lsp-rust-analyzer-cargo-watch-enable t
+      lsp-rust-analyzer-cargo-watch-command "clippy"
+      lsp-rust-analyzer-display-chaining-hints t
+      lsp-rust-analyzer-display-closure-return-type-hints t
+      lsp-rust-analyzer-display-lifetime-elision-hints-use-parameter-names nil
+      lsp-rust-analyzer-display-parameter-hints t
+      lsp-rust-analyzer-display-reborrow-hints t
+      lsp-rust-analyzer-inlay-hints-mode t
+      lsp-rust-analyzer-proc-macro-enable t
+      lsp-rust-analyzer-server-display-inlay-hints t)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -2209,6 +2287,26 @@ Org-Babel Integration
 #+END_SRC
 
 *** SQL Stuff
+#+BEGIN_SRC emacs-lisp :exports none
+(message "INIT: § ▶ ⁋ SQL")
+#+END_SRC
+
+Support formatting SQL buffers.
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'format-sql)
+#+END_SRC
+
+Use the builtin =sql-mode= in Org blocks.
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install
+ '(ob-sql-mode))
+
+(require 'ob-sql-mode)
+#+END_SRC
+
+Emacs own interface for SQL databases.
 
 #+BEGIN_SRC emacs-lisp
 (skj/package-install
@@ -2217,16 +2315,66 @@ Org-Babel Integration
 #+END_SRC
 
 *** Web Development
+#+BEGIN_SRC emacs-lisp :exports none
+(message "INIT: § ▶ ⁋ Web Development")
+#+END_SRC
+
+Extensions to the standard =html-mode=.
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install
+ '(auto-rename-tag
+   cakecrumbs
+   showcss-mode))
+
+(setq cakecrumbs-html-major-modes '(html-mode web-mode nxml-mode sgml-mode)
+      cakecrumbs-scss-major-modes '(scss-mode less-css-mode css-mode))
+(cakecrumbs-auto-setup)
+
+(defun sm/toggle-showcss()
+  "Toggle showcss-mode"
+  (interactive)
+  (if (derived-mode-p
+       'html-mode
+       'nxml-mode
+       'nxhtml-mode
+       'web-mode
+       'handlebars-mode)
+      (showcss-mode 'toggle)
+    (message "Not in an html mode")))
+(global-set-key (kbd "C-c C-k") 'sm/toggle-showcss)
+#+END_SRC
+
+Completion
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install
+ '(ac-html-bootstrap
+   ac-html-csswatcher
+   company-web
+   counsel-css))
+
+(require 'counsel-css)
+#+END_SRC
+
+Template page support.
 
 #+BEGIN_SRC emacs-lisp
 (skj/package-install
  '(jinja2-mode
+   web-mode)
+#+END_SRC
 
-   web-mode
-   web-beautify))
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'react-snippets)
+
+(require 'react-snippets)
 #+END_SRC
 
 *** JavaScript
+#+BEGIN_SRC emacs-lisp :exports none
+(message "INIT: § ▶ ⁋ JavaScript")
+#+END_SRC
 
 #+BEGIN_SRC emacs-lisp
 (skj/package-install
@@ -2235,12 +2383,107 @@ Org-Babel Integration
    js2-refactor
    js2hl
    xref-js2))
+
+(require 'js2-mode)
+
+(add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+
+(require 'js2-refactor)
+
+(add-hook 'js2-mode-hook #'js2-refactor-mode)
+(js2r-add-keybindings-with-prefix "C-c C-r")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
 (require 'js2-mode)
+
 (add-to-list 'auto-mode-alist '("\\.mjs\\'" . js2-mode))
 #+END_SRC
+
+Integration of [[https://beautifier.io/][beautifier.io]].
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'web-beautify)
+#+END_SRC
+
+The underlying command-line tool is  installed by typing: =npm -g install js-beautify=.
+
+*** Typescript
+#+BEGIN_SRC emacs-lisp :exports none
+(message "INIT: § ▶ ⁋ Typescript")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install
+ '(tide
+   ts-comint
+   typescript-mode))
+#+END_SRC
+
+To run a TypeScript interpreter (REPL) in an inferior process window =M-x
+run-ts=. For the external interpreter you'll need to run =npm install -g tsun=.
+
+Use =typescript-mode= in Org blocks.
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'ob-typescript)
+
+(require 'ob-typescript)
+#+END_SRC
+
+*** Semantic Web
+#+BEGIN_SRC emacs-lisp :exports none
+(message "INIT: § ▶ ⁋ Semantic Web")
+#+END_SRC
+
+Lookup RDF prefixes
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'rdf-prefix)
+
+(require 'rdf-prefix)
+#+END_SRC
+
+SPARQL mode
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'sparql-mode)
+
+(require 'sparql-mode)
+
+(add-to-list 'auto-mode-alist '("\\.sparql$" . sparql-mode))
+(add-to-list 'auto-mode-alist '("\\.rq$" . sparql-mode))
+#+END_SRC
+
+Use =sparql-mode= in Org blocks.
+
+#+BEGIN_SRC emacs-lisp
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((sparql . t)))
+#+END_SRC
+
+** AWS Integration
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install
+ '(aws-snippets
+   awscli-capf
+   cfn-mode
+   flycheck-cfn))
+
+(require 'awscli-capf)
+
+(add-hook 'shell-mode-hook
+          (lambda ()
+            (add-to-list 'completion-at-point-functions 'awscli-capf)))
+
+(require 'flycheck-cfn)
+
+(flycheck-cfn-setup)
+#+END_SRC
+
+Also consider =aws-ec2=.
 
 ** Developer Services
 
@@ -2255,6 +2498,27 @@ projects and what tools you use as an engineer. Set the API key in =~/.wakatime.
 (global-wakatime-mode)
 
 (setq wakatime-cli-path (locate-file "wakatime-cli" exec-path))
+#+END_SRC
+
+** For Fun
+
+Don't forget to =M-x asm-blox=!
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'asm-blox)
+#+END_SRC
+
+Emacs screen saver, note that both of the configuration values are in seconds.
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'gameoflife)
+
+(require 'gameoflife)
+
+(setq gameoflife-animation-speed 0.5
+      gameoflife-screensaver-timeout (* 60 30))
+
+(gameoflife-screensaver-mode)
 #+END_SRC
 
 
@@ -2316,7 +2580,7 @@ work-specific packages.
 
 (setq org-agenda-files
       (append org-agenda-files
-              (list (concat work-org-directory "/notes.org")
+              (list (concat work-org-directory "/work.org")
                     (concat work-org-directory "/people.org"))))
 #+END_SRC
 
