@@ -6,6 +6,27 @@ after having a modular version I've actually found having a hyperlinked output
 is super useful. Also, I do like literate programming in general although it's
 hard to find a good implementation.
 
+Set the garbage collection threshold to a high value during initialization to
+speed things along.
+
+#+BEGIN_SRC emacs-lisp
+(setq gc-cons-percentage 0.3
+      gc-cons-threshold (* 50 1024 1024))
+#+END_SRC
+
+We'll also set up a hook to see how long startup took, and with how many GC
+cycles.
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (message "Emacs ready in %s with %d garbage collections."
+                     (format "%.2f seconds"
+                             (float-time
+                              (time-subtract after-init-time before-init-time)))
+                     gcs-done)))
+#+END_SRC
+
 * Utility Functions
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -60,18 +81,6 @@ more descriptive than dealing with the =system-type=
       scroll-bar-mode nil
       scroll-margin 1
       scroll-step 1)
-#+END_SRC
-
-*** Measure Startup Time
-
-#+BEGIN_SRC emacs-lisp
-(add-hook 'emacs-startup-hook
-          (lambda ()
-            (message "Emacs ready in %s with %d garbage collections."
-                     (format "%.2f seconds"
-                             (float-time
-                              (time-subtract after-init-time before-init-time)))
-                     gcs-done)))
 #+END_SRC
 
 ** Load Path
@@ -192,7 +201,9 @@ like a good idea. See also [[*Google Calendar]].
 
 ** Package Management Setup
 
-Using the basic package management, =package=, as it does all I need.
+Using the basic package management, =package=, as it does all I need. Although
+=use-package= has some advantages, especially in lazy loading. There's some good
+notes on this [[https://github.com/daviwil/emacs-from-scratch/blob/master/show-notes/Emacs-Scratch-12.org][here]].
 
 #+BEGIN_SRC emacs-lisp
 (require 'package)
@@ -230,7 +241,37 @@ Just in case, refresh the archive contents now.
   (package-refresh-contents))
 #+END_SRC
 
-*** Create Install Wrapper
+*** Auto-Update Packages
+
+This package provides functionality for automatically updating your Emacs
+packages periodically. It is specially useful for people that work in multiple
+machines and tend to forget to manually update packages from time to time.
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/package-install 'auto-package-update)
+
+(require 'auto-package-update)
+#+END_SRC
+
+Configure the update to happen every 7 days, at 3:00am, deleting any
+old/obsolete packages after updating.
+
+#+BEGIN_SRC emacs-lisp :exports none
+(setq auto-package-update-interval 7
+      auto-package-update-delete-old-versions t
+      auto-package-update-hide-results t)
+
+(auto-package-update-at-time "03:00")
+#+END_SRC
+
+=auto-package-update-maybe= will update your installed packages, if there is an
+update pending.
+
+#+BEGIN_SRC emacs-lisp :exports none
+(auto-package-update-maybe)
+#+END_SRC
+
+*** Create =package-install= Wrapper
 
 This is a simple function that wraps the =package-install=. It does allow a
 single package or list of packages and only executes the install action if the
@@ -252,6 +293,7 @@ package is not already installed.
 #+END_SRC
 
 ** More Paths
+
 *** Command Execution Paths
 
 [[https://brew.sh/][Homebrew]] is great, but just in case it isn't on the path, this helps a lot.
@@ -297,7 +339,7 @@ Set the root for all my projects, home and work.
 (message "INIT: § Generic Configuration")
 #+END_SRC
 
-** Core UI Settin
+** Core UI Settings
 *** Input Encoding
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -416,31 +458,58 @@ I like to keep this pretty simple, certainly no powerline!.
 
 #+BEGIN_SRC emacs-lisp
 (setq display-time-string-forms
-      '((propertize (concat " " 24-hours ":" minutes " "))))
+      '((propertize (concat " " 24-hours ":" minutes " "))))
 
 (display-time-mode t)
 (line-number-mode t)
 (column-number-mode t)
-(display-battery-mode t)
 #+END_SRC
 
+For battery mode, simplify the usual and use icons, it makes it easier to
+find.
+
+#+BEGIN_SRC emacs-lisp
+(require 'battery)
+
+(when (functionp battery-status-function)
+  (cond ((string= "AC" (battery-format "%L" (funcall battery-status-function)))
+         (setq battery-mode-line-format ""))
+        ((string-match-p "N/A" (battery-format "%B" (battery-status-function)))
+         (setq battery-mode-line-format ""))
+        (t
+         (setq battery-mode-line-format ":%p%%"))))
+
+(display-battery-mode 1)
+#+END_SRC
+  
 *** Notifications
+:PROPERTIES:
+:CUSTOM_ID: core-ui-notifications
+:END:
 
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Notifications")
 #+END_SRC
 
-Generally use the `alert' package for notifications.
+Alert is a Growl-workalike for Emacs which uses a common notification
+interface and multiple, selectable "styles", whose use is fully
+customizable by the user.
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/package-install 'alert)
 
 (require 'alert)
-(setq alert-fade-time 10 ;; seconds
-      alert-default-style 'osx-notifier)
+
+(setq alert-fade-time 10) ;; seconds
 #+END_SRC
 
-Maybe add [[https://github.com/djcb/sauron][Sauron]] some day.
+Set the alert style: /Native OSX notifier using AppleScript/.
+
+#+BEGIN_SRC emacs-lisp :exports none
+(if (system-mac-p)
+  (setq alert-default-style 'osx-notifier)
+  (setq alert-default-style 'notifications))
+#+END_SRC
 
 *** Icons
 
@@ -506,40 +575,74 @@ Maybe add [[https://github.com/djcb/sauron][Sauron]] some day.
                             (scroll-up 1)))
 #+END_SRC
 
+*** Windows
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (message "INIT: § ▶ ⁋ Windows")
+#+END_SRC
+
+Using multiple side-by-side windows is a great way to utilize the
+large high-resolution displays that exists today. This [[https://github.com/Lindydancer/multicolumn][package]]
+provides the "missing features" of Emacs to create a side-by-side
+layout, to navigate efficiently, and to manage the windows.
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'multicolumn)
+#+END_SRC
+
+In OS X 10.9, each monitor is a separate space. If you want to stretch an
+Emacs frame across multiple monitors, you can change this in "System
+Preferences -> Mission Control -> Displays have separate Spaces".
+
 *** Buffers
 
 #+BEGIN_SRC emacs-lisp :exports none
   (message "INIT: § ▶ ⁋ Buffers")
 #+END_SRC
 
+Recentf is a minor mode that builds a list of recently opened files. This list
+is automatically saved across sessions on exiting Emacs - you can then access
+this list through a command or the menu.
+
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'recentf)
+(skj/package-install 'recentf)
 
-  (setq recentf-max-menu-items 100
-        recentf-max-saved-items 100)
+(setq recentf-max-menu-items 100
+      recentf-max-saved-items 100)
 
-  (recentf-mode)
+(recentf-mode)
+
+(global-set-key "\C-x\ \C-r" 'recentf-open-files)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install
-   '(ibuffer
-     ibuffer-sidebar))
+(skj/package-install
+ '(ibuffer
+   ibuffer-sidebar))
+
+(global-set-key (kbd "C-x C-b") 'ibuffer-sidebar-toggle-sidebar)
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp
-  (skj/package-install 'buffer-move)
+This file is for lazy people wanting to swap buffers without
+typing =/C-x b/= on each window.
 
-  (when (fboundp 'windmove-default-keybindings)
-    (windmove-default-keybindings))
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'buffer-move)
+
+(when (fboundp 'windmove-default-keybindings)
+  (windmove-default-keybindings))
 #+END_SRC
 
+This package provides a global minor mode =everlasting-scratch-mode=
+that causes the scratch buffer to respawn after it's killed and with
+its content restored.
+
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'everlasting-scratch)
+(skj/package-install 'everlasting-scratch)
 
-  (require 'everlasting-scratch)
+(require 'everlasting-scratch)
 
-  (add-hook 'after-init-hook 'everlasting-scratch-mode)
+(add-hook 'after-init-hook 'everlasting-scratch-mode)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -554,13 +657,34 @@ Maybe add [[https://github.com/djcb/sauron][Sauron]] some day.
 (message "INIT: § ▶ ⁋ Multiple Cursors")
 #+END_SRC
 
+[[https://github.com/magnars/multiple-cursors.el][Multiple cursors]] for Emacs.
+
 #+BEGIN_SRC emacs-lisp
-(skj/package-install
- '(multicolumn
-   multiple-cursors
-   mc-extras))
+(skj/package-install 'multiple-cursors)
 
 (require 'multiple-cursors)
+#+END_SRC
+
+When you have an active region that spans multiple lines, the following will add a cursor to each line:
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+#+END_SRC
+
+When you want to add multiple cursors not based on continuous lines, but based on keywords in the buffer, use:
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "C-c m c") 'mc/edit-lines)
+(global-set-key (kbd "C-c m >") 'mc/mark-next-like-this)
+(global-set-key (kbd "C-c m <") 'mc/mark-previous-like-this)
+(global-set-key (kbd "C-c m *") 'mc/mark-more-like-this)
+(global-set-key (kbd "C-c m !") 'mc/mark-all-like-this)
+#+END_SRC
+
+This package contains [[https://github.com/knu/mc-extras.el][extra functions]] for multiple-cursors mode.
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'mc-extras)
 #+END_SRC
 
 *** Undo Tree
@@ -577,39 +701,6 @@ Maybe add [[https://github.com/djcb/sauron][Sauron]] some day.
 (global-undo-tree-mode)
 #+END_SRC
 
-*** Key Bindings
-
-#+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Key Bindings")
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
-  (global-set-key (kbd "C-x C-b") 'ibuffer-sidebar-toggle-sidebar)
-
-  (global-set-key (kbd "C-c m c") 'mc/edit-lines)
-  (global-set-key (kbd "C-c m >") 'mc/mark-next-like-this)
-  (global-set-key (kbd "C-c m <") 'mc/mark-previous-like-this)
-  (global-set-key (kbd "C-c m *") 'mc/mark-more-like-this)
-  (global-set-key (kbd "C-c m !") 'mc/mark-all-like-this)
-#+END_SRC
-
-# Check this out sometime:
-# ;; Fix M-<arrow key> in terminals
-# (if (eq window-system nil)
-#     (progn (define-key input-decode-map "\e[1;9A" [(meta up)])
-#            (define-key input-decode-map "\e[1;9B" [(meta down)])
-#            (define-key input-decode-map "\e[1;9D" [(meta left)])
-#            (define-key input-decode-map "\e[1;9C" [(meta right)])
-#            ;; New Emacs 27.1 plus AL2 with 24 bit color needs help for Alt and Control
-#            (define-key input-decode-map "\e[1;3A" [(meta up)])
-#            (define-key input-decode-map "\e[1;3B" [(meta down)])
-#            (define-key input-decode-map "\e[1;3D" [(meta left)])
-#            (define-key input-decode-map "\e[1;3C" [(meta right)])
-#            (define-key input-decode-map "\e[1;5A" [(ctrl up)])
-#            (define-key input-decode-map "\e[1;5B" [(ctrl down)])
-#            (define-key input-decode-map "\e[1;5D" [(ctrl left)])
-#            (define-key input-decode-map "\e[1;5C" [(ctrl right)])))
-
 ** Completion UI Settings
 *** Company
 
@@ -620,7 +711,7 @@ Maybe add [[https://github.com/djcb/sauron][Sauron]] some day.
 #+BEGIN_SRC emacs-lisp
 (skj/package-install
  '(company
-   company-math
+   company-emojify
    company-prescient
    company-quickhelp))
 #+END_SRC
@@ -746,14 +837,24 @@ Ivy-resume (resumes the last Ivy-based completion) and other commands
 (message "INIT: § ▶ ⁋ macOS System Integration")
 #+END_SRC
 
+- =osx-lib=: An Emacs package with functions and commands for interacting with
+  macOS.
+- =osx-plist=: This is a simple parser for macOS plist files. The main entry
+  points are =osx-plist-parse-file= and =osx-plist-parse-buffer=.
+- =osx-trash=: Make =delete-by-moving-to-trash= do what you expect it to do on macOS.
+- =reveal-in-osx-finder=: Provides the function =reveal-in-osx-finder= for file
+  and dired buffers.
+  
 #+BEGIN_SRC emacs-lisp
 (when (system-mac-p)
   (skj/package-install
    '(osx-lib
-     osx-org-clock-menubar
      osx-plist
      osx-trash
      reveal-in-osx-finder)))
+
+(when (system-mac-p)
+  (osx-trash-setup))
 #+END_SRC
 
 *** macOS Keyboard Settings
@@ -785,10 +886,34 @@ Ivy-resume (resumes the last Ivy-based completion) and other commands
 (add-hook 'after-init-hook #'global-flycheck-mode)
 #+END_SRC
 
+Figure this out some day, but it will require a LOT of customization as the
+faces are a mess.
+
+#+BEGIN_SRC emacs-lisp
+;;(skj/package-install 'flycheck-color-mode-line)
+
+;;(require 'flycheck-color-mode-line)
+
+;; (remove-hook 'flycheck-mode-hook 'flycheck-color-mode-line-mode)
+;; (custom-set-faces
+;;  '(flycheck-color-mode-line-error-face ((t (:inherit flycheck-fringe-error :foreground "#dc322f" :weight normal))))
+;;  '(flycheck-color-mode-line-info-face ((t (:inherit flycheck-fringe-info :foreground "#2aa198" :weight normal))))
+;;  '(flycheck-color-mode-line-warning-face ((t (:inherit flycheck-fringe-warning :foreground "#b58900" :weight normal))))
+#+END_SRC
+
 ** Shell & Terminal Settings
+
+Emacs-libvterm (=/vterm/=) is fully-fledged terminal emulator inside GNU Emacs
+based on libvterm, a C library. As a result of using compiled code (instead of
+elisp), emacs-libvterm is fully capable, fast, and it can seamlessly handle
+large outputs.
 
 #+BEGIN_SRC emacs-lisp
 (skj/package-install 'vterm)
+
+(setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *"
+      vterm-shell "zsh"
+      vterm-max-scrollback 10000)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -801,8 +926,7 @@ Ivy-resume (resumes the last Ivy-based completion) and other commands
 #+END_SRC
 ** Gnus
 
-Basic [[https://www.gnu.org/software/emacs/manual/html_node/gnus/][Gnus Newsreader]] configuration. Enter Gnus with /=M-x gnus=/.
-
+Basic [[https://www.gnu.org/software/emacs/manual/html_node/gnus/][Gnus Newsreader]] configuration. Enter Gnus with =/M-x gnus/=.
 
 #+BEGIN_SRC emacs-lisp
 (setq gnus-select-method '(nntp "news.gnus.org"))
@@ -814,7 +938,7 @@ Basic [[https://www.gnu.org/software/emacs/manual/html_node/gnus/][Gnus Newsread
 (add-to-list 'gnus-secondary-select-methods '(nnhackernews ""))
 #+END_SRC
 
-Enter the =nnhackernews:news= newsgroup with /=RET=/.
+Enter the =nnhackernews:news= newsgroup with =/RET/=.
 
 And of course, more icons!
 
@@ -899,20 +1023,16 @@ And of course, more icons!
 (setq magit-completing-read-function 'ivy-completing-read)
 #+END_SRC
 
-Add contents of TODO.org file from project root into Magit buffers
-
-#+BEGIN_SRC emacs-lisp
-(skj/package-install 'magit-org-todos)
-
-(require 'magit-org-todos)
-
-(magit-org-todos-autoinsert)
-#+END_SRC
+This package displays keyword entries from source code comments and Org files
+in the Magit status buffer.  Activating an item jumps to it in its file.  By
+default, it uses keywords from `hl-todo', minus a few (like "NOTE").
 
 #+BEGIN_SRC emacs-lisp
 (skj/package-install 'magit-todos)
 
 (require 'magit-todos)
+
+(magit-todos-mode)
 #+END_SRC
 
 *** Diff Highlighting
@@ -921,27 +1041,19 @@ Add contents of TODO.org file from project root into Magit buffers
 (message "INIT: § ▶ ⁋ Diff Highlighting")
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp
-(skj/package-install 'diff-hl)
-#+END_SRC
+`diff-hl-mode' highlights uncommitted changes on the side of the
+window (using the /fringe/, by default), allows you to jump between
+the hunks and revert them selectively.
 
 #+BEGIN_SRC emacs-lisp
+(skj/package-install 'diff-hl)
+
 (require 'diff-hl)
 
 (add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
 (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
 
 (global-diff-hl-mode)
-#+END_SRC
-
-*** Code Reviews
-
-#+BEGIN_SRC emacs-lisp :exports none
-(message "INIT: § ▶ ⁋ Code Reviews")
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
-(skj/package-install 'code-review)
 #+END_SRC
 
 *** Github Integration
@@ -1003,6 +1115,16 @@ This gets to be a pain if it is disconnected. Consider trying =gh-notify=.
             (ibuffer-vc-set-filter-groups-by-vc-root)
             (unless (eq ibuffer-sorting-mode 'alphabetic)
               (ibuffer-do-sort-by-alphabetic))))
+#+END_SRC
+
+*** Code Reviews
+
+#+BEGIN_SRC emacs-lisp :exports none
+(message "INIT: § ▶ ⁋ Code Reviews")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'code-review)
 #+END_SRC
 
 
@@ -1100,6 +1222,9 @@ The following are worth reading for more details and future ideas:
 - http://doc.norang.ca/org-mode.html
 - https://github.com/zzamboni/dot-emacs/blob/master/init.org
 - https://orgmode.org/worg/org-tutorials/encrypting-files.html
+- https://github.com/daviwil/emacs-from-scratch/blob/master/show-notes/Emacs-06.org
+  (Agendas and Templates)
+- https://orgmode.org/manual/Custom-Agenda-Views.html#Custom-Agenda-Views
 
 ** Initial Configuration
 
@@ -1234,7 +1359,9 @@ record time AND comment, ! for just time
   (setq-default org-enforce-todo-dependencies t)
 #+END_SRC
 
-Better Task Dependencies
+Edna provides an extensible means of specifying conditions which must be fulfilled before a task can be completed and actions to take once it is.
+
+Org Edna runs when either the BLOCKER or TRIGGER properties are set on a heading, and when it is changing from a TODO state to a DONE state.
 
 #+BEGIN_SRC emacs-lisp
   (skj/package-install 'org-edna)
@@ -1274,6 +1401,19 @@ Better Task Dependencies
   (add-hook 'org-mode-hook #'turn-on-font-lock)
 #+END_SRC
 
+*** Project File Integration
+
+Adds all TODO items from a =todo.org= file in the magit project's root
+to the magit status buffer.
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'magit-org-todos)
+
+(require 'magit-org-todos)
+
+(magit-org-todos-autoinsert)
+#+END_SRC
+
 ** Core UI Additions
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -1300,24 +1440,18 @@ Use /=C-c C-s=/ to use a relative time for schedule.
 (message "INIT: § ▶ ⁋ Notifications")
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp
-(skj/package-install 'org-notify)
-
-(require 'org-notify)
-
-(org-notify-start)
-
-(org-notify-add 'appt
-                '(:time "-1s" :period "20s" :duration 10
-                  :actions (-message -ding))
-                '(:time "15m" :period "2m" :duration 100
-                  :actions -notify)
-                '(:time "2h" :period "5m" :actions -message)
-                '(:time "3d" :actions -email))
-#+END_SRC
+Provides notifications for scheduled or deadlined agenda entries. This uses
+the =alert= package configured in [[#core-ui-notifications]] above.
 
 #+BEGIN_SRC emacs-lisp
+(skj/package-install 'org-alert)
+
 (require 'org-alert)
+
+(setq org-alert-interval 300
+      org-alert-notify-cutoff 10
+      org-alert-notify-after-event-cutoff 10
+      org-alert-notification-title "Org Agenda")
 #+END_SRC
 
 *** Prettier Bullets
@@ -1405,6 +1539,18 @@ Use /=C-c C-s=/ to use a relative time for schedule.
                      "%22DEADLINE(Deadline)"
                      "%6EFFORT(Effort){:}")
                    " "))
+#+END_SRC
+
+Basically, if you don't touch Emacs =idle-org-agenda= will display your
+org-agenda after certain time. That can be useful to remember tasks after come
+back to work.
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'idle-org-agenda)
+
+(require 'idle-org-agenda)
+
+(idle-org-agenda-mode)
 #+END_SRC
 
 *** Clock Tracking
@@ -1620,11 +1766,18 @@ Always redisplay images after =C-c C-c=
 (skj/package-install '(ox-md ox-gfm ox-wk))
 #+END_SRC
 
-*** Refile
+*** Refile and Archive
 
 #+BEGIN_SRC emacs-lisp
 (setq org-refile-targets (quote ((nil :maxlevel . 9)
-                                 (org-agenda-files :maxlevel . 9))))
+                                 (org-agenda-files :maxlevel . 9)
+                                 ("archive.org" :maxlevel . 1))))
+#+END_SRC
+
+Save Org buffers after refiling.
+
+#+BEGIN_SRC emacs-lisp
+(advice-add 'org-refile :after 'org-save-all-org-buffers)
 #+END_SRC
 
 *** Completion Integration
@@ -1667,7 +1820,6 @@ Always redisplay images after =C-c C-c=
 
 (global-set-key (kbd "C-c p") 'org-pomodoro)
 #+END_SRC
-
 
 
 * Other Writing Modes
@@ -1853,14 +2005,27 @@ Use /=M-x latex-math-preview-expression=/
 (setq smog-command "style -L en")
 #+END_SRC
 
-** LaTeX Math Completion
+** LaTeX Completion
 
 #+BEGIN_SRC emacs-lisp :exports none
-(message "INIT: § ▶ ⁋ LaTeX Math Completion")
+(message "INIT: § ▶ ⁋ LaTeX Completion")
 #+END_SRC
 
+This is a group of backends for =company-mode= providing auto-completion for
+AUCTeX.
+
 #+BEGIN_SRC emacs-lisp
-(skj/package-install 'company-math)
+(skj/package-install 'company-auctex)
+
+(require 'company-auctex)
+
+(company-auctex-init)
+#+END_SRC
+
+This add-on defines three =company-mode= backends.
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install company-math)
 
 (require 'company-math)
 
@@ -1892,25 +2057,25 @@ Use /=M-x latex-math-preview-expression=/
 #+END_SRC
 
 ** UI Settings
-
 *** Prettify Things
 
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Prettify Things")
 #+END_SRC
 
+Emacs 24.4 comes with a builtin =prettify-symbols-mode=. It can be customized by
+changing =prettify-symbols-alist=.
+
 #+BEGIN_SRC emacs-lisp
-(skj/package-install
- '(fira-code-mode
-   prettify-greek
-   prettify-math))
+(add-hook 'prog-mode-hook #'prettify-symbols-mode)
+#+END_SRC
 
-(when (display-graphic-p)
-  (add-hook 'prog-mode-hook 'fira-code-mode))
+The packages =prettify-math= and =prettify-greek= extend the configuration above.
+The math package requires we set the delimiters before the module loaded.
 
-(add-hook 'scheme-mode-hook #'prettify-symbols-mode)
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'prettify-math)
 
-;; Set delimiters before this module loaded
 (setq prettify-math-delimiters-alist
       '(("$" tex)
         ("$$" tex block)
@@ -1920,12 +2085,30 @@ Use /=M-x latex-math-preview-expression=/
 
 (require 'prettify-math)
 
+(skj/package-install 'prettify-greek)
+
 (require 'prettify-greek)
 
 (add-hook 'emacs-lisp-mode-hook
           (lambda ()
             (setq prettify-symbols-alist prettify-greek-lower)
             (prettify-symbols-mode t)))
+#+END_SRC
+
+=fira-code-mode= is a simple minor mode for [[Fira Code][https://github.com/tonsky/FiraCode]]
+ligatures.
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'fira-code-mode)
+
+;; (fira-code-mode-install-fonts)
+
+(when (display-graphic-p)
+  (require 'fira-code-mode)
+  
+  (fira-code-mode-set-font)
+  
+  (add-hook 'prog-mode-hook 'fira-code-mode))
 #+END_SRC
 
 *** Delimiters/Parenthesis
@@ -2009,7 +2192,6 @@ Use /=M-x latex-math-preview-expression=/
 #+END_SRC
 
 ** Project Support
-
 *** Projectile
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -2049,6 +2231,7 @@ Recommended keymap prefix on macOS
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
+(counsel-projectile-mode 1)
 (projectile-mode +1)
 #+END_SRC
 
@@ -2092,26 +2275,31 @@ Recommended keymap prefix on macOS
 
 ** Language Server (Generic)
 
-#+BEGIN_SRC emacs-lisp
-(skj/package-install
- '(lsp-mode lsp-ui))
-#+END_SRC
+- Documentation: https://emacs-lsp.github.io/lsp-mode/
+- Supported language servers: https://emacs-lsp.github.io/lsp-mode/page/languages/
 
 #+BEGIN_SRC emacs-lisp
+(skj/package-install 'lsp-mode)
+
 (require 'lsp)
 
-(setq
- lsp-eldoc-render-all t
- lsp-idle-delay 0.6)
+(setq lsp-eldoc-render-all t
+      lsp-idle-delay 0.6)
 #+END_SRC
 
+This package contains all the higher level UI modules of =lsp-mode=, like
+flycheck support and code lenses.
+ 
 #+BEGIN_SRC emacs-lisp
+(skj/package-install 'lsp-ui)
+
 (require 'lsp-ui)
 
-(setq
- lsp-ui-peek-always-show t
- lsp-ui-sideline-show-hover t
- lsp-ui-doc-enable nil)
+(setq  lsp-ui-doc-enable nil
+       lsp-ui-doc-position 'bottom
+       lsp-ui-peek-always-show t
+       lsp-ui-sideline-enable nil
+       lsp-ui-sideline-show-hover t)
 
 (add-hook 'lsp-mode-hook 'lsp-ui-mode)
 #+END_SRC
@@ -2125,6 +2313,23 @@ Recommended keymap prefix on macOS
 	  (lsp-ui-imenu)
     (imenu-list-smart-toggle)))
 #+END_SRC
+
+This package provides an interactive =ivy= interface to the workspace symbol
+functionality offered by =lsp-mode=.
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/package-install 'lsp-ivy)
+#+END_SRC
+
+*Key Bindings/Commands*
+
+- =completion-at-point= for completions
+- Signatures when writing methods (=/C-n/=, ==/C-p/== to cycle signatures)
+- =lsp-find-definition=: =/C-c l g r/=
+- =lsp-find-references=: =/C-c l g g/=
+- =lsp-rename=: =/C-c l r r/=
+- =lsp-format-buffer=: =/C-c l = ==/=
+- =lsp-ui-peek-find-references= to show references inline (=/M-n/=, =/M-p/= to cycle)
 
 ** Test and Debug
 
@@ -2540,6 +2745,54 @@ Use =sparql-mode= in Org blocks.
  '((sparql . t)))
 #+END_SRC
 
+*** Proof Assistants
+   
+#+BEGIN_SRC emacs-lisp :exports none
+(message "INIT: § ▶ ⁋ Semantic Web")
+#+END_SRC
+
+Proof General is a generic Emacs interface for proof assistants
+(also known as interactive theorem provers).
+
+It is supplied ready to use for the proof assistants Coq,
+EasyCrypt, qrhl, and PhoX.
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'proof-general)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'coq-commenter)
+
+(require 'coq-commenter)
+
+(add-hook 'coq-mode-hook 'coq-commenter-mode)
+
+(define-key coq-commenter-mode-map
+  (kbd "C-;")
+  #'coq-commenter-comment-proof-in-region)
+(define-key coq-commenter-mode-map
+  (kbd "C-x C-;")
+  #'coq-commenter-comment-proof-to-cursor)
+(define-key coq-commenter-mode-map
+  (kbd "C-'")
+  #'coq-commenter-uncomment-proof-in-region)
+(define-key coq-commenter-mode-map
+  (kbd "C-x C-'")
+  #'coq-commenter-uncomment-proof-in-buffer)
+#+END_SRC
+
+This package includes a collection of company-mode backends for
+Proof-General's Coq mode, and many useful extensions to Proof-General.
+
+#+BEGIN_SRC emacs-lisp
+(skj/package-install 'company-coq)
+
+(require 'company-coq)
+
+(add-hook 'coq-mode-hook #'company-coq-mode)
+#+END_SRC
+
 ** AWS Integration
 
 #+BEGIN_SRC emacs-lisp
@@ -2563,7 +2816,6 @@ Use =sparql-mode= in Org blocks.
 Also consider =aws-ec2=.
 
 ** Developer Services
-
 *** Wakatime
 
 [[https://wakatime.com/emacs][Wakatime]] service customization. This service tries to keep track of what
@@ -2614,6 +2866,8 @@ resources referenced in [[*Work Packages]].
 (message "INIT: § ▶ ⁋ Paths")
 #+END_SRC
 
+These are either common on dev boxes or laptop environments.
+
 #+BEGIN_SRC emacs-lisp :exports none
 (dolist (path '("~/bin" "~/.toolbox/bin"))
   (exec-path-prepend path))
@@ -2624,6 +2878,8 @@ resources referenced in [[*Work Packages]].
 #+BEGIN_SRC emacs-lisp :exports none
 (message "INIT: § ▶ ⁋ Customization")
 #+END_SRC
+
+These parallel their non-work values.
 
 #+BEGIN_SRC emacs-lisp
 (defcustom
@@ -2662,6 +2918,8 @@ work-specific packages.
 (message "INIT: § ▶ ⁋ Org Mode")
 #+END_SRC
 
+Load initial work org files, there may be more, but this is a start.
+
 #+BEGIN_SRC emacs-lisp
 (setq work-org-directory
       (concat-path skj/work-project-root-dir "/SimonjoDocuments/emacs-org"))
@@ -2681,6 +2939,15 @@ work-specific packages.
 
 These things need to be last!
 
+** Reset the GC Threshold
+
+Set this back to a reasonable value now that startup is complete.
+
+#+BEGIN_SRC emacs-lisp
+(setq gc-cons-percentage 0.1
+      gc-cons-threshold (* 2 1024 1024))
+#+END_SRC
+
 ** Run Emacs as a Server
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -2698,8 +2965,3 @@ server process.
   (server-start))
 #+END_SRC
 
-** Set the GC Threshold
-
-#+BEGIN_SRC emacs-lisp
-(setq gc-cons-threshold (* 2 1000 1000))
-#+END_SRC
