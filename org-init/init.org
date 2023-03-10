@@ -247,7 +247,7 @@ This package provides functionality for automatically updating your Emacs
 packages periodically. It is specially useful for people that work in multiple
 machines and tend to forget to manually update packages from time to time.
 
-#+BEGIN_SRC emacs-lisp :exports none
+#+BEGIN_SRC emacs-lisp
 (skj/package-install 'auto-package-update)
 
 (require 'auto-package-update)
@@ -256,7 +256,7 @@ machines and tend to forget to manually update packages from time to time.
 Configure the update to happen every 7 days, at 3:00am, deleting any
 old/obsolete packages after updating.
 
-#+BEGIN_SRC emacs-lisp :exports none
+#+BEGIN_SRC emacs-lisp
 (setq auto-package-update-interval 7
       auto-package-update-delete-old-versions t
       auto-package-update-hide-results t)
@@ -267,7 +267,7 @@ old/obsolete packages after updating.
 =auto-package-update-maybe= will update your installed packages, if there is an
 update pending.
 
-#+BEGIN_SRC emacs-lisp :exports none
+#+BEGIN_SRC emacs-lisp
 (auto-package-update-maybe)
 #+END_SRC
 
@@ -362,7 +362,7 @@ We really like UTF-8!
               terminal-coding-system 'utf-8)
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp :exports none
+#+BEGIN_SRC emacs-lisp
   (skj/package-install 'iso-transl)
 
   (require 'iso-transl)
@@ -495,7 +495,7 @@ Alert is a Growl-workalike for Emacs which uses a common notification
 interface and multiple, selectable "styles", whose use is fully
 customizable by the user.
 
-#+BEGIN_SRC emacs-lisp :exports none
+#+BEGIN_SRC emacs-lisp
 (skj/package-install 'alert)
 
 (require 'alert)
@@ -505,7 +505,7 @@ customizable by the user.
 
 Set the alert style: /Native OSX notifier using AppleScript/.
 
-#+BEGIN_SRC emacs-lisp :exports none
+#+BEGIN_SRC emacs-lisp
 (if (system-mac-p)
   (setq alert-default-style 'osx-notifier)
   (setq alert-default-style 'notifications))
@@ -2095,7 +2095,7 @@ The math package requires we set the delimiters before the module loaded.
             (prettify-symbols-mode t)))
 #+END_SRC
 
-=fira-code-mode= is a simple minor mode for [[Fira Code][https://github.com/tonsky/FiraCode]]
+=fira-code-mode= is a simple minor mode for [[https://github.com/tonsky/FiraCode][Fira Code]]
 ligatures.
 
 #+BEGIN_SRC emacs-lisp
