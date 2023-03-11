@@ -39,20 +39,20 @@ They affect both Emacs =exec-path= variable and the
 
 #+BEGIN_SRC emacs-lisp
 (defun exec-path-prepend (path)
-"Add PATH to the beginning of the current `exec-path` variable,
+  "Add PATH to the beginning of the current `exec-path` variable,
 and the shell's `$PATH` variable."
-(unless (member path exec-path)
-(setq exec-path (cons path exec-path))
-(setenv "PATH" (concat path ":" (getenv "PATH")))))
+  (unless (member path exec-path)
+    (setq exec-path (cons path exec-path))
+    (setenv "PATH" (concat path ":" (getenv "PATH")))))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
 (defun exec-path-append (path)
-"Add PATH to the end of the current `exec-path` variable, and
+  "Add PATH to the end of the current `exec-path` variable, and
 the shell's `$PATH` variable."
-(unless (member path exec-path)
-(setq exec-path (append exec-path (list path)))
-(setenv "PATH" (concat (getenv "PATH") ":" path))))
+  (unless (member path exec-path)
+    (setq exec-path (append exec-path (list path)))
+    (setenv "PATH" (concat (getenv "PATH") ":" path))))
 #+END_SRC
 
 The following is a simple predicate that allows for us to add others and be
@@ -61,8 +61,8 @@ more descriptive than dealing with the =system-type=
 
 #+BEGIN_SRC emacs-lisp
 (defun system-mac-p ()
-"Return `t` if this is Darwin, else nil."
-(eq system-type 'darwin))
+  "Return `t` if this is Darwin, else nil."
+  (eq system-type 'darwin))
 #+END_SRC
 
 
