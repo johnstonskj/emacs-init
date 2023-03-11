@@ -11,7 +11,7 @@ speed things along.
 
 #+BEGIN_SRC emacs-lisp
 (setq gc-cons-percentage 0.3
-  gc-cons-threshold (* 50 1024 1024))
+      gc-cons-threshold (* 50 1024 1024))
 #+END_SRC
 
 We'll also set up a hook to see how long startup took, and with how many GC
@@ -19,12 +19,12 @@ cycles.
 
 #+BEGIN_SRC emacs-lisp
 (add-hook 'emacs-startup-hook
-      (lambda ()
-        (message "Emacs ready in %s with %d garbage collections."
-                 (format "%.2f seconds"
-                         (float-time
-                          (time-subtract after-init-time before-init-time)))
-                 gcs-done)))
+          (lambda ()
+            (message "Emacs ready in %s with %d garbage collections."
+                     (format "%.2f seconds"
+                             (float-time
+                              (time-subtract after-init-time before-init-time)))
+                     gcs-done)))
 #+END_SRC
 
 * Utility Functions
@@ -75,12 +75,12 @@ more descriptive than dealing with the =system-type=
 
 #+BEGIN_SRC emacs-lisp
 (setq echo-keystrokes 0.5
-  inhibit-startup-screen t
-  inhibit-startup-echo-area-message t
-  ring-bell-function 'ignore
-  scroll-bar-mode nil
-  scroll-margin 1
-  scroll-step 1)
+      inhibit-startup-screen t
+      inhibit-startup-echo-area-message t
+      ring-bell-function 'ignore
+      scroll-bar-mode nil
+      scroll-margin 1
+      scroll-step 1)
 #+END_SRC
 
 ** Load Path
@@ -101,21 +101,21 @@ select =skj=.
 
 #+BEGIN_SRC emacs-lisp
 (defgroup skj nil
-"Simon's personal environment settings."
-:tag "skj"
-:prefix "skj/")
+  "Simon's personal environment settings."
+  :tag "skj"
+  :prefix "skj/")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
 (defcustom
-skj/trace-init
-(if (and (boundp debug-on-error) debug-on-error)
-  debug-on-error
-t)
-"Emit tracing messages during initialization, useful with --debug-init."
-:tag "Trace initialization process"
-:group 'skj
-:type 'boolean)
+  skj/trace-init
+  (if (and (boundp debug-on-error) debug-on-error)
+      debug-on-error
+    t)
+  "Emit tracing messages during initialization, useful with --debug-init."
+  :tag "Trace initialization process"
+  :group 'skj
+  :type 'boolean)
 #+END_SRC
 
 ** Load Customized Values
@@ -142,29 +142,28 @@ Basic identity values, these are my common non-work values.
 
 #+BEGIN_SRC emacs-lisp
 (defcustom
-skj/primary-email
-"johnstonskj@gmail.com"
-"Primary, non-work, email address."
-:tag "Primary email address"
-:group 'skj
-:type 'string)
+  skj/primary-email
+  "johnstonskj@gmail.com"
+  "Primary, non-work, email address."
+  :tag "Primary email address"
+  :group 'skj
+  :type 'string)
 
 (defcustom
-skj/full-name
-"Simon Johnston"
-"Name to go with email-address."
-:tag "Primary email address"
-:group 'skj
-:type 'string)
+  skj/full-name
+  "Simon Johnston"
+  "Name to go with email-address."
+  :tag "Primary email address"
+  :group 'skj
+  :type 'string)
 #+END_SRC
 
 The following are used by Emacs.
 
 #+BEGIN_SRC emacs-lisp
-(setq
-user-login-name "johnstonskj"
-user-full-name skj/full-name
-user-mail-address skj/primary-email)
+(setq user-login-name "johnstonskj"
+      user-full-name skj/full-name
+      user-mail-address skj/primary-email)
 #+END_SRC
 
 This is just useful to have.
@@ -182,12 +181,12 @@ This sets my most common location, and while mostly used by calendaring and
 (require 'solar)
 
 (setq calendar-latitude 47.6062
-  calendar-longitude -122.3321
-  calendar-location-name "Seattle, WA")
+      calendar-longitude -122.3321
+      calendar-location-name "Seattle, WA")
 
 (setq calendar-time-zone -480
-  calendar-standard-time-zone-name "PST"
-  calendar-daylight-time-zone-name "PDT")
+      calendar-standard-time-zone-name "PST"
+      calendar-daylight-time-zone-name "PDT")
 #+END_SRC
 
 This isn't absolutely necessary, but keeping a use-case neutral form seems
@@ -213,24 +212,24 @@ Add the most common package archives and set priorities.
 
 #+BEGIN_SRC emacs-lisp
 (add-to-list
-'package-archives
-'("melpa" . "http://melpa.org/packages/") t)
+ 'package-archives
+ '("melpa" . "http://melpa.org/packages/") t)
 (add-to-list
-'package-archives
-'("melpa-stable" . "https://stable.melpa.org/packages/") t)
+ 'package-archives
+ '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 
 (setq package-archive-priorities '(("gnu" . 30)
-                               ("nongnu" . 25)
-                               ("melpa-stable" . 20)
-                               ("melpa" . 15)
-                               ("marmalade" . 10)))
+                                   ("nongnu" . 25)
+                                   ("melpa-stable" . 20)
+                                   ("melpa" . 15)
+                                   ("marmalade" . 10)))
 #+END_SRC
 
 Just in case, refresh the archive contents now.
 
 #+BEGIN_SRC emacs-lisp
 (when (not package-archive-contents)
-(package-refresh-contents))
+  (package-refresh-contents))
 #+END_SRC
 
 *** Create =package-install= Wrapper
@@ -241,22 +240,22 @@ package is not already installed.
 
 #+BEGIN_SRC emacs-lisp
 (defun skj/package-install (package)
-"Install a single, or list of, PACKAGE."
-(cond
-((listp package)
-(dolist (pkg package)
-  (skj/package-install pkg)))
-((symbolp package)
-(when (and (not (package-installed-p package))
-           (assoc package package-archive-contents))
-  (package-install package)))
-(t
-(error "Expecting a package, or list of packages to install, not %s" package))))
+  "Install a single, or list of, PACKAGE."
+  (cond
+   ((listp package)
+    (dolist (pkg package)
+      (skj/package-install pkg)))
+   ((symbolp package)
+    (when (and (not (package-installed-p package))
+               (assoc package package-archive-contents))
+      (package-install package)))
+   (t
+    (error "Expecting a package, or list of packages to install, not %s" package))))
 #+END_SRC
 
 *** Auto-Update Packages
 
-This package provides functionality for automatically updating your Emacs
+[[https://github.com/rranelli/auto-package-update.el][This package]] provides functionality for automatically updating your Emacs
 packages periodically. It is specially useful for people that work in multiple
 machines and tend to forget to manually update packages from time to time.
 
@@ -271,8 +270,8 @@ old/obsolete packages after updating.
 
 #+BEGIN_SRC emacs-lisp
 (setq auto-package-update-interval 7
-  auto-package-update-delete-old-versions t
-  auto-package-update-hide-results t)
+      auto-package-update-delete-old-versions t
+      auto-package-update-hide-results t)
 
 (auto-package-update-at-time "03:00")
 #+END_SRC
@@ -285,7 +284,6 @@ update pending.
 #+END_SRC
 
 ** More Paths
-
 *** Command Execution Paths
 
 [[https://brew.sh/][Homebrew]] is great, but just in case it isn't on the path, this helps a lot.
@@ -303,7 +301,7 @@ This is a weird one, can't remember why ...
 
 #+BEGIN_SRC emacs-lisp
 (when (and (system-mac-p) (display-graphic-p))
-(exec-path-prepend "usr/local/bin"))
+  (exec-path-prepend "usr/local/bin"))
 #+END_SRC
 
 *** Common Project Directory
@@ -316,12 +314,12 @@ Set the root for all my projects, home and work.
 
 #+BEGIN_SRC emacs-lisp
 (defcustom
-skj/project-root-dir
-(expand-file-name "~/Projects")
-"Root directory for development projects."
-:tag "Project root directory"
-:group 'skj
-:type 'directory)
+  skj/project-root-dir
+  (expand-file-name "~/Projects")
+  "Root directory for development projects."
+  :tag "Project root directory"
+  :group 'skj
+  :type 'directory)
 #+END_SRC
 
 
@@ -344,14 +342,14 @@ We really like UTF-8!
 (set-locale-environment "en_US.UTF-8")
 (set-language-environment "UTF-8")
 (setq-default buffer-file-coding-system 'utf-8
-          coding-system-for-read 'utf-8
-          coding-system-for-write 'utf-8
-          file-name-coding-system 'utf-8
-          keyboard-coding-system 'utf-8
-          locale-coding-system 'utf-8
-          prefer-coding-system 'utf-8
-          require-final-newline t
-          terminal-coding-system 'utf-8)
+              coding-system-for-read 'utf-8
+              coding-system-for-write 'utf-8
+              file-name-coding-system 'utf-8
+              keyboard-coding-system 'utf-8
+              locale-coding-system 'utf-8
+              prefer-coding-system 'utf-8
+              require-final-newline t
+              terminal-coding-system 'utf-8)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -369,10 +367,10 @@ We really like UTF-8!
 #+BEGIN_SRC emacs-lisp
 (setq sentence-end-double-space nil)
 (setq-default fill-column 78
-          indent-tabs-mode nil
-          indicate-empty-lines t
-          tab-always-indent 'complete
-          tab-width 4)
+              indent-tabs-mode nil
+              indicate-empty-lines t
+              tab-always-indent 'complete
+              tab-width 4)
 #+END_SRC
 
 Don't use it, and it takes up space
@@ -389,9 +387,9 @@ Save place in files between Sessions
 
 #+BEGIN_SRC emacs-lisp
 (when (>= emacs-major-version 26)
-(pixel-scroll-mode))
+  (pixel-scroll-mode))
 (when (>= emacs-major-version 29)
-(setq pixel-scroll-precision-mode 1))
+  (setq pixel-scroll-precision-mode 1))
 #+END_SRC
 
 *** Default Face
@@ -483,9 +481,9 @@ find.
 (message "INIT: § ▶ ⁋ Notifications")
 #+END_SRC
 
-Alert is a Growl-workalike for Emacs which uses a common notification
-interface and multiple, selectable "styles", whose use is fully
-customizable by the user.
+[[https://github.com/jwiegley/alert][Alert]] is a Growl-workalike for Emacs
+which uses a common notification interface and multiple, selectable "styles",
+whose use is fully customizable by the user.
 
 #+BEGIN_SRC emacs-lisp
 (skj/package-install 'alert)
@@ -499,8 +497,8 @@ Set the alert style: /Native OSX notifier using AppleScript/.
 
 #+BEGIN_SRC emacs-lisp
 (if (system-mac-p)
-(setq alert-default-style 'osx-notifier)
-(setq alert-default-style 'notifications))
+    (setq alert-default-style 'osx-notifier)
+  (setq alert-default-style 'notifications))
 #+END_SRC
 
 *** Icons
@@ -511,10 +509,10 @@ Set the alert style: /Native OSX notifier using AppleScript/.
 
 #+BEGIN_SRC emacs-lisp
 (skj/package-install
-'(all-the-icons
-all-the-icons-completion
-all-the-icons-dired
-all-the-icons-ibuffer))
+ '(all-the-icons
+   all-the-icons-completion
+   all-the-icons-dired
+   all-the-icons-ibuffer))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -523,25 +521,23 @@ all-the-icons-ibuffer))
 
 #+BEGIN_SRC emacs-lisp
 (when (display-graphic-p)
-(require 'all-the-icons)
-(all-the-icons-completion-mode)
-(add-hook 'dired-mode-hook 'all-the-icons-dired-mode)
-(add-hook 'ibuffer-mode-hook #'all-the-icons-ibuffer-mode))
+  (require 'all-the-icons)
+  (all-the-icons-completion-mode)
+  (add-hook 'dired-mode-hook 'all-the-icons-dired-mode)
+  (add-hook 'ibuffer-mode-hook #'all-the-icons-ibuffer-mode))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
 (skj/package-install
-'(mode-icons
- major-mode-icons))
+ '(mode-icons
+   major-mode-icons))
 
 (when (display-graphic-p)
-(require 'major-mode-icons)
+  (require 'major-mode-icons)
+  (major-mode-icons-mode 1)
 
-(major-mode-icons-mode 1)
-
-(require 'mode-icons)
-
-(mode-icons-mode))
+  (require 'mode-icons)
+  (mode-icons-mode))
 #+END_SRC
 
 *** Mouse
@@ -553,18 +549,18 @@ all-the-icons-ibuffer))
 #+BEGIN_SRC emacs-lisp
 (require 'mouse)
 (setq mouse-wheel-follow-mouse 't
-  mouse-wheel-scroll-amount '(1 ((shift) . 1)))
+      mouse-wheel-scroll-amount '(1 ((shift) . 1)))
 
 (xterm-mouse-mode t)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
 (global-set-key [mouse-4] (lambda ()
-                        (interactive)
-                        (scroll-down 1)))
+                            (interactive)
+                            (scroll-down 1)))
 (global-set-key [mouse-5] (lambda ()
-                        (interactive)
-                        (scroll-up 1)))
+                            (interactive)
+                            (scroll-up 1)))
 #+END_SRC
 
 *** Windows
@@ -592,7 +588,7 @@ Preferences -> Mission Control -> Displays have separate Spaces".
 (message "INIT: § ▶ ⁋ Buffers")
 #+END_SRC
 
-Recentf is a minor mode that builds a list of recently opened files. This list
+[[https://www.emacswiki.org/emacs/RecentFiles][Recentf]] is a minor mode that builds a list of recently opened files. This list
 is automatically saved across sessions on exiting Emacs - you can then access
 this list through a command or the menu.
 
@@ -600,7 +596,7 @@ this list through a command or the menu.
 (skj/package-install 'recentf)
 
 (setq recentf-max-menu-items 100
-  recentf-max-saved-items 100)
+      recentf-max-saved-items 100)
 
 (recentf-mode)
 
@@ -609,23 +605,23 @@ this list through a command or the menu.
 
 #+BEGIN_SRC emacs-lisp
 (skj/package-install
-'(ibuffer
-ibuffer-sidebar))
+ '(ibuffer
+   ibuffer-sidebar))
 
 (global-set-key (kbd "C-x C-b") 'ibuffer-sidebar-toggle-sidebar)
 #+END_SRC
 
-This file is for lazy people wanting to swap buffers without
+This [[https://github.com/lukhas/buffer-move][package]] is for lazy people wanting to swap buffers without
 typing =/C-x b/= on each window.
 
 #+BEGIN_SRC emacs-lisp
 (skj/package-install 'buffer-move)
 
 (when (fboundp 'windmove-default-keybindings)
-(windmove-default-keybindings))
+  (windmove-default-keybindings))
 #+END_SRC
 
-This package provides a global minor mode =everlasting-scratch-mode=
+This [[https://github.com/beacoder/everlasting-scratch][package]] provides a global minor mode =everlasting-scratch-mode=
 that causes the scratch buffer to respawn after it's killed and with
 its content restored.
 
@@ -636,6 +632,8 @@ its content restored.
 
 (add-hook 'after-init-hook 'everlasting-scratch-mode)
 #+END_SRC
+
+Finally, set the default buffer mode.
 
 #+BEGIN_SRC emacs-lisp
 (setq-default major-mode 'text-mode)
@@ -685,6 +683,8 @@ This package contains [[https://github.com/knu/mc-extras.el][extra functions]] f
 (message "INIT: § ▶ ⁋ Undo Tree")
 #+END_SRC
 
+How does anyone work without an [[https://gitlab.com/tsc25/undo-tree][Undo Tree]]!
+
 #+BEGIN_SRC emacs-lisp
 (skj/package-install 'undo-tree)
 
@@ -700,19 +700,23 @@ This package contains [[https://github.com/knu/mc-extras.el][extra functions]] f
 (message "INIT: § ▶ ⁋ Company")
 #+END_SRC
 
+[[Company is a text completion framework for Emacs. The name stands for "complete anything". It uses pluggable back-ends and front-ends to retrieve and display completion candidates.][Company]] is a text completion framework for Emacs. The name stands for
+"/complete anything/". It uses pluggable back-ends and front-ends to retrieve
+and display completion candidates.
+
 #+BEGIN_SRC emacs-lisp
 (skj/package-install
-'(company
-company-emojify
-company-prescient
-company-quickhelp))
+ '(company
+   company-emojify
+   company-prescient
+   company-quickhelp))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
 (require 'company)
 
 (setq company-files-exclusions '(".DS_Store")
-  company-tooltip-align-annotations t)
+      company-tooltip-align-annotations t)
 
 (add-hook 'after-init-hook 'global-company-mode)
 #+END_SRC
@@ -756,13 +760,15 @@ company-quickhelp))
 (message "INIT: § ▶ ⁋ Counsel")
 #+END_SRC
 
+[[https://github.com/abo-abo/swiper][Counsel]].
+
 #+BEGIN_SRC emacs-lisp
 (skj/package-install
-'(counsel
-counsel-fd
-counsel-osx-app
-counsel-tramp
-counsel-web))
+ '(counsel
+   counsel-fd
+   counsel-osx-app
+   counsel-tramp
+   counsel-web))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -839,14 +845,14 @@ and dired buffers.
 
 #+BEGIN_SRC emacs-lisp
 (when (system-mac-p)
-(skj/package-install
-'(osx-lib
- osx-plist
- osx-trash
- reveal-in-osx-finder)))
+  (skj/package-install
+   '(osx-lib
+     osx-plist
+     osx-trash
+     reveal-in-osx-finder)))
 
 (when (system-mac-p)
-(osx-trash-setup))
+  (osx-trash-setup))
 #+END_SRC
 
 *** macOS Keyboard Settings
@@ -871,10 +877,13 @@ and dired buffers.
 
 ** Initial Flycheck Settings
 
+[[https://www.flycheck.org/en/latest/][Flycheck]].
+
 #+BEGIN_SRC emacs-lisp
 (skj/package-install 'flycheck)
 
 (require 'flycheck)
+
 (add-hook 'after-init-hook #'global-flycheck-mode)
 #+END_SRC
 
@@ -904,17 +913,17 @@ large outputs.
 (skj/package-install 'vterm)
 
 (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *"
-  vterm-shell "zsh"
-  vterm-max-scrollback 10000)
+      vterm-shell "zsh"
+      vterm-max-scrollback 10000)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
 (add-to-list 'auto-mode-alist '("\\.zsh\\'" . sh-mode))
 
 (add-hook 'sh-mode-hook
-      (lambda ()
-        (if (string-match "\\.zsh$" buffer-file-name)
-            (sh-set-shell "zsh"))))
+          (lambda ()
+            (if (string-match "\\.zsh$" buffer-file-name)
+                (sh-set-shell "zsh"))))
 #+END_SRC
 ** Gnus
 
@@ -938,16 +947,16 @@ And of course, more icons!
 (skj/package-install 'all-the-icons-gnus)
 
 (when (display-graphic-p)
-(require 'all-the-icons-gnus)
-(all-the-icons-gnus-setup))
+  (require 'all-the-icons-gnus)
+  (all-the-icons-gnus-setup))
 #+END_SRC
 
 ** Remote (TRAMP) Editing
 
 #+BEGIN_SRC emacs-lisp
 (skj/package-install
-'(counsel-tramp
-docker-tramp))
+ '(counsel-tramp
+   docker-tramp))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -964,11 +973,11 @@ docker-tramp))
 
 #+BEGIN_SRC emacs-lisp
 (skj/package-install
-'(git-attr
-git-blamed
-git-link
-git-timemachine
-git-modes))
+ '(git-attr
+   git-blamed
+   git-link
+   git-timemachine
+   git-modes))
 #+END_SRC
 
 *** Git and iBuffer
@@ -1003,10 +1012,10 @@ git-modes))
 
 #+BEGIN_SRC emacs-lisp
 (skj/package-install
-'(magit
-magit-diff-flycheck
-magit-lfs
-magit-filenotify))
+ '(magit
+   magit-diff-flycheck
+   magit-lfs
+   magit-filenotify))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -1054,15 +1063,15 @@ the hunks and revert them selectively.
 (message "INIT: § ▶ ⁋ Github Integration")
 #+END_SRC
 
-M-x github-explorer "txgvnn/github-explorer"
+Example =/M-x github-explorer/= "txgvnn/github-explorer"
 
 #+BEGIN_SRC emacs-lisp
 (skj/package-install
-'(github
-github-browse-file
-github-explorer
-github-pullrequest
-github-review))
+ '(github
+   github-browse-file
+   github-explorer
+   github-pullrequest
+   github-review))
 #+END_SRC
 
 *** Github Bug References
@@ -1103,10 +1112,10 @@ This gets to be a pain if it is disconnected. Consider trying =gh-notify=.
 (skj/package-install 'ibuffer-vc)
 
 (add-hook 'ibuffer-hook
-      (lambda ()
-        (ibuffer-vc-set-filter-groups-by-vc-root)
-        (unless (eq ibuffer-sorting-mode 'alphabetic)
-          (ibuffer-do-sort-by-alphabetic))))
+          (lambda ()
+            (ibuffer-vc-set-filter-groups-by-vc-root)
+            (unless (eq ibuffer-sorting-mode 'alphabetic)
+              (ibuffer-do-sort-by-alphabetic))))
 #+END_SRC
 
 *** Code Reviews
@@ -1148,14 +1157,14 @@ First of all, the primary snippet tool is =yasnippet=.
 (skj/package-install 'yasnippet)
 #+END_SRC
 
-on changes: yas-reload-all
+on changes: =/M-x yas-reload-all/=
 
 #+BEGIN_SRC emacs-lisp
 (require 'yasnippet)
 
 (dolist (path (list
-           (concat-path user-emacs-directory "snippets")
-           skj/snippet-repo-dir))
+               (concat-path user-emacs-directory "snippets")
+               skj/snippet-repo-dir))
   (unless (member path yas-snippet-dirs)
     (setq yas-snippet-dirs
           (cons path yas-snippet-dirs))))
@@ -1173,9 +1182,9 @@ on changes: yas-reload-all
 
 #+BEGIN_SRC emacs-lisp
 (skj/package-install
-'(yasnippet-snippets
-gitignore-snippets
-license-snippets))
+ '(yasnippet-snippets
+   gitignore-snippets
+   license-snippets))
 
 (require 'gitignore-snippets)
 
@@ -1251,7 +1260,7 @@ The following are worth reading for more details and future ideas:
 *** Org Query Language (ql)
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'org-ql)
+(skj/package-install 'org-ql)
 #+END_SRC
 
 *** Priorities
@@ -1267,20 +1276,20 @@ The following are worth reading for more details and future ideas:
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'org-fancy-priorities)
+(skj/package-install 'org-fancy-priorities)
 
-  (require 'org-fancy-priorities)
+(require 'org-fancy-priorities)
 
-  (setq org-fancy-priorities-list
-        '((?A . "⚡") (?B . "⬆") (?C . " ") (?D . "⬇") (?E . "☕"))
-        org-priority-faces
-        '((?A :foreground "red" :weight bold)
-          (?B :foreground "orange" :weight semi-bold)
-          (?C :foreground "green" :weight normal)
-          (?B :foreground "blue" :weight semi-light)
-          (?C :foreground "grey" :weight light)))
+(setq org-fancy-priorities-list
+      '((?A . "⚡") (?B . "⬆") (?C . " ") (?D . "⬇") (?E . "☕"))
+      org-priority-faces
+      '((?A :foreground "red" :weight bold)
+        (?B :foreground "orange" :weight semi-bold)
+        (?C :foreground "green" :weight normal)
+        (?B :foreground "blue" :weight semi-light)
+        (?C :foreground "grey" :weight light)))
 
-  (add-hook 'org-agenda-mode-hook 'org-fancy-priorities-mode)
+(add-hook 'org-agenda-mode-hook 'org-fancy-priorities-mode)
 #+END_SRC
 
 *** Tags
@@ -1365,31 +1374,31 @@ Org Edna runs when either the BLOCKER or TRIGGER properties are set on a heading
 *** Capture Templates
 
 #+BEGIN_SRC emacs-lisp
-  (setq org-capture-templates
-        '(("t" "Todo" entry (file+headline org-default-notes-file "Inbox")
-           "* TODO %?\n%u\n%a\n" :clock-in t :clock-resume t)
-          ("m" "Meeting" entry (file+headline org-default-notes-file "Inbox")
-           "* MEETING with %? :MEETING:\n%t" :clock-in t :clock-resume t)
-          ("i" "Idea" entry (file+headline org-default-notes-file "Inbox")
-           "* %? :IDEA: \n%t" :clock-in t :clock-resume t)
-          ("n" "Next Task" entry (file+headline org-default-notes-file "Inbox")
-           "** NEXT %? \nDEADLINE: %t")
-          ("d" "Distraction" entry (file+headline
-                                    (concat org-directory "/distractions.org")
-                                    "Distractions")
-           "* %?\n%T")))
+(setq org-capture-templates
+      '(("t" "Todo" entry (file+headline org-default-notes-file "Inbox")
+         "* TODO %?\n%u\n%a\n" :clock-in t :clock-resume t)
+        ("m" "Meeting" entry (file+headline org-default-notes-file "Inbox")
+         "* MEETING with %? :MEETING:\n%t" :clock-in t :clock-resume t)
+        ("i" "Idea" entry (file+headline org-default-notes-file "Inbox")
+         "* %? :IDEA: \n%t" :clock-in t :clock-resume t)
+        ("n" "Next Task" entry (file+headline org-default-notes-file "Inbox")
+         "** NEXT %? \nDEADLINE: %t")
+        ("d" "Distraction" entry (file+headline
+                                  (concat org-directory "/distractions.org")
+                                  "Distractions")
+         "* %?\n%T")))
 #+END_SRC
 
 *** Faces
 
 #+BEGIN_SRC emacs-lisp
-  (setq org-todo-keyword-faces
-        '(("NEXT" . (:foreground "green" :weight bold))
-          ("PLAN" . (:foreground "green" :weight bold))
-          ("INPROGRESS" . (:foreground "blue" :weight bold))
-          ("ACTIVE" . (:foreground "blue" :weight bold))))
+(setq org-todo-keyword-faces
+      '(("NEXT" . (:foreground "green" :weight bold))
+        ("PLAN" . (:foreground "green" :weight bold))
+        ("INPROGRESS" . (:foreground "blue" :weight bold))
+        ("ACTIVE" . (:foreground "blue" :weight bold))))
 
-  (add-hook 'org-mode-hook #'turn-on-font-lock)
+(add-hook 'org-mode-hook #'turn-on-font-lock)
 #+END_SRC
 
 *** Project File Integration
@@ -1674,7 +1683,7 @@ If we leave Emacs running overnight - reset the appointments one minute after mi
 (run-at-time "24:01" nil 'skj-org-agenda-to-appt)
 #+END_SRC
 
- Run now so appointments are set up when Emacs starts
+Run now so appointments are set up when Emacs starts
  
 #+BEGIN_SRC emacs-lisp
 (skj-org-agenda-to-appt)
@@ -1753,9 +1762,10 @@ Always redisplay images after =C-c C-c=
 *** Refile and Archive
 
 #+BEGIN_SRC emacs-lisp
-(setq org-refile-targets (quote ((nil :maxlevel . 9)
-                                 (org-agenda-files :maxlevel . 9)
-                                 ("archive.org" :maxlevel . 1))))
+(setq org-refile-targets
+      (quote ((nil :maxlevel . 9)
+              (org-agenda-files :maxlevel . 9)
+              ("archive.org" :maxlevel . 1))))
 #+END_SRC
 
 Save Org buffers after refiling.
@@ -1767,20 +1777,20 @@ Save Org buffers after refiling.
 *** Completion Integration
 
 #+BEGIN_SRC emacs-lisp
-  (skj/package-install 'company-org-block)
+(skj/package-install 'company-org-block)
 
-  (require 'company-org-block)
+(require 'company-org-block)
 
-  (setq company-org-block-edit-style 'auto) ;; 'auto, 'prompt, or 'inline
+(setq company-org-block-edit-style 'auto) ;; 'auto, 'prompt, or 'inline
 
-  (add-hook 'org-mode-hook
-            (lambda ()
-              (add-to-list (make-local-variable 'company-backends)
-                           'company-org-block)))
-  (skj/package-install
-     '(org-ivy-search
-       ivy-omni-org
-       ivy-todo))
+(add-hook 'org-mode-hook
+          (lambda ()
+            (add-to-list (make-local-variable 'company-backends)
+                         'company-org-block)))
+(skj/package-install
+ '(org-ivy-search
+   ivy-omni-org
+   ivy-todo))
 #+END_SRC
 
 ** Key Bindings
@@ -1828,12 +1838,12 @@ all but the block of text/code you are currently within.
 ** Emoji Support
 
 #+BEGIN_SRC emacs-lisp :exports none
-  (message "INIT: § ▶ ⁋ Emoji Support")
+(message "INIT: § ▶ ⁋ Emoji Support")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
 (skj/package-install 'company-emoji)
-   
+
 (when (display-graphic-p)
   (add-to-list 'company-backends 'company-emoji)
   
@@ -2128,9 +2138,8 @@ ligatures.
 
 (require 'highlight-indent-guides)
 
-(setq
- highlight-indent-guides-method 'character
- highlight-indent-guides-responsive 'stack)
+(setq highlight-indent-guides-method 'character
+      highlight-indent-guides-responsive 'stack)
 
 (set-face-foreground 'highlight-indent-guides-character-face "brightmagenta")
 
@@ -2146,8 +2155,8 @@ ligatures.
 #+BEGIN_SRC emacs-lisp
 (require 'company)
 
-(setq company-files-exclusions '(".git/" ".DS_Store"))
-(setq company-tooltip-align-annotations t)
+(setq company-files-exclusions '(".git/" ".DS_Store")
+      company-tooltip-align-annotations t)
 
 (add-hook 'web-mode-hook
           (lambda ()
@@ -2161,13 +2170,21 @@ ligatures.
 (message "INIT: § ▶ ⁋ Odds & Ends")
 #+END_SRC
 
+[[https://github.com/tarsius/hl-todo][Highlight TODO]]-like tags in buffers.
+
 #+BEGIN_SRC emacs-lisp
 (skj/package-install 'hl-todo)
 #+END_SRC
 
+Turns on /subword/ [[https://www.gnu.org/software/emacs/manual/html_node/ccmode/Subword-Movement.html][movement and editing]].
+
 #+BEGIN_SRC emacs-lisp
 (skj/package-install 'subword)
 #+END_SRC
+
+A very simple but effective thing, eldoc-mode is a MinorMode which [[https://www.emacswiki.org/emacs/ElDoc][shows you]],
+in the echo area, the argument list of the function call you are currently
+writing.
 
 #+BEGIN_SRC emacs-lisp
 (skj/package-install 'eldoc)
@@ -2182,6 +2199,16 @@ ligatures.
 (message "INIT: § ▶ ⁋ Projectile")
 #+END_SRC
 
+Projectile is a project interaction library for Emacs. Its goal is to provide
+a nice set of features operating on a project level without introducing
+external dependencies (when feasible).
+
+=projectile-git-autofetch= is a minor mode for Emacs to automatically fetch
+repositories you are currently working on (by default, all open repositories
+known to projectile).
+
+=project-explorer= provides a tree-based project explorer sidebar.
+
 #+BEGIN_SRC emacs-lisp
 (skj/package-install
  '(projectile
@@ -2189,7 +2216,6 @@ ligatures.
    projectile-ripgrep
 
    project-explorer
-   project-persist
    find-file-in-project
 
    counsel-projectile
@@ -2212,6 +2238,10 @@ Recommended keymap prefix on macOS
 #+BEGIN_SRC emacs-lisp
 (when (system-mac-p)
   (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(require 'find-file-in-project)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -2605,6 +2635,7 @@ Extensions to the standard =html-mode=.
        'handlebars-mode)
       (showcss-mode 'toggle)
     (message "Not in an html mode")))
+
 (global-set-key (kbd "C-c C-k") 'sm/toggle-showcss)
 #+END_SRC
 
