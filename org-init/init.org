@@ -705,9 +705,7 @@ How does anyone work without an [[https://gitlab.com/tsc25/undo-tree][Undo Tree]
 (message "INIT: § ▶ ⁋ Company")
 #+END_SRC
 
-[[Company is a text completion framework for Emacs. The name stands for "complete anything". It uses pluggable back-ends and front-ends to retrieve and display completion candidates.][Company]] is a text completion framework for Emacs. The name stands for
-"/complete anything/". It uses pluggable back-ends and front-ends to retrieve
-and display completion candidates.
+[[https://company-mode.github.io/][Company]] is a text completion framework for Emacs. The name stands for "complete anything". It uses pluggable back-ends and front-ends to retrieve and display completion candidates.
 
 #+BEGIN_SRC emacs-lisp
 (skj/package-install
