@@ -603,6 +603,11 @@ this list through a command or the menu.
 (global-set-key "\C-x\ \C-r" 'recentf-open-files)
 #+END_SRC
 
+[[https://www.emacswiki.org/emacs/IbufferMode][Ibuffer]] is an advanced replacement for BufferMenu, which lets you operate on
+buffers much in the same manner as Dired. The most important Ibuffer features
+are highlighting and various alternate layouts. Ibuffer is part of Emacs since
+version 22.
+
 #+BEGIN_SRC emacs-lisp
 (skj/package-install
  '(ibuffer
@@ -1236,21 +1241,21 @@ The following are worth reading for more details and future ideas:
 (require 'org)
 
 (setq org-confirm-babel-evaluate nil
-  org-cycle-separator-lines 2
-  org-default-notes-file (concat-path org-directory "inbox.org")
-  org-edit-src-content-indentation 2
-  org-ellipsis " ▾"
-  org-enforce-todo-dependencies t
-  org-fontify-quote-and-verse-blocks t
-  org-hide-emphasis-markers t
-  org-image-actual-width '(550)
-  org-log-done 'time
-  org-log-into-drawer t
-  org-src-fontify-natively t
-  org-src-preserve-indentation t
-  org-src-tab-acts-natively t
-  org-startup-folded 'content
-  org-startup-indented t)
+      org-cycle-separator-lines 2
+      org-default-notes-file (concat-path org-directory "inbox.org")
+      org-edit-src-content-indentation 2
+      org-ellipsis " ▾"
+      org-enforce-todo-dependencies t
+      org-fontify-quote-and-verse-blocks t
+      org-hide-emphasis-markers t
+      org-image-actual-width '(550)
+      org-log-done 'time
+      org-log-into-drawer t
+      org-src-fontify-natively t
+      org-src-preserve-indentation t
+      org-src-tab-acts-natively t
+      org-startup-folded 'content
+      org-startup-indented t)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -1476,6 +1481,8 @@ the =alert= package configured in [[#core-ui-notifications]] above.
    org-super-agenda))
 #+END_SRC
 
+Set basic things for Agenda management.
+
 #+BEGIN_SRC emacs-lisp
 (require 'org-agenda)
 
@@ -1489,57 +1496,65 @@ the =alert= package configured in [[#core-ui-notifications]] above.
       org-agenda-log-mode-items '(closed clock state))
 #+END_SRC
 
+*** Custom Views
+
+This is useful for filtering by priority, when not using tag queries.
+
 #+BEGIN_SRC emacs-lisp
 (defun skj/org-skip-subtree-if-priority (priority)
   "Skip an agenda subtree if it has a priority of PRIORITY.
   
-  PRIORITY must be an integer 1 <= p <= 5."
+  PRIORITY must be string between =\"A\"= and =\"E\"=."
   (let ((subtree-end (save-excursion (org-end-of-subtree t)))
-        (pri-current (org-get-priority (thing-at-point 'line t))))
-    (if (= priority pri-current)
-        subtree-end
-      nil)))
-
-(defun skj/org-skip-subtree-if-habit ()
-  "Skip an agenda entry if it has a STYLE property equal to \"habit\"."
-  (let ((subtree-end (save-excursion (org-end-of-subtree t))))
-    (if (string= (org-entry-get nil "STYLE") "habit")
+        (pri-current (org-element-property :priority (org-element-at-point))))
+    (if (equal priority pri-current)
         subtree-end
       nil)))
 #+END_SRC
+
+Set up some useful Agenda views.
 
 #+BEGIN_SRC emacs-lisp
 (setq org-agenda-custom-commands
       '(("m"
          "ALL Meetings"
-         ((tags "CATEGORY=\"Meetings\""
-                ((org-agenda-overriding-header "Meetings:")
-                 (org-tags-match-list-sublevels t)))))
+         ((tags
+           "CATEGORY=\"Meetings\""
+           ((org-agenda-overriding-header "Meetings:")
+            (org-tags-match-list-sublevels t)))))
         ("d"
          "Daily agenda review"
-         ((tags "PRIORITY=1"
-                ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
-                 (org-agenda-overriding-header "High-priority unfinished tasks:")))
+         ((tags
+           "PRIORITY=\"A\"-TODO=\"DONE\""
+           ((org-agenda-overriding-header "High-priority unfinished tasks:")
+            (org-agenda-sorting-strategy '(todo-state-down effort-up))))
           (agenda "")
-          (alltodo ""
-                   ((org-agenda-skip-function
-                     '(or (skj/org-skip-subtree-if-priority 1)
-                          (org-agenda-skip-if nil '(scheduled deadline)))))))
+          (alltodo
+           ""
+           ((org-agenda-skip-function
+             '(or (skj/org-skip-subtree-if-priority ?A)
+                  (org-agenda-skip-if nil '(scheduled deadline))))
+            (org-agenda-sorting-strategy '(priority-down todo-state-down effort-up)))))
          nil
          ("~/daily-agenda.html"))))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
 (setq org-columns-default-format-for-agenda
-      (string-join '("%35ITEM(Task)"
+      (string-join '("%45ITEM(Task)"
                      "%10TODO(State)"
-                     "%3PRIORITY(P)"
+                     "%1PRIORITY(!)"
+                     "%1BLOCKED()"
                      "%30ALLTAGS(All Tags)"
                      "%23SCHEDULED(Scheduled to Start)"
                      "%22DEADLINE(Deadline)"
-                     "%6EFFORT(Effort){:}")
+                     "%10EFFORT(Effort){:}"
+                     "%10CLOCKSUM(Actual){:}"
+                     "%10CLOCKSUM(Actual/T){:}")
                    " "))
 #+END_SRC
+
+*** Run on Idle
 
 Basically, if you don't touch Emacs =idle-org-agenda= will display your
 org-agenda after certain time. That can be useful to remember tasks after come
