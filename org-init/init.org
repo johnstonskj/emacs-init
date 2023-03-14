@@ -2248,7 +2248,7 @@ Emacs major mode for managing [[https://jekyllrb.com/][jekyll]] blogs ([[https:/
 
 (defcustom
   skj/bibtex-files
-  (expand-file-name "~/Projects/latex/personal.bib")
+  (list (expand-file-name "~/Projects/latex/personal.bib"))
   "A list of BibTeX files."
   :tag "Shared BibTeX files"
   :group 'skj
