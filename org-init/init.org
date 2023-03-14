@@ -706,7 +706,7 @@ Set the alert style: /Native OSX notifier using AppleScript/.
 #+END_SRC
 
 To ensure fonts have been installed on your system, execute:
-=/M-x all-the-icons-install-fonts<RET>/=
+/=M-x all-the-icons-install-fonts<RET>=/
 
 #+BEGIN_SRC emacs-lisp
 (use-package mode-icons
@@ -794,7 +794,7 @@ version 22.
 #+END_SRC
 
 This [[https://github.com/lukhas/buffer-move][package]] is for lazy people wanting to swap buffers without
-typing =/C-x b/= on each window.
+typing /=C-x b=/ on each window.
 
 #+BEGIN_SRC emacs-lisp
 (use-package buffer-move)
@@ -1005,12 +1005,12 @@ Ivy-resume (resumes the last Ivy-based completion) and other commands
 #+END_SRC
 
 - =osx-lib=: An Emacs package with functions and commands for interacting with
-macOS.
+  macOS.
 - =osx-plist=: This is a simple parser for macOS plist files. The main entry
-points are =osx-plist-parse-file= and =osx-plist-parse-buffer=.
+  points are =osx-plist-parse-file= and =osx-plist-parse-buffer=.
 - =osx-trash=: Make =delete-by-moving-to-trash= do what you expect it to do on macOS.
 - =reveal-in-osx-finder=: Provides the function =reveal-in-osx-finder= for file
-and dired buffers.
+  and dired buffers.
 
 #+BEGIN_SRC emacs-lisp
 (use-package osx-lib
@@ -1077,7 +1077,7 @@ and dired buffers.
                 (sh-set-shell "zsh"))))
 #+END_SRC
 
-Emacs-libvterm (=/vterm/=) is fully-fledged terminal emulator inside GNU Emacs
+Emacs-libvterm, =/vterm/=, is fully-fledged terminal emulator inside GNU Emacs
 based on libvterm, a C library. As a result of using compiled code (instead of
 elisp), emacs-libvterm is fully capable, fast, and it can seamlessly handle
 large outputs.
@@ -1095,8 +1095,8 @@ large outputs.
 (setq l2-msg (progress l1-msg "Gnus"))
 #+END_SRC
 
-Basic [[https://www.gnu.org/software/emacs/manual/html_node/gnus/][Gnus Newsreader]] configuration. Enter Gnus with =/M-x gnus/=.
-
+Basic [[https://www.gnu.org/software/emacs/manual/html_node/gnus/][Gnus Newsreader]] configuration. Enter Gnus with /=M-x gnus=/
+.
 #+BEGIN_SRC emacs-lisp
 (require 'gnus) ;; builtin
 
@@ -1109,7 +1109,7 @@ Basic [[https://www.gnu.org/software/emacs/manual/html_node/gnus/][Gnus Newsread
   (add-to-list 'gnus-secondary-select-methods '(nnhackernews "")))
 #+END_SRC
 
-Enter the =nnhackernews:news= newsgroup with =/RET/=.
+Enter the =nnhackernews:news= newsgroup with /=RET=/.
 
 And of course, more icons!
 
@@ -1190,7 +1190,7 @@ And of course, more icons!
 
 This package displays keyword entries from source code comments and Org files
 in the Magit status buffer.  Activating an item jumps to it in its file.  By
-default, it uses keywords from `hl-todo', minus a few (like "NOTE").
+default, it uses keywords from -hl-todo-, minus a few (like "NOTE").
 
 #+BEGIN_SRC emacs-lisp
 (use-package magit-todos
@@ -1222,7 +1222,7 @@ the hunks and revert them selectively.
 (progress l2-msg "Github Integration")
 #+END_SRC
 
-Example =/M-x github-explorer/= "txgvnn/github-explorer"
+Example /=M-x github-explorer=/ "txgvnn/github-explorer"
 
 #+BEGIN_SRC emacs-lisp
 (use-package github-browse-file)
@@ -1326,7 +1326,7 @@ First of all, the primary snippet tool is =yasnippet=.
   (yas-global-mode 1))
 #+END_SRC
 
-Remember to execute =/M-x yas-reload-all/= when any snippets change.
+Remember to execute /=M-x yas-reload-all<RET>=/ when any snippets change.
 
 ** Snippet Collections
 
@@ -1654,7 +1654,7 @@ to group items into sections, rather than having them all in one big list.
 
 This package presents helpful sidebars for Org buffers. Sidebars are
 customizable using [[*Org Query Language][org-ql]] queries and =org-super-agenda= grouping. To show the
-tree execute =/M-x org-sidebar-tree<RET>/=.
+tree execute /=M-x org-sidebar-tree<RET>=/.
 
 #+BEGIN_SRC emacs-lisp
 (use-package org-sidebar)
@@ -1902,8 +1902,8 @@ Now setup the client.
   (org-gcal-local-timezone calendar-time-zone-name))
 #+END_SRC
 
-Execute =/M-x org-gcal-fetch<RET>/= to fetch new calendar updates. Or, execute
-=/M-x org-gcal-post-at-point<RET>/= to turn a =TODO= into a calendar entry.
+Execute /=M-x org-gcal-fetch<RET>=/ to fetch new calendar updates. Or, execute
+/=M-x org-gcal-post-at-point<RET>=/ to turn a =TODO= into a calendar entry.
 
 *** Appointment Integration
 
@@ -2406,7 +2406,7 @@ weasel words it is possible to add to the irregular passive voice verbs in
 #+END_SRC
 
 This is more a batch checker, you run the external tool =style= on a buffer or
-region. To check writing style, execute: =/M-x smog-check-buffer<RET>/=.
+region. To check writing style, execute: /=M-x smog-check-buffer<RET>=/.
 
 #+BEGIN_SRC emacs-lisp
 (use-package smog
@@ -2463,7 +2463,7 @@ The math package requires we set the delimiters before the module loaded.
 #+END_SRC
 
 =fira-code-mode= is a simple minor mode for [[https://github.com/tonsky/FiraCode][Fira Code]] ligatures. You can
-pre-install the fonts with the command =/M-x fira-code-mode-install-fonts<RET>/=.
+pre-install the fonts with the command /=M-x fira-code-mode-install-fonts<RET>=/.
 
 #+BEGIN_SRC emacs-lisp
 (use-package fira-code-mode
@@ -2708,12 +2708,12 @@ functionality offered by =lsp-mode=.
 *Key Bindings/Commands*
 
 - =completion-at-point= for completions
-- Signatures when writing methods (=/C-n/=, ==/C-p/== to cycle signatures)
-- =lsp-find-definition=: =/C-c l g r/=
-- =lsp-find-references=: =/C-c l g g/=
-- =lsp-rename=: =/C-c l r r/=
-- =lsp-format-buffer=: =/C-c l = ==/=
-- =lsp-ui-peek-find-references= to show references inline (=/M-n/=, =/M-p/= to cycle)
+- Signatures when writing methods (/=C-n=/, /=C-p=/ to cycle signatures)
+- =lsp-find-definition=: /=C-c l g r=/
+- =lsp-find-references=: /=C-c l g g=/
+- =lsp-rename=: /=C-c l r r=/
+- =lsp-format-buffer=: /=C-c l ==/
+- =lsp-ui-peek-find-references= to show references inline (/=M-n=/, /=M-p=/ to cycle)
 
 ** Test and Debug
 
