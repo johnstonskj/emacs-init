@@ -334,6 +334,19 @@ to port your entire Emacs configuration over to a new setup.
         use-package-expand-minimally nil))
 #+END_SRC
 
+Always compile packages, and use the newest version available.
+
+#+BEGIN_SRC emacs-lisp
+(use-package auto-compile
+  :init
+  (setq load-prefer-newer t)
+  :custom
+  (auto-compile-display-buffer nil)
+  (auto-compile-mode-line-counter t)
+  :config
+  (auto-compile-on-load-mode))
+#+END_SRC
+
 If we are debugging, let's go ahead and get a =use-package= statistics report at
 the end of the startup process.
 
@@ -360,11 +373,9 @@ old/obsolete packages after updating.
 
 #+BEGIN_SRC emacs-lisp
 (use-package auto-package-update
-  :custom
-  (auto-package-update-interval 7)
-  (auto-package-update-delete-old-versions t)
-  (auto-package-update-hide-results t)
-  :config
+  :config (setq auto-package-update-interval 7
+                auto-package-update-delete-old-versions t
+                auto-package-update-hide-results t)
   (auto-package-update-at-time "03:00")
   (auto-package-update-maybe))
 #+END_SRC
@@ -438,6 +449,17 @@ By generic I mean not /specifically/ for the major uses in [[*Org-Mode]],
 [[*Other Writing Modes]], or [[*Developer Configuration]]. Some of these are not
 necessarily "generic" unless you do all your work on Git for example.
 
+** Authentication/Authorization Stores
+
+#+BEGIN_SRC emacs-lisp :exports none
+(setq l2-msg (progress l1-msg "Authentication/Authorization Stores"))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(setq auth-sources
+      (list (concat-path user-emacs-directory "authinfo.gpg")))
+#+END_SRC
+
 ** Core UI Settings
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -458,16 +480,15 @@ to not use it for everything.
 #+BEGIN_SRC emacs-lisp
 (set-locale-environment "en_US.UTF-8")
 (set-language-environment "UTF-8")
-(setq-default
- buffer-file-coding-system 'utf-8
- coding-system-for-read 'utf-8
- coding-system-for-write 'utf-8
- file-name-coding-system 'utf-8
- keyboard-coding-system 'utf-8
- locale-coding-system 'utf-8
- prefer-coding-system 'utf-8
- require-final-newline t
- terminal-coding-system 'utf-8)
+(setq-default buffer-file-coding-system 'utf-8
+              coding-system-for-read 'utf-8
+              coding-system-for-write 'utf-8
+              file-name-coding-system 'utf-8
+              keyboard-coding-system 'utf-8
+              locale-coding-system 'utf-8
+              prefer-coding-system 'utf-8
+              require-final-newline t
+              terminal-coding-system 'utf-8)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -484,9 +505,8 @@ Because this *is not* the 1950's!
 
 #+BEGIN_SRC emacs-lisp
 (use-package emacs ;; can't access `paragraphs' package directly.
-  :custom
-  (sentence-end-double-space nil)
-  (colon-double-space nil))
+  :config (setq sentence-end-double-space nil
+                colon-double-space nil))
 #+END_SRC
 
 =TAB= and =SPC= handling.
@@ -600,8 +620,8 @@ Make the menu system readable, the default colors after theming are kind of hein
   (setq custom-enabled-themes '(sanityinc-solarized-light)
         custom-safe-themes
         '("4cf3221feff536e2b3385209e9b9dc4c2e0818a69a1cdb4b522756bcdf4e00a4" default))
-  :custom (color-theme-is-global t)
-  :config (color-theme-sanityinc-solarized-light))
+  :config (setq color-theme-is-global t)
+  (color-theme-sanityinc-solarized-light))
 #+END_SRC
 
 *** Fringes
@@ -666,15 +686,22 @@ by the user.
 
 #+BEGIN_SRC emacs-lisp
 (use-package alert
-  :custom (alert-fade-time 10)) ;; seconds
+  :config (setq alert-fade-time 10 ;; seconds
+                alert-default-style (if (system-mac-p)
+                                        'osx-notifier
+                                      'notifications)))
 #+END_SRC
 
-Set the alert style: /Native OSX notifier using AppleScript/.
+*** Images
+
+#+BEGIN_SRC emacs-lisp :exports none
+(progress l2-msg "Images")
+#+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-(if (system-mac-p)
-    (setq alert-default-style 'osx-notifier)
-  (setq alert-default-style 'notifications))
+(if (image-type-available-p 'imagemagick)
+    (message "Emacs has imagemagick support :)")
+   (message "Emacs does not have imagemagick support :("))
 #+END_SRC
 
 *** Icons
@@ -682,6 +709,9 @@ Set the alert style: /Native OSX notifier using AppleScript/.
 #+BEGIN_SRC emacs-lisp :exports none
 (progress l2-msg "Icons")
 #+END_SRC
+
+To ensure fonts have been installed on your system, execute:
+/=M-x all-the-icons-install-fonts<RET>=/
 
 #+BEGIN_SRC emacs-lisp
 (use-package all-the-icons
@@ -705,8 +735,15 @@ Set the alert style: /Native OSX notifier using AppleScript/.
   :hook (ibuffer-mode . all-the-icons-ibuffer-mode))
 #+END_SRC
 
-To ensure fonts have been installed on your system, execute:
-/=M-x all-the-icons-install-fonts<RET>=/
+The VSCode common icons.
+
+#+BEGIN_SRC emacs-lisp
+(use-package vscode-icon
+  :if window-system
+  :commands (vscode-icon-for-file))
+#+END_SRC
+
+Now enable modes using the icons above.
 
 #+BEGIN_SRC emacs-lisp
 (use-package mode-icons
@@ -775,10 +812,9 @@ this list through a command or the menu.
 #+BEGIN_SRC emacs-lisp
 (use-package recentf
   :bind ("C-x C-r" . recentf-open-files)
-  :custom
-  (recentf-max-menu-items 100)
-  (recentf-max-saved-items 100)
-  :config (recentf-mode))
+  :config (setq recentf-max-menu-items 100
+                recentf-max-saved-items 100)
+  (recentf-mode))
 #+END_SRC
 
 [[https://www.emacswiki.org/emacs/IbufferMode][Ibuffer]] is an advanced replacement for BufferMenu, which lets you operate on
@@ -863,13 +899,95 @@ This package contains [[https://github.com/knu/mc-extras.el][extra functions]] f
 How does anyone work without an [[https://gitlab.com/tsc25/undo-tree][Undo Tree]]!
 
 #+BEGIN_SRC emacs-lisp
-(use-package undo-tree :config (global-undo-tree-mode))
+(use-package undo-tree
+  :config (global-undo-tree-mode))
 #+END_SRC
 
 ** Completion UI Settings
 
 #+BEGIN_SRC emacs-lisp :exports none
 (setq l2-msg (progress l1-msg "Completion UI Settings"))
+#+END_SRC
+
+*** Ivy
+
+#+BEGIN_SRC emacs-lisp :exports none
+(progress l2-msg "Ivy")
+#+END_SRC
+
+The guidance is to do all this /before/ installing the [[https://github.com/abo-abo/swiper][ivy]] packages themselves.
+
+#+BEGIN_SRC emacs-lisp
+(use-package all-the-icons-ivy
+  :if window-system
+  :config (all-the-icons-ivy-setup))
+
+  (use-package all-the-icons-ivy-rich
+  :if window-system
+  :init (all-the-icons-ivy-rich-mode 1))
+#+END_SRC
+
+Do these *before* ivy.
+
+#+BEGIN_SRC emacs-lisp
+(use-package ivy-historian
+  :init (historian-mode +1)
+  :config (ivy-historian-mode +1))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package ivy
+  :config (setq ivy-use-virtual-buffers t
+                enable-recursive-minibuffers t
+                ivy-count-format "(%d/%d) ")
+  (ivy-mode 1))
+#+END_SRC
+
+Do these *after* ivy, but right now do not activate them.
+
+#+BEGIN_SRC emacs-lisp
+(use-package ivy-file-preview
+  :after (ivy))
+;;  :config (ivy-file-preview-mode 1))
+
+(use-package ivy-rich
+  :after (ivy))
+;;  :config (ivy-rich-mode 1))
+#+END_SRC
+
+*** Counsel
+
+#+BEGIN_SRC emacs-lisp :exports none
+(progress l2-msg "Counsel")
+#+END_SRC
+
+[[https://github.com/abo-abo/swiper][Counsel]] integrations; note that while ~counsel-osx-app~ looks good I didn't use
+it.
+
+#+BEGIN_SRC emacs-lisp
+(use-package counsel
+  :after (ivy)
+  :config
+  (setq counsel-find-file-ignore-regexp "\\(?:\\`\\|[/\\]\\)\\(?:[#.]\\)")
+  (counsel-mode 1))
+
+(use-package counsel-fd)
+;; M-x counsel-fd-dired-jump to jump to a subdirectory under current directory
+;; M-x counsel-fd-file-jump to jump to a file under current directory
+
+(use-package counsel-web
+  :config
+  (setq counsel-web-engine 'google
+        counsel-web-search-action #'browse-url
+        counsel-web-search-alternate-action #'w3m)
+  ;; Define "C-c w" as a prefix key.
+  (defvar counsel-web-map
+    (let ((map (make-sparse-keymap "counsel-web")))
+      (define-key map (kbd "w") #'counsel-web-suggest)
+      (define-key map (kbd "s") #'counsel-web-search)
+      (define-key map (kbd ".") #'counsel-web-thing-at-point)
+      map))
+  (global-set-key (kbd "C-c w") counsel-web-map))
 #+END_SRC
 
 *** Company
@@ -884,64 +1002,14 @@ retrieve and display completion candidate.
 
 #+BEGIN_SRC emacs-lisp
 (use-package company
-  :hook (after-init . global-company-mode)
-  :custom
-  (company-files-exclusions '(".DS_Store"))
-  (company-tooltip-align-annotations t))
+  :hook
+  (after-init . global-company-mode)
+  :config
+  (setq company-files-exclusions '(".DS_Store")
+        company-tooltip-align-annotations t
+        company-format-margin-function #'company-text-icons-margin))
 
-(use-package company-emojify)
-
-(use-package company-prescient)
-
-(use-package company-quickhelp)
-#+END_SRC
-
-*** Ivy
-
-#+BEGIN_SRC emacs-lisp :exports none
-(progress l2-msg "Ivy")
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
-(use-package ivy
-  :custom
-  (ivy-use-virtual-buffers t)
-  (enable-recursive-minibuffers t)
-  (ivy-count-format "(%d/%d) ")
-  :config (ivy-mode 1))
-
-(use-package ivy-explorer
-  :config (ivy-explorer-mode 1))
-
-(use-package ivy-file-preview)
-
-(use-package ivy-historian)
-
-(use-package ivy-prescient)
-
-(use-package ivy-rich)
-#+END_SRC
-
-*** Counsel
-
-#+BEGIN_SRC emacs-lisp :exports none
-(progress l2-msg "Counsel")
-#+END_SRC
-
-[[https://github.com/abo-abo/swiper][Counsel]].
-
-#+BEGIN_SRC emacs-lisp
-(use-package counsel
-  :custom (counsel-find-file-ignore-regexp "\\(?:\\`\\|[/\\]\\)\\(?:[#.]\\)")
-  :config (counsel-mode 1))
-
-(use-package counsel-fd)
-
-(use-package counsel-osx-app)
-
-(use-package counsel-tramp)
-
-(use-package counsel-web)
+  (use-package company-quickhelp :if window-system)
 #+END_SRC
 
 *** Key Bindings
@@ -1084,9 +1152,8 @@ large outputs.
 
 #+BEGIN_SRC emacs-lisp
 (use-package vterm
-  :custom
-  (vterm-shell "zsh")
-  (vterm-max-scrollback 10000))
+  :config (setq vterm-shell "zsh"
+                vterm-max-scrollback 10000))
 #+END_SRC
 
 ** Gnus
@@ -1160,7 +1227,7 @@ And of course, more icons!
 (use-package git-link)
 
 (use-package git-timemachine
-  :custom (git-timemachine-show-minibuffer-details t))
+  :config (setq git-timemachine-show-minibuffer-details t))
 
 (use-package git-modes)
 #+END_SRC
@@ -1177,15 +1244,12 @@ And of course, more icons!
 
 #+BEGIN_SRC emacs-lisp
 (use-package magit
-  :custom
-  (git-commit-fill-column 72)
-  (magit-completing-read-function 'ivy-completing-read))
+  :config (setq git-commit-fill-column 72
+                magit-completing-read-function 'ivy-completing-read))
 
-(use-package magit-diff-flycheck)
-
-(use-package magit-lfs)
-
-(use-package magit-filenotify)
+(use-package magit-lfs
+  :after magit
+  :pin melpa)
 #+END_SRC
 
 This package displays keyword entries from source code comments and Org files
@@ -1194,9 +1258,30 @@ default, it uses keywords from -hl-todo-, minus a few (like "NOTE").
 
 #+BEGIN_SRC emacs-lisp
 (use-package magit-todos
-  :config
-  (magit-todos-mode))
+  :after magit
+  :config (magit-todos-mode))
 #+END_SRC
+
+*** Forge Integration
+
+#+BEGIN_SRC emacs-lisp :exports none
+(progress l2-msg "Magit Forge Integration")
+#+END_SRC
+
+To start using Forge in a certain repository visit the Magit status buffer for
+that repository and type =f n= (=forge-pull=). Alternatively, you can use /=M-x
+forge-add-repository=/, which makes it possible to add a forge repository
+without pulling all topics and even without having to clone the respective Git
+repository.
+
+#+BEGIN_SRC emacs-lisp
+(use-package forge
+  :after magit)
+#+END_SRC
+
+Forge uses the Ghub package to access the APIs of supported Git forges. How
+this works and how to create and store a token is documented in the magit
+[[https://magit.vc/manual/ghub.html#Getting-Started][Getting Started]] section.
 
 *** Diff Highlighting
 
@@ -1210,55 +1295,15 @@ the hunks and revert them selectively.
 
 #+BEGIN_SRC emacs-lisp
 (use-package diff-hl
+  :after magit
   :hook ((magit-pre-refresh . diff-hl-magit-pre-refresh)
          (magit-post-refresh . diff-hl-magit-post-refresh))
-  :config
-  (global-diff-hl-mode))
-#+END_SRC
-
-*** Github Integration
-
-#+BEGIN_SRC emacs-lisp :exports none
-(progress l2-msg "Github Integration")
-#+END_SRC
-
-Example /=M-x github-explorer=/ "txgvnn/github-explorer"
-
-#+BEGIN_SRC emacs-lisp
-(use-package github-browse-file)
-
-(use-package github-explorer)
-
-(use-package github-pullrequest)
-
-(use-package github-review)
-#+END_SRC
-
-*** Github Bug References
-
-#+BEGIN_SRC emacs-lisp :exports none
-(progress l2-msg "Github Bug References")
+  :config (global-diff-hl-mode))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-(use-package bug-reference-github
-  :hook (prog-mode . bug-reference-github-set-url-format))
-#+END_SRC
-
-*** Github Notifications
-
-#+BEGIN_SRC emacs-lisp :exports none
-(progress l2-msg "Github Notifications")
-#+END_SRC
-
-This gets to be a pain if it is disconnected. Consider trying =gh-notify=.
-
-#+BEGIN_SRC emacs-lisp
-;; (use-package skj-secrets :hook (prog-mode))
-;; 
-;; (use-package github-notifier
-;;              :custom
-;;              (github-notifier-token (skj/secrets-value 'github-token)))
+(use-package magit-diff-flycheck
+  :after (flycheck magit))
 #+END_SRC
 
 *** iBuffer Integration
@@ -1314,8 +1359,7 @@ First of all, the primary snippet tool is =yasnippet=.
 
 #+BEGIN_SRC emacs-lisp
 (use-package yasnippet
-  :hook
-  (prog-mode . yas-minor-mode)
+  :hook (prog-mode . yas-minor-mode)
   :config
   (dolist (path (list
                  (concat-path user-emacs-directory "snippets")
@@ -1361,7 +1405,8 @@ These are common license files, easy to add to a new project.
 (setq l2-msg (progress l1-msg "Snippet Completion"))
 #+END_SRC
 
-This is all, for now.
+=ivy-yasnippet= lets you preview yasnippet snippets with ivy. To use it, call
+~ivy-yasnippet~ in =yas-minor-mode=.
 
 #+BEGIN_SRC emacs-lisp
 (use-package ivy-yasnippet)
@@ -1406,29 +1451,68 @@ The following are worth reading for more details and future ideas:
 
 #+BEGIN_SRC emacs-lisp
 (use-package org
-  :custom
-  (org-confirm-babel-evaluate nil)
-  (org-cycle-separator-lines 2)
-  (org-default-notes-file (concat-path skj/org-directory "inbox.org"))
-  (org-edit-src-content-indentation 2)
-  (org-ellipsis " ▾")
-  (org-enforce-todo-dependencies t)
-  (org-fontify-quote-and-verse-blocks t)
-  (org-hide-emphasis-markers t)
-  (org-image-actual-width '(550))
-  (org-log-done 'time)
-  (org-log-into-drawer t)
-  (org-src-fontify-natively t)
-  (org-src-preserve-indentation t)
-  (org-src-tab-acts-natively t)
-  (org-startup-folded 'content)
-  (org-startup-indented t)
-  :config
+  :mode ("\\.org\\'" . org-mode)
+  :config (setq org-confirm-babel-evaluate nil
+                org-cycle-separator-lines 2
+                org-default-notes-file (concat-path skj/org-directory "inbox.org")
+                org-edit-src-content-indentation 2
+                org-ellipsis " ▾"
+                org-enforce-todo-dependencies t
+                org-fontify-quote-and-verse-blocks t
+                org-hide-emphasis-markers t
+                org-image-actual-width '(480)
+                org-log-done 'time
+                org-log-into-drawer t
+                org-pretty-entities t
+                org-src-fontify-natively t
+                org-src-preserve-indentation t
+                org-src-tab-acts-natively t
+                org-startup-folded 'content
+                org-startup-indented t
+                org-startup-with-inline-images t)
   (require 'org-mouse))
 #+END_SRC
 
+The only problem with hiding emphasis markers is that rich text becomes hard
+to edit because it is unclear whether your cursor is on the marker or the
+first or last character. The =org-appear= package helps by displaying the
+markers while the cursor is on a rich text word.
+
 #+BEGIN_SRC emacs-lisp
-(add-to-list 'auto-mode-alist '("\\.org\\'" . org-mode))
+(use-package org-appear
+  :hook (org-mode . org-appear-mode))
+#+END_SRC
+
+Links in org-mode by default are displayed as “descriptive” links, meaning
+they hide their target URLs (or a destination in general). While this looks
+great, it makes it a bit tricky to figure out how you can edit their URL.
+
+#+BEGIN_SRC emacs-lisp
+(require 'org)
+
+(define-key org-mode-map (kbd "C-c h") 'org-toggle-link-display)
+#+END_SRC
+
+Set the default column view for all files.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-columns-default-format
+      (string-join '("%45ITEM(Task)"
+                     "%10TODO(State)"
+                     "%1PRIORITY(!)"
+                     "%1BLOCKED()"
+                     "%20ALLTAGS(All Tags)"
+                     "%20SCHEDULED(Start)"
+                     "%20DEADLINE(Deadline)"
+                     "%8EFFORT(Effort){:}")
+                   " "))
+#+END_SRC
+
+The [[https://github.com/alphapapa/ts.el][ts]] package is a useful tool for a bunch of time related stuff in agenda
+and more.
+
+#+BEGIN_SRC emacs-lisp
+(use-package ts)
 #+END_SRC
 
 *** Org Query Language
@@ -1490,14 +1574,10 @@ Use fancy icons for different priority levels.
 
 #+BEGIN_SRC emacs-lisp
 (setq org-tag-alist
-      '((:startgroup)
-        ("@home" . ?H) ("@travel" . ?V) ("@work" . ?W) ("@doctor" . ?D)
-        (:endgroup)
-        
-        (:startgrouptag)
+      '((:startgrouptag)
         ("generic")
         (:grouptags)
-        ("idea" . ?i) ("call" . ?c) ("errand" . ?e) ("remind" . ?r)
+        ("idea" . ?i) ("call" . ?c) ("errand" . ?e) ("pay" . ?p) ("remind" . ?r)
         (:endgrouptag)
         
         (:startgrouptag)
@@ -1508,9 +1588,16 @@ Use fancy icons for different priority levels.
         (:endgrouptag)
         
         (:startgrouptag)
-        ("home-fun")
+        ("hobbies")
         (:grouptags)
-        ("diving" . ?d) ("hacking" . ?h) ("music" . ?m) ("synth" . ?s)
+        ("diving" . ?d) ("hacking" . ?h) ("music" . ?m) ("synth" . ?s) ("blogging" . ?b)
+        (:endgrouptag)
+        
+        (:startgrouptag)
+        ("travel")
+        (:grouptags)
+        ("flight" . ?F) ("car" . ?C) ("train" . ?t) ("hotel" . ?s) ("event" . ?v)
+        ("outb" . ?>) ("inb" . ?<)
         (:endgrouptag)
         
         (:startgrouptag)
@@ -1632,13 +1719,18 @@ to the magit status buffer.
 (setq l2-msg (progress l1-msg "Core UI Additions"))
 #+END_SRC
 
+The Org-Superstar package improves the look of Org mode headings by replacing
+the asterisk symbols with nicer looking circles. The package also enhances the
+looks of plain lists and todo items.
+
 #+BEGIN_SRC emacs-lisp
 (use-package org-superstar
   :hook (org-mode . org-superstar-mode))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-(use-package org-beautify-theme :if window-system)
+(use-package org-beautify-theme
+  :if window-system)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -1677,11 +1769,10 @@ the =alert= package configured in [[#core-ui-notifications]] above.
 
 #+BEGIN_SRC emacs-lisp
 (use-package org-alert
-  :custom
-  (org-alert-interval 300)
-  (org-alert-notify-cutoff 10)
-  (org-alert-notify-after-event-cutoff 10)
-  (org-alert-notification-title "Org Agenda"))
+  :config (setq org-alert-interval 300
+                org-alert-notify-cutoff 10
+                org-alert-notify-after-event-cutoff 10
+                org-alert-notification-title "Org Agenda"))
 #+END_SRC
 
 *** Prettier Bullets
@@ -1702,20 +1793,31 @@ the =alert= package configured in [[#core-ui-notifications]] above.
 (setq l2-msg (progress l1-msg "Agenda"))
 #+END_SRC
 
-Set basic things for Agenda management.
+Set basic things for Agenda management. Note that we don't append to the list
+~org-agenda-files~ as this should be the first usage and so let's make it clean.
 
 #+BEGIN_SRC emacs-lisp
 (require 'org-agenda) ;; builtin
 
 (setq org-agenda-files
       (list (concat skj/org-directory "/inbox.org")
-            (concat skj/org-directory "/notes.org")
+            (concat skj/org-directory "/todo.org")
             (concat skj/org-directory "/gcal.org")
             (concat skj/org-directory "/birthdays.org")
             (concat skj/org-directory "/holidays.org"))
       org-agenda-hide-tags-regexp "."
       org-agenda-log-mode-items '(closed clock state))
 #+END_SRC
+
+Because opening the agenda has a tendency to "mess up" window layout...
+
+#+BEGIN_SRC emacs-lisp
+(setq org-agenda-window-setup 'current-window
+      org-agenda-restore-windows-after-quit t)
+#+END_SRC
+
+Useful extras. Specifically the property package can be customized with
+~org-agenda-property-list~ and ~org-agenda-property-position~.
 
 #+BEGIN_SRC emacs-lisp
 (use-package org-agenda-property)
@@ -1747,21 +1849,19 @@ Set up some useful Agenda views.
 
 #+BEGIN_SRC emacs-lisp
 (setq org-agenda-custom-commands
-      '(("m"
-         "ALL Meetings"
-         ((tags
-           "CATEGORY=\"Meetings\""
-           ((org-agenda-overriding-header "Meetings:")
-            (org-tags-match-list-sublevels t)))))
+      '(("c" "TODO closed last week"
+         tags "TODO=\"DONE\"&CLOSED>=\"<-1w>\""
+         ((org-agenda-overriding-header "TODO Closed last week:")
+          (org-agenda-sorting-strategy '(priority-down effort-down))
+          (org-agenda-overriding-columns-format "%45ITEM(Task) %1PRIORITY(!) %23SCHEDULED(Scheduled to Start) %22DEADLINE(Deadline) %22CLOSED(Closed on) %30ALLTAGS(All Tags)")
+          (org-agenda-view-columns-initially t)))
         ("d"
          "Daily agenda review"
-         ((tags
-           "PRIORITY=\"A\"-TODO=\"DONE\""
+         ((tags "PRIORITY=\"A\"-TODO=\"DONE\""
            ((org-agenda-overriding-header "High-priority unfinished tasks:")
             (org-agenda-sorting-strategy '(todo-state-down effort-up))))
           (agenda "")
-          (alltodo
-           ""
+          (alltodo ""
            ((org-agenda-skip-function
              '(or (skj/org-skip-subtree-if-priority ?A)
                   (org-agenda-skip-if nil '(scheduled deadline))))
@@ -1819,9 +1919,7 @@ Active notifications are shown every 3 minute, inactive every 3
 
 #+BEGIN_SRC emacs-lisp
 (use-package org-clock-reminder
-  :custom
-  (org-clock-reminder-interval (cons 3 10))
-  :config
+  :config (setq org-clock-reminder-interval (cons 3 10))
   (org-clock-reminder-mode))
 #+END_SRC
 
@@ -1833,14 +1931,12 @@ Active notifications are shown every 3 minute, inactive every 3
 
 #+BEGIN_SRC emacs-lisp
 (use-package org-habit-stats
-  :custom
-  (org-habit-following-days 7)
-  (org-habit-graph-column 60)
-  (org-habit-preceding-days 28)
-  (org-habit-show-all-today t)
-  (org-habit-show-done-always-green t)
-  (org-habit-show-habits-only-for-today t)
-  :config
+  :config (setq org-habit-following-days 7
+                org-habit-graph-column 60
+                org-habit-preceding-days 28
+                org-habit-show-all-today t
+                org-habit-show-done-always-green t
+                org-habit-show-habits-only-for-today t)
   (add-to-list 'org-modules 'org-habit t))
 #+END_SRC
 
@@ -1861,15 +1957,24 @@ But, these are rather good to know!
 #+BEGIN_SRC emacs-lisp
 (use-package mexican-holidays
   :after (calendar holidays)
-  :custom
-  (calendar-holidays
-   (append calendar-holidays holiday-mexican-holidays)))
+  :config (setq calendar-holidays
+                (append calendar-holidays holiday-mexican-holidays)))
 #+END_SRC
 
 *** Google Calendar
 
 #+BEGIN_SRC emacs-lisp :exports none
 (progress l2-msg "Google Calendar")
+#+END_SRC
+
+Emacs own /EasyPG/ picks up the wrong key if I use the primary email address, it
+seems to ignore the fact that it has been revoked. Using the alternate email
+for this key, should work?
+
+#+BEGIN_SRC emacs-lisp
+(require 'plstore)
+
+(setq plstore-encrypt-to "simonkjohnston@mac.com")
 #+END_SRC
 
 Use my secrets store to load the Google Calendar credentials.
@@ -1885,7 +1990,7 @@ Store synced calendar entries in the following file.
 
 #+BEGIN_SRC emacs-lisp
 (defcustom skj/org-gcal-file
-  (concat org-directory "/gcal.org")
+  (concat skj/org-directory "/gcal.org")
   "Location of `org-mode' file to sync with Google Calendar."
   :tag "Org Agenda file for Google Calendar"
   :group 'skj
@@ -1896,10 +2001,10 @@ Now setup the client.
 
 #+BEGIN_SRC emacs-lisp
 (use-package org-gcal
-  :custom
-  (org-gcal-fetch-file-alist (list (cons skj/primary-email
-                                         skj/org-gcal-file)))
-  (org-gcal-local-timezone calendar-time-zone-name))
+  :config
+  (setq org-gcal-fetch-file-alist (list (cons skj/primary-email
+                                              skj/org-gcal-file))
+        org-gcal-local-timezone calendar-time-zone-name))
 #+END_SRC
 
 Execute /=M-x org-gcal-fetch<RET>=/ to fetch new calendar updates. Or, execute
@@ -1976,6 +2081,21 @@ Load common builtin languages, also always redisplay images after =C-c C-c.=
 ;;(use-package ob-latex-as-png)
 #+END_SRC
 
+*** GNUPlot
+
+#+BEGIN_SRC emacs-lisp :exports none
+(progress l2-msg "GNUPlot")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package gnuplot
+  :mode ("\\.gp$" . gnuplot-mode)
+  :config
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((gnuplot . t))))
+#+END_SRC
+
 *** GraphViz
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -1984,13 +2104,13 @@ Load common builtin languages, also always redisplay images after =C-c C-c.=
 
 #+BEGIN_SRC emacs-lisp
 (use-package graphviz-dot-mode
-             :hook (org-babel-after-execute . org-display-inline-images)
-             :config
-             (unless (version<= emacs-version "26")
-               (setq graphviz-dot-indent-width tab-width))
-             (org-babel-do-load-languages
-              'org-babel-load-languages
-              '((dot . t))))
+  :hook (org-babel-after-execute . org-display-inline-images)
+  :config
+  (unless (version<= emacs-version "26")
+    (setq graphviz-dot-indent-width tab-width))
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((dot . t))))
 
 (executable-required
  "dot"
@@ -2007,11 +2127,11 @@ Load common builtin languages, also always redisplay images after =C-c C-c.=
 Configuring this to use the =plantuml= executable.
 
 #+BEGIN_SRC emacs-lisp
-(use-package plantuml-mode
-  :custom (plantuml-default-exec-mode 'executable)           
-  :config (org-babel-do-load-languages
-           'org-babel-load-languages
-           '((plantuml . t))))
+(use-package plantuml-mode           
+  :config (setq plantuml-default-exec-mode 'executable)
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((plantuml . t))))
 
 (executable-required
  "plantuml"
@@ -2035,7 +2155,7 @@ Configuring this to use the =plantuml= executable.
 (progress l2-msg "References")
 #+END_SRC
 
-This adds [[https://github.com/jkitchin/org-ref][org-ref]] for citations and references, along with the very nice
+This adds [[https://github.com/jkitchin/org-ref][org-ref]] for citations and references, along with the nice
 [[https://github.com/alezost/org-ref-prettify.el][org-ref-prettify]].
 
 #+BEGIN_SRC emacs-lisp
@@ -2052,14 +2172,24 @@ This adds [[https://github.com/jkitchin/org-ref][org-ref]] for citations and ref
 (progress l2-msg "Exporting")
 #+END_SRC
 
+The package [[https://github.com/emacsorphanage/ox-pandoc][=ox-pandoc=]] is an exporter for Org mode which converts Org-mode files to a wide
+variety of other formats using the [[https://pandoc.org/][pandoc]] tool. Pandoc can produce PDFs, HTML,
+presentations, markdown files, office documents and e-pub publications as well
+as a number of other more specialised formats.
+
+#+BEGIN_SRC emacs-lisp
+(use-package ox-pandoc
+  :after ox)
+#+END_SRC
+
 Add Org exporter backends for Markdown and [[https://github.com/larstvei/ox-gfm][Github-Flavored Markdown]].
 
 #+BEGIN_SRC emacs-lisp
-(use-package ox-md)
+(require 'ox-md) ;; builtin
 
 (use-package ox-gfm
-  :commands (org-gfm-export-as-markdown org-gfm-export-to-markdown)
-  :after org)
+  :after ox
+  :commands (org-gfm-export-as-markdown org-gfm-export-to-markdown))
 #+END_SRC
 
 *** Refile and Archive
@@ -2090,19 +2220,29 @@ Save Org buffers after refiling.
 #+BEGIN_SRC emacs-lisp
 (use-package company-org-block
   :config
-  (setq company-org-block-edit-style 'auto) ;; 'auto, 'prompt, or 'inline
+  ;; style: 'auto, 'prompt, or 'inline
+  (setq company-org-block-edit-style 'auto)
   (add-hook 'org-mode-hook
             (lambda ()
               (add-to-list (make-local-variable 'company-backends)
                            'company-org-block))))
 
 (use-package org-ivy-search
+  :after (org ivy)
   :bind ("C-c o" . org-ivy-search-view))
 
 (use-package ivy-todo
+  :after (org ivy)
   :bind ("C-c t" . ivy-todo)
   :commands ivy-todo
   :config (setq ivy-todo-default-tags '("PROJECT")))
+#+END_SRC
+
+The following is installed by =org-ref= we just pull it in here.
+
+#+BEGIN_SRC emacs-lisp
+(require 'org-ref)
+(require 'org-ref-ivy)
 #+END_SRC
 
 ** Key Bindings
@@ -2153,10 +2293,18 @@ all but the block of text/code you are currently within.
 (setq l2-msg (progress l1-msg "Emoji Support"))
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp
-(use-package company-emoji)
+Emacs has to be able to properly render emojis, so a suitable font is
+required. Noto Color Emoji is recomended for optimal results.
 
-(when (display-graphic-p)
+#+BEGIN_SRC emacs-lisp
+(set-fontset-font t 'symbol (font-spec :family "Noto Color Emoji") nil 'prepend)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package company-emoji
+  :after (company)
+  :if window-system
+  :config
   (add-to-list 'company-backends 'company-emoji)
   
   (defun --set-emoji-font (frame)
@@ -2172,6 +2320,23 @@ all but the block of text/code you are currently within.
   ;; Hook for when a frame is created with emacsclient
   ;; see https://www.gnu.org/software/emacs/manual/html_node/elisp/Creating-Frames.html
   (add-hook 'after-make-frame-functions '--set-emoji-font))
+#+END_SRC
+
+Setup ivy emoji support to use the same list as company, for consistency.
+
+#+BEGIN_SRC emacs-lisp
+(use-package ivy-emoji
+  :after (ivy company-emoji)
+  :if window-system
+  :bind ("C-c i e" . ivy-emoji) ;; mnemonics i e = insert emoji
+  :config
+  (require 'company-emoji-list)
+  (setq ivy-emoji-list
+        (mapcar #'(lambda (emoji)
+                   (concat
+                    (get-text-property 0 :unicode emoji) " "
+                    (substring-no-properties emoji)))     ;; Print the name
+                (company-emoji-list-create))))
 #+END_SRC
 
 ** Markdown
@@ -2229,6 +2394,28 @@ Emacs major mode for managing [[https://jekyllrb.com/][jekyll]] blogs ([[https:/
     (format "<a href=\"{%% post_url %s %%}\">%s</a>" (file-name-sans-extension path) desc))))
 
 (org-add-link-type "jekyll-post" 'org-jekyll-post-link-follow 'org-jekyll-post-link-export)
+#+END_SRC
+
+** Wiki Stuff
+
+#+BEGIN_SRC emacs-lisp :exports none
+(setq l2-msg (progress l1-msg "Wiki stuff"))
+#+END_SRC
+
+This allows direct access to edit files on the Wiki, and an Org mode exporter
+via /=M-x org-mw-export-as-mediawiki<RET>=/.
+
+#+BEGIN_SRC emacs-lisp
+;; (use-package mediawiki)
+
+(use-package ox-mediawiki
+  :after (ox mediawiki))
+#+END_SRC
+
+XWiki mode is an offline editing mode only.
+
+#+BEGIN_SRC emacs-lisp
+(use-package xwiki-mode)
 #+END_SRC
 
 ** LaTeX
@@ -2292,9 +2479,8 @@ This add-on defines three =company-mode= backends.
 
 #+BEGIN_SRC emacs-lisp
 (use-package company-math
-  :custom
-  (company-tooltip-align-annotations t)
-  :config
+ :config
+  (setq company-tooltip-align-annotations t)
   ;; global activation of the unicode symbol completion
   (add-to-list 'company-backends 'company-math-symbols-unicode))
 #+END_SRC
@@ -2315,14 +2501,11 @@ Completion, using [[https://github.com/gbgar/company-bibtex][company-bibtex]] an
 
 #+BEGIN_SRC emacs-lisp
 (use-package company-bibtex
-  :custom
-  (company-bibtex-bibliography skj/bibtex-files)
-  :config
+  :config (setq company-bibtex-bibliography skj/bibtex-files)
   (add-to-list 'company-backends 'company-bibtex))
 
 (use-package ivy-bibtex
-  :custom
-  (bibtex-completion-bibliography skj/bibtex-files))
+  :config (setq bibtex-completion-bibliography skj/bibtex-files))
 #+END_SRC
 
 Tools to retrieve content.
@@ -2333,17 +2516,19 @@ Tools to retrieve content.
 (use-package gscholar-bibtex)
 #+END_SRC
 
-[[https://github.com/emacs-citar/citar][Citar]] provides a completing-read front-end to browse and act on BibTeX,
+The [[https://github.com/emacs-citar/citar][ccitar]] package provides a completing-read front-end to browse and act on BibTeX,
 BibLaTeX, and CSL JSON bibliographic data, and LaTeX, markdown, and org-cite
-editing support.
+editing support. See [[https://kristofferbalintona.me/posts/202206141852/#citar][this page]] for some configuration ideas.
 
 #+BEGIN_SRC emacs-lisp
 (use-package citar
-  :custom
-  (citar-bibliography skj/bibtex-files)
-  :hook
-  (LaTeX-mode . citar-capf-setup)
-  (org-mode . citar-capf-setup))
+  :config (setq citar-bibliography skj/bibtex-files))
+
+;;(use-package citar-org
+;;  :after oc
+;;  :config (setq org-cite-insert-processor 'citar
+;;                org-cite-follow-processor 'citar
+;;                org-cite-activate-processor 'citar))
 #+END_SRC
 
 *** Preview
@@ -2359,6 +2544,13 @@ Use /=M-x latex-math-preview-expression=/
 
 (use-package latex-preview-pane
   :config (latex-preview-pane-enable))
+#+END_SRC
+
+Automatically toggle Org mode LaTeX fragment previews as the cursor enters and exits them
+
+#+BEGIN_SRC emacs-lisp
+(use-package org-fragtog
+  :hook (org-mode))
 #+END_SRC
 
 ** Spell and Style Checking
@@ -2377,9 +2569,8 @@ Use /=M-x latex-math-preview-expression=/
 (use-package flyspell-correct-ivy
   :hook ((text-mode . flyspell-mode)
          (prog-mode . flyspell-prog-mode))
-  :custom
-  (flyspell-issue-message-flag nil)
-  (ispell-program-name "aspell"))
+  :config (setq flyspell-issue-message-flag nil
+                ispell-program-name "aspell"))
 
 (let* ((env-language (getenv "LANG"))
 	   (dictionary (first (split-string env-language "\\."))))
@@ -2410,8 +2601,7 @@ region. To check writing style, execute: /=M-x smog-check-buffer<RET>=/.
 
 #+BEGIN_SRC emacs-lisp
 (use-package smog
-  :custom
-  (smog-command "style -L en"))
+  :config (setq smog-command "style -L en"))
 
 (executable-required
  "style"
@@ -2580,13 +2770,14 @@ known to projectile).
 
 #+BEGIN_SRC emacs-lisp
 (use-package projectile
-  :custom
-  (projectile-completion-system 'ivy)
-  (projectile-require-project-root t)
-  (projectile-project-search-path
-   (mapcar (lambda (p)
-             (concat (file-name-as-directory skj/project-root-dir) p))
-           '("emacs-little-packages" "racket" "rust" "Amazon"))))
+  :after (ivy)
+  :config
+  (setq projectile-completion-system 'ivy
+        projectile-require-project-root t
+        projectile-project-search-path
+        (mapcar (lambda (p)
+                  (concat (file-name-as-directory skj/project-root-dir) p))
+                '("emacs-little-packages" "racket" "rust" "Amazon"))))
 
 (use-package projectile-git-autofetch
   :config (projectile-git-autofetch-mode 1))
@@ -2637,12 +2828,11 @@ Turn stuff on.
 #+BEGIN_SRC emacs-lisp
 (use-package project-explorer
   :bind ("<f8>" . project-explorer-toggle)
-  :custom
-  (pe/filenotify-enabled t)
-  (pe/inline-folders t)
-  (pe/omit-gitignore t)
-  (pe/side 'left)
-  (pe/width 40))
+  :config (setq pe/filenotify-enabled t
+                pe/inline-folders t
+                pe/omit-gitignore t
+                pe/side 'left
+                pe/width 40))
 #+END_SRC
 
 *** Find Files
@@ -2667,10 +2857,14 @@ Turn stuff on.
 
 #+BEGIN_SRC emacs-lisp
 (use-package lsp-mode
+  :init
+  (setq lsp-keymap-prefix "M-o")
   :commands lsp
-  :custom
-  (lsp-eldoc-render-all t)
-  (lsp-idle-delay 0.6))
+  :config (setq lsp-eldoc-render-all t
+                lsp-idle-delay 0.6
+                lsp-keep-workspace-alive nil
+                lsp-completion-provider :capf
+                lsp-signature-doc-lines 5))
 #+END_SRC
 
 This package contains all the higher level UI modules of =lsp-mode=, like
@@ -2679,13 +2873,12 @@ flycheck support and code lenses.
 #+BEGIN_SRC emacs-lisp
 (use-package lsp-ui
   :hook (lsp-mode)
-  :custom
-  (lsp-ui-doc-enable nil)
-  (lsp-ui-doc-position 'bottom)
-  (lsp-ui-peek-always-show t)
-  (lsp-ui-peek-fontify 'always)
-  (lsp-ui-sideline-enable nil)
-  (lsp-ui-sideline-show-hover t))
+  :config (setq lsp-ui-doc-enable nil
+                lsp-ui-doc-position 'bottom
+                lsp-ui-peek-always-show t
+                lsp-ui-peek-fontify 'always
+                lsp-ui-sideline-enable t
+                lsp-ui-sideline-show-hover t))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -2700,6 +2893,10 @@ flycheck support and code lenses.
 
 This package provides an interactive =ivy= interface to the workspace symbol
 functionality offered by =lsp-mode=.
+
+- ~lsp-ivy-workspace-symbol~ - workspace symbols for the current workspace
+- ~lsp-ivy-global-workspace-symbol~ - workspace symbols from all of the active
+  workspaces.
 
 #+BEGIN_SRC emacs-lisp :exports none
 (use-package lsp-ivy)
@@ -2733,20 +2930,18 @@ functionality offered by =lsp-mode=.
 
 #+BEGIN_SRC emacs-lisp
 (use-package dap-mode
-             :custom
-             (dap-auto-configure-features
-              '(sessions locals controls tooltip))
-             :config
-             (require 'dap-ui)
-             (dap-ui-mode 1)
-             (dap-ui-controls-mode 1)
-             ;; Enables mouse hover support
-             (dap-tooltip-mode 1)
-             ;; Use tooltips for mouse hover,
-             ;; if it is not enabled `dap-mode' will use the minibuffer.
-             (tooltip-mode 1)
-             ;; Displays floating panel with debug buttons
-             (dap-ui-controls-mode 1))
+  :config (setq dap-auto-configure-features
+                '(sessions locals controls tooltip))
+  (require 'dap-ui)
+  (dap-ui-mode 1)
+  (dap-ui-controls-mode 1)
+  ;; Enables mouse hover support
+  (dap-tooltip-mode 1)
+  ;; Use tooltips for mouse hover,
+  ;; if it is not enabled `dap-mode' will use the minibuffer.
+  (tooltip-mode 1)
+  ;; Displays floating panel with debug buttons
+  (dap-ui-controls-mode 1))
 #+END_SRC
 
 *** Additional Test Tools
@@ -2869,6 +3064,22 @@ functionality offered by =lsp-mode=.
 (use-package scribble-mode :after (racket-mode))
 #+END_SRC
 
+*** Ada
+
+#+BEGIN_SRC emacs-lisp :exports none
+(progress l2-msg "Ada Language")
+#+END_SRC
+
+Not currently using this, but have used the following:
+
+- =eglot= as an LSP client to the AdaCore (GNAT) [[https://github.com/AdaCore/ada_language_server][ALS]].
+- =ada-mode=
+- =ada-ref-man=
+
+It is important to note that you not only need a compiler (again, AdaCore) but
+also the [[https://alire.ada.dev/][Alire]] package manager. Download =alr= and run =alr toolchain --select= to
+get an Ada environment installed.
+
 *** Rust Language
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -2890,28 +3101,31 @@ For more information/inspiration:
   :after (lsp lsp-lens-mode)
   :hook ((rustic-mode . rustic-mode-auto-save-hook)
          (rustic-mode . lsp-lens-mode))
-  :custom
-  (rustic-babel-format-src-block t)
-  (rustic-babel-auto-wrap-main t)
-  (rustic-format-on-save t)
-  (rustic-lsp-server 'rust-analyzer)
-  (lsp-rust-analyzer-cargo-load-out-dirs-from-check t)
-  (lsp-rust-analyzer-cargo-watch-enable t)
-  (lsp-rust-analyzer-cargo-watch-command "clippy")
-  (lsp-rust-analyzer-display-chaining-hints t)
-  (lsp-rust-analyzer-display-closure-return-type-hints t)
-  (lsp-rust-analyzer-display-lifetime-elision-hints-use-parameter-names nil)
-  (lsp-rust-analyzer-display-parameter-hints t)
-  (lsp-rust-analyzer-display-reborrow-hints t)
-  (lsp-rust-analyzer-inlay-hints-mode t)
-  (lsp-rust-analyzer-proc-macro-enable t)
-  (lsp-rust-analyzer-server-display-inlay-hints t))
+  :config
+  (setq rustic-babel-format-src-block t
+        rustic-babel-auto-wrap-main t
+        rustic-format-on-save t
+        rustic-lsp-server 'rust-analyzer
+        lsp-rust-analyzer-cargo-load-out-dirs-from-check t
+        lsp-rust-analyzer-cargo-watch-enable t
+        lsp-rust-analyzer-cargo-watch-command "clippy"
+        lsp-rust-analyzer-display-chaining-hints t
+        lsp-rust-analyzer-display-closure-return-type-hints t
+        lsp-rust-analyzer-display-lifetime-elision-hints-use-parameter-names nil
+        lsp-rust-analyzer-display-parameter-hints t
+        lsp-rust-analyzer-display-reborrow-hints t
+        lsp-rust-analyzer-inlay-hints-mode t
+        lsp-rust-analyzer-proc-macro-enable t
+        lsp-rust-analyzer-server-display-inlay-hints t))
+
+(add-hook 'rust-mode-hook
+          (lambda () (set-fill-column 100)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
 (use-package cargo-mode
   :after (rustic)
-  :hook (rust-mode . cargo-minor))
+  :hook (rust-mode . cargo-minor-mode))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -2931,7 +3145,8 @@ Flycheck for Rust.
 #+BEGIN_SRC emacs-lisp
 (use-package flycheck-rust
   :after (rustic cargo-mode)
-  :config (setq flycheck-rustic-clippy-executable "cargo-clippy")
+  :config
+  (setq flycheck-rustic-clippy-executable "cargo-clippy")
   (unless (member 'rustic-clippy flycheck-checkers)
     (setq flycheck-checkers (cons 'rustic-clippy flycheck-checkers))))
 #+END_SRC
@@ -2963,7 +3178,7 @@ Org-Babel Integration
 
 #+BEGIN_SRC emacs-lisp
 (use-package pest-mode
-             :mode "\\.pest\\'")
+  :mode "\\.pest\\'")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -2996,8 +3211,7 @@ Support formatting SQL buffers.
 
 #+BEGIN_SRC emacs-lisp
 (use-package sqlformat
-  :custom
-  (sqlformat-command "sqlfluff"))
+  :config (setq sqlformat-command "sqlfluff"))
 
 (add-hook 'sql-mode-hook 'sqlformat-on-save-mode)
 
@@ -3040,10 +3254,9 @@ Extensions to the standard =html-mode=.
   :hook (html-mode))
 
 (use-package cakecrumbs
-  :custom
-  (cakecrumbs-html-major-modes '(html-mode web-mode nxml-mode sgml-mode))
-  (cakecrumbs-scss-major-modes '(scss-mode less-css-mode css-mode))
   :config
+  (setq cakecrumbs-html-major-modes '(html-mode web-mode nxml-mode sgml-mode)
+        cakecrumbs-scss-major-modes '(scss-mode less-css-mode css-mode))
   (cakecrumbs-auto-setup))
 
 (defun skj/toggle-showcss()
@@ -3232,7 +3445,7 @@ and tailing logs, ergonomically available through emacs.
 
 #+BEGIN_SRC emacs-lisp
 (use-package axe
-  :custom (axe-region 'us-west-2))
+  :config (setq axe-region 'us-west-2))
 #+END_SRC
 
 Editing and Flycheck modes for Cloud Formation Templates.
@@ -3264,8 +3477,8 @@ projects and what tools you use as an engineer. Set the API key in =~/.wakatime.
 
 #+BEGIN_SRC emacs-lisp
 (use-package wakatime-mode
-  :custom (wakatime-cli-path (locate-file "wakatime-cli" exec-path))
-  :config (global-wakatime-mode))
+  :config (setq wakatime-cli-path (locate-file "wakatime-cli" exec-path))
+  (global-wakatime-mode))
 #+END_SRC
 
 ** For Fun
@@ -3365,13 +3578,11 @@ work-specific packages.
 Load initial work Org files, there may be more, but this is a start.
 
 #+BEGIN_SRC emacs-lisp
-(setq work-org-directory
-      (concat-path skj/work-project-root-dir "/SimonjoDocuments/emacs-org")
-
-      org-agenda-files
+(setq org-agenda-files
       (append org-agenda-files
-              (list (concat work-org-directory "/work.org")
-                    (concat work-org-directory "/people.org"))))
+              (list (concat skj/org-directory "/work-todo.org")
+                    (concat skj/org-directory "/work-travel.org")
+                    (concat skj/org-directory "/work-people.org"))))
 #+END_SRC
 
 
