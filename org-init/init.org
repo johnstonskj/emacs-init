@@ -734,6 +734,12 @@ by the user.
 (progress l2-msg "Icons")
 #+END_SRC
 
+This one isn't a true package, but a part of the [[https://github.com/sebastiencs/icons-in-terminal][icons-in-terminal]] repository.
+
+#+BEGIN_SRC emacs-lisp
+(require 'icons-in-terminal)
+#+END_SRC
+
 To ensure fonts have been installed on your system, execute:
 /=M-x all-the-icons-install-fonts<RET>=/
 
@@ -1567,12 +1573,12 @@ great, it makes it a bit tricky to figure out how you can edit their URL.
 (define-key org-mode-map (kbd "C-c h") 'org-toggle-link-display)
 #+END_SRC
 
-Set the default column view for all files.
+Set the default column view for all org-mode files.
 
 #+BEGIN_SRC emacs-lisp
 (setq org-columns-default-format
       (skj/make-org-column-view
-       '(item todo priority blocked tags-all scheduled deadline effort)))
+       '(item category todo priority blocked tags-all scheduled deadline effort)))
 #+END_SRC
 
 The [[https://github.com/alphapapa/ts.el][ts]] package is a useful tool for a bunch of time related stuff in agenda
@@ -1640,7 +1646,11 @@ could be used without.
 (progress l2-msg "Categories")
 #+END_SRC
 
-org-agenda-category-icon-alist
+Would be nice to customize `org-agenda-category-icon-alist' but for two
+issues:
+
+1. Column views seem to ignore category properties and just use file names.
+2. The icon list expects image data, no terminal mode.
 
 *** Tags
 
@@ -1688,6 +1698,7 @@ Currently this fails!
 #+END_SRC
 
 It results in the following:
+
 #+BEGIN_EXAMPLE
 all-the-icons-fileicon: Unable to find icon with name ‘svelte’ in icon set ‘fileicon’
 #+END_EXAMPLE
@@ -3371,7 +3382,7 @@ Because =ielm= (inferior emacs lisp mode) is damn hard to remember, here's a
 simple shortcut.
 
 #+BEGIN_SRC emacs-lisp
-(defalias 'emacs-list-repl 'ielm)
+(defalias 'emacs-lisp-repl 'ielm)
 #+END_SRC
 
 Also consider:
