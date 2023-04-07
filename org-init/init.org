@@ -39,6 +39,8 @@ changes without corresponding change to this file.
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :lexical t :exports none
+(require 'subr-x) ;; builtin convenience functions.
+
 (defun progress (head &rest tail)
   "Debug messages used to show progress during startup.
 
@@ -172,6 +174,13 @@ symlink to my local Git repository.
 (add-to-list 'load-path (concat-path user-emacs-directory "lib/skj"))
 #+END_SRC
 
+This is a directory that contains links to packages outside the standard load path.
+For example packages still in development.
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'load-path (concat-path user-emacs-directory "llib"))
+#+END_SRC
+
 ** Personal Customization Group
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -253,7 +262,7 @@ it I don't have to worry about a function ignoring the tilde.
 #+END_SRC
 
 This sets my most common location, and while mostly used by calendaring and
-[[*Agenda]], I keep it here. Note the three required packages are all Emacs
+[[*Org Agenda]], I keep it here. Note the three required packages are all Emacs
 builtins.
 
 #+BEGIN_SRC emacs-lisp
@@ -400,14 +409,12 @@ Additional paths and locations that are really not feature-specific.
 [[https://brew.sh/][Homebrew]] is great, but just in case it isn't on the path, this helps a lot.
 
 #+BEGIN_SRC emacs-lisp
-(let ((brew (executable-find "brew")))
-  (if brew
-      (let ((prefix (string-trim (shell-command-to-string (concat brew " --prefix")))))
-        (when prefix
-          ;; Add the brew bin directory to the head of the path.
-          (exec-path-prepend (concat-path prefix "bin"))))
-    (message "WARN: no =brew= command found, go to https://brew.sh/")))
+(require 'homebrew) ;; local file
+
+(exec-path-prepend (homebrew-prefix/bin))
 #+END_SRC
+
+#+RESULTS:
 
 This is a weird one, can't remember why ...
 
@@ -456,8 +463,19 @@ necessarily "generic" unless you do all your work on Git for example.
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
+(use-package password-store)
+
+;; password-store-otp ?
+
+(use-package pass :after password-store)
+
+(use-package ivy-pass :after password-store)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
 (setq auth-sources
-      (list (concat-path user-emacs-directory "authinfo.gpg")))
+      (list '(password-store)
+            (concat-path user-emacs-directory "authinfo.gpg")))
 #+END_SRC
 
 ** Core UI Settings
@@ -494,6 +512,12 @@ to not use it for everything.
 #+BEGIN_SRC emacs-lisp
 (use-package iso-transl)
 #+END_SRC
+
+It is worth mentioning the ~set-input-method~ (=C-x RET=) function that allows for a number
+of input methods other than the usual keyboard changes. One useful tool is to
+set the input method to =TeX= which allows the use of character entities to
+be add by their TeX command names. Also, choose =sgml= for entering HTML
+entities. See [[*Org Entities]] later for an alternative tool
 
 *** Basic Editing Customization
 
@@ -753,6 +777,12 @@ Now enable modes using the icons above.
 (use-package major-mode-icons
   :if window-system
   :config (major-mode-icons-mode 1))
+#+END_SRC
+
+Add the fontawesome utility to allow search for icons. by name
+
+#+BEGIN_SRC emacs-lisp
+(use-package fontawesome :after ivy)
 #+END_SRC
 
 *** Mouse
@@ -1248,8 +1278,7 @@ And of course, more icons!
                 magit-completing-read-function 'ivy-completing-read))
 
 (use-package magit-lfs
-  :after magit
-  :pin melpa)
+  :after magit)
 #+END_SRC
 
 This package displays keyword entries from source code comments and Org files
@@ -1473,6 +1502,50 @@ The following are worth reading for more details and future ideas:
   (require 'org-mouse))
 #+END_SRC
 
+#+BEGIN_SRC emacs-lisp
+(defconst skj/org-column-headings
+  '((all-tags "%30ALLTAGS(All Tags)")
+    (blocked "%1BLOCKED()")
+    (category "%10CATEGORY(Category)")
+    (clock-sum "%10CLOCKSUM(Actual){:}")
+    (clock-sum-today "%10CLOCKSUM_T(Actual Day){:}")
+    (closed "%24CLOSED(Closed on)")
+    (deadline "%24DEADLINE(Deadline)")
+    (effort "%10EFFORT(Effort){:}")
+    (file "%15FILE")
+    (item "%45ITEM(Task)")
+    (priority "%1PRIORITY(!)")
+    (scheduled "%24SCHEDULED(Scheduled to Start)")
+    (tags-all "%20TAGS(Tags)")
+    (todo "%10TODO(State)")))
+
+(defconst skj/org-column-separator " ")
+
+(defun skj/make-org-column-view (columns &optional column-separator)
+  "Construct a column view heading string.
+
+The argument COLUMNS is a list of symbols where each symbol is a key to
+the alist in `skj/org-column-headings'. Any column symbol not
+found in `skj/org-column-headings' will be discarded and the
+resulting list of values combined with the value of COLUMN-SEPARATOR,
+or the default value in `skj/org-column-separator'."
+  (string-join
+   (mapcar
+    'car 
+    (seq-filter
+     (lambda (elt) (not (null elt)))
+     (mapcar
+      (lambda (column) (alist-get column skj/org-column-headings))
+      columns)))
+    (or column-separator skj/org-column-separator)))
+#+END_SRC
+
+Add the /official/ [[https://orgmode.org/worg/org-contrib/][contributed]] packages for =org-mode=.
+
+#+BEGIN_SRC emacs-lisp
+(use-package org-contrib :after org)
+#+END_SRC
+
 The only problem with hiding emphasis markers is that rich text becomes hard
 to edit because it is unclear whether your cursor is on the marker or the
 first or last character. The =org-appear= package helps by displaying the
@@ -1480,6 +1553,7 @@ markers while the cursor is on a rich text word.
 
 #+BEGIN_SRC emacs-lisp
 (use-package org-appear
+  :after org
   :hook (org-mode . org-appear-mode))
 #+END_SRC
 
@@ -1497,15 +1571,8 @@ Set the default column view for all files.
 
 #+BEGIN_SRC emacs-lisp
 (setq org-columns-default-format
-      (string-join '("%45ITEM(Task)"
-                     "%10TODO(State)"
-                     "%1PRIORITY(!)"
-                     "%1BLOCKED()"
-                     "%20ALLTAGS(All Tags)"
-                     "%20SCHEDULED(Start)"
-                     "%20DEADLINE(Deadline)"
-                     "%8EFFORT(Effort){:}")
-                   " "))
+      (skj/make-org-column-view
+       '(item todo priority blocked tags-all scheduled deadline effort)))
 #+END_SRC
 
 The [[https://github.com/alphapapa/ts.el][ts]] package is a useful tool for a bunch of time related stuff in agenda
@@ -1524,7 +1591,7 @@ and more.
 A powerful [[https://github.com/alphapapa/org-ql][query language]] for org files.
 
 #+BEGIN_SRC emacs-lisp
-(use-package org-ql)
+(use-package org-ql :after org)
 #+END_SRC
 
 *** Priorities
@@ -1548,7 +1615,8 @@ interfaces use integers, chars, /and/ strings.
  org-default-priority ?C)
 #+END_SRC
 
-Use fancy icons for different priority levels.
+Use fancy icons for different priority levels, this hooks into org-agenda but
+could be used without.
 
 #+BEGIN_SRC emacs-lisp
 (use-package
@@ -1566,6 +1634,14 @@ Use fancy icons for different priority levels.
           (?C :foreground "grey" :weight light))))
 #+END_SRC
 
+*** Categories
+
+#+BEGIN_SRC emacs-lisp :exports none
+(progress l2-msg "Categories")
+#+END_SRC
+
+org-agenda-category-icon-alist
+
 *** Tags
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -1574,38 +1650,34 @@ Use fancy icons for different priority levels.
 
 #+BEGIN_SRC emacs-lisp
 (setq org-tag-alist
-      '((:startgrouptag)
-        ("generic")
-        (:grouptags)
-        ("idea" . ?i) ("call" . ?c) ("errand" . ?e) ("pay" . ?p) ("remind" . ?r)
-        (:endgrouptag)
-        
+      '((:startgroup)
+        ("idea" . ?i) ("call" . ?c) ("errand" . ?e) ("pay" . ?p) ("remind" . ?r) ("writing" . ?w)
+        (:endgroup)
+        ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
         (:startgrouptag)
-        ("home")
+        ("home" . ?H)
         (:grouptags)
-        ("fix") ("clean") ("garage") ("yard") ("family") ("friends")
-        ("finance") ("estate") ("pets")
+        ("fix" . ?f) ("clean" . ?l) ("garage" . ?g) ("yard" . ?y) ("family" . ?a) ("friends" . ?r)
+        ("finance" . ?$) ("estate" . ?#) ("pets" . ?t)
         (:endgrouptag)
-        
+        ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
         (:startgrouptag)
-        ("hobbies")
+        ("activities" . ?A)
         (:grouptags)
-        ("diving" . ?d) ("hacking" . ?h) ("music" . ?m) ("synth" . ?s) ("blogging" . ?b)
+        ("diving" . ?v) ("hacking" . ?h) ("music" . ?u) ("synth" . ?s) ("blogging" . ?b)
         (:endgrouptag)
-        
+        ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
         (:startgrouptag)
-        ("travel")
+        ("travel" . ?T)
         (:grouptags)
-        ("flight" . ?F) ("car" . ?C) ("train" . ?t) ("hotel" . ?s) ("event" . ?v)
-        ("outb" . ?>) ("inb" . ?<)
+        ("flight" . ?F) ("car" . ?C) ("train" . ?R) ("hotel" . ?O) ("event" . ?V)
         (:endgrouptag)
-        
+        ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
         (:startgrouptag)
-        ("work")
+        ("work" . ?W)
         (:grouptags)
-        ("coding" . ?o) ("meeting" . ?m) ("planning" . ?p) ("writing" . ?w)
-        ("business" . ?B) ("technical" . ?T) ("hr" . ?H)
-        ("l6" . ?6) ("l7" . ?7) ("l8" . ?8) ("l10" . ?0) ("l11" . ?1)
+        ("planning" . ?%) ("design" . ?^) ("coding" . ?!) ("meeting" . ??)
+        ("admin" . ?/) ("business" . ?B) ("technical" . ?T) ("hr" . ?H)
         (:endgrouptag)))
 #+END_SRC
 
@@ -1620,7 +1692,7 @@ It results in the following:
 all-the-icons-fileicon: Unable to find icon with name ‘svelte’ in icon set ‘fileicon’
 #+END_EXAMPLE
 
-*** Task Types (Keywords)
+*** Task Types (TODO)
 
 #+BEGIN_SRC emacs-lisp :exports none
 (progress l2-msg "Task Types (Keywords)")
@@ -1633,12 +1705,15 @@ record time AND comment, ! for just time
 (setq org-todo-keywords
       '(;; Simple reminders
         (sequence "NUDGE(g)" "|" "DONE(d!)")
+        ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
         ;; General to-do items
         (sequence "TODO(t)" "NEXT(n!)" "INPROGRESS(p!)" "WAIT(w@/!)" "|" "DONE(d!)" "CANCELED(c@)")
+        ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
         ;; Work-like task items
         (sequence "BACKLOG(b)" "PLAN(p!)" "READY(r!)" "ACTIVE(a@/!)" "REVIEW(v)" "WAIT(w@/!)" "HOLD(h)" "|" "DONE(d!)" "CANCELED(c@)")
+        ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
         ;; Appointment and Meeting tracking
-        (sequence "SCHEDULE(s/!)" "REQUESTED(r)" "BOOKED(b@/!)" "DEFERRED(f@/!)" "RESCHEDULE(e@/!)" "|" "DONE(d!)" "CANCELED(c@)")))
+        (sequence "MEETING(M)" "REQUESTED(R!)" "BOOKED(B@)" "DEFERRED(F@)" "RESCHEDULE(E@)" "|" "DONE(d@)" "CANCELED(c@)")))
 
 (setq-default org-enforce-todo-dependencies t)
 #+END_SRC
@@ -1660,6 +1735,23 @@ heading, and when it is changing from a TODO state to a DONE state.
   :config (org-edna-mode))
 #+END_SRC
 
+*** Expiration
+
+#+BEGIN_SRC emacs-lisp :exports none
+(progress l2-msg "Expiration")
+#+END_SRC
+
+This gives you a chance to get rid of old entries in your Org files by
+expiring them. The package is a part of =org-contrib=.
+
+#+BEGIN_SRC emacs-lisp
+(use-package org-contrib
+  :after org
+  :config
+  (require 'org-expiry)
+  (setq org-expiry-handler-function 'org-expiry-add-keyword))
+#+END_SRC
+
 *** Capture Templates
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -1667,19 +1759,81 @@ heading, and when it is changing from a TODO state to a DONE state.
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-(setq org-capture-templates
-      '(("t" "Todo" entry (file+headline org-default-notes-file "Inbox")
-         "* TODO %?\n%u\n%a\n" :clock-in t :clock-resume t)
-        ("m" "Meeting" entry (file+headline org-default-notes-file "Inbox")
-         "* MEETING with %? :MEETING:\n%t" :clock-in t :clock-resume t)
-        ("i" "Idea" entry (file+headline org-default-notes-file "Inbox")
-         "* %? :IDEA: \n%t" :clock-in t :clock-resume t)
-        ("n" "Next Task" entry (file+headline org-default-notes-file "Inbox")
-         "** NEXT %? \nDEADLINE: %t")
-        ("d" "Distraction" entry (file+headline
-                                  (concat org-directory "/distractions.org")
-                                  "Distractions")
-         "* %?\n%T")))
+(let ((deadline "DEADLINE: %^t\n")
+      (prop-id ":ID: %(org-id-new)")
+      (prop-created ":CREATED: %U")
+      (prop-level
+       ":LEVEL: %^{Level|Team|VP|SVP|STeam|Flagship}")
+      (prop-effort
+       ":EFFORT: %^{Effort|1h|0:15|0:30|1h|4h|1d|2d|1w|2w|1m|3m|6m|1y}")
+      (props (lambda (ps)
+               (format
+                ":PROPERTIES:\n%s:END:\n"
+                (if (null ps) "" (concat (string-join ps "\n") "\n"))))))
+    (setq org-capture-templates
+        (list
+         (list
+          "t" "Add a TODO entry"
+           'entry
+           '(file+headline org-default-notes-file "Task Inbox")
+           (concat "** TODO %?\n"
+                   (funcall props (list prop-created prop-id prop-effort)))
+           :clock-in t
+           :clock-resume t
+           :empty-lines-after 1)
+          ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+          (list
+           "n" "Add a task as NEXT"
+           'entry
+           '(file+headline org-default-notes-file "Task Inbox")
+           (concat "** NEXT %?\n"
+                   deadline
+                   (funcall props (list prop-created prop-id prop-effort)))
+           :empty-lines-after 1)
+          ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+          (list
+           "p" "Add a project"
+           'entry
+           '(file+headline org-default-notes-file "Task Inbox")
+           (concat "** %? [%] :project: \n"
+                   deadline
+                   (funcall props (list prop-created prop-id)))
+           :empty-lines-after 2
+           :refile-targets)
+          ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+          (list
+           "g" "Add a goal"
+           'entry
+           '(file+headline org-default-notes-file "Task Inbox")
+           (concat "** %? :goal: \n"
+                   deadline
+                   (funcall props (list prop-created prop-id prop-level)))
+           :empty-lines-after 1
+           :refile-targets)
+          ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+          (list
+           "a" "Annotate current task"
+           'plain
+           '(clock)
+           "- Note taken on %T \\\n  %?"
+           :empty-lines-after 1)
+          ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+          (list
+           "m" "Add a planned meeting"
+           'entry
+           '(file+headline org-default-notes-file "Meeting Requests")
+           (concat "** MEETING with %? :meeting: \n"
+                   deadline
+                   (funcall props (list prop-created)))
+           :empty-lines-after 1)
+          ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+          (list
+           "i" "A Random idea"
+           'entry
+           '(file+headline org-default-notes-file "Thoughts")
+           (concat "* %? :idea: \n"
+                   (funcall props (list prop-created)))
+           :empty-lines-after 1))))
 #+END_SRC
 
 *** Faces
@@ -1709,6 +1863,7 @@ to the magit status buffer.
 
 #+BEGIN_SRC emacs-lisp
 (use-package magit-org-todos
+  :after (magit org)
   :config
   (magit-org-todos-autoinsert))
 #+END_SRC
@@ -1725,38 +1880,71 @@ looks of plain lists and todo items.
 
 #+BEGIN_SRC emacs-lisp
 (use-package org-superstar
+  :after org
   :hook (org-mode . org-superstar-mode))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
 (use-package org-beautify-theme
+  :after org
   :if window-system)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-(use-package org-modern)
-#+END_SRC
-
-This package lets you "supercharge" your Org daily/weekly agenda. The idea is
-to group items into sections, rather than having them all in one big list.
-
-#+BEGIN_SRC emacs-lisp
-(use-package org-super-agenda)
+(use-package org-modern :after org)
 #+END_SRC
 
 This package presents helpful sidebars for Org buffers. Sidebars are
-customizable using [[*Org Query Language][org-ql]] queries and =org-super-agenda= grouping. To show the
-tree execute /=M-x org-sidebar-tree<RET>=/.
+customizable using [[*Org Query Language][org-ql]] queries and
+=org-super-agenda= grouping. To show the tree execute /=M-x
+org-sidebar-tree<RET>=/.
 
 #+BEGIN_SRC emacs-lisp
-(use-package org-sidebar)
+(use-package org-sidebar :after org)
 #+END_SRC
 
 Use /=C-c C-s=/ to use a relative time for schedule.
 
+=org-collector= collects headline properties into tables with optional
+pre-processing.
+
 #+BEGIN_SRC emacs-lisp :exports none
-;; (use-package orgbox)
+(use-package org-contrib
+  :after org
+  :config (require 'org-collector))
 #+END_SRC
+
+The =[[https://github.com/nobiot/org-transclusion][org-transclusion]]= package
+lets you insert a copy of text content via a file link or ID link within an
+Org file. It lets you have the same content present in different buffers at
+the same time without copy-and-pasting it.
+
+#+BEGIN_SRC emacs-lisp :exports none
+(use-package org-transclusion :after org)
+#+END_SRC
+
+Package =[[https://github.com/eliascotto/accent][accent]]= shows a popup with
+accented characters based on the current letter under the cursor. Based on the
+MacOS features for adding accented letters with a long keypress.
+
+#+BEGIN_SRC emacs-lisp :exports none
+(use-package accent
+  :config
+  (global-set-key (kbd "C-x C-a") 'accent-menu)
+  (setq accent-position 'after))
+#+END_SRC
+
+*** Org Entities
+
+#+BEGIN_SRC emacs-lisp :exports none
+(progress l2-msg "Org Entities")
+#+END_SRC
+
+The =org-entities= package included in Org Mode allows for entering character
+entries in TeX-like form, so =\approx= becomes =≈=. You can toggle the display
+between the entered form and the display form with
+~org-toggle-pretty-entities~ (=C-c C-x \=). Additionally, ~org-entities-help~ will
+show a table of supported entities. 
 
 *** Notifications
 
@@ -1769,6 +1957,7 @@ the =alert= package configured in [[#core-ui-notifications]] above.
 
 #+BEGIN_SRC emacs-lisp
 (use-package org-alert
+  :after org
   :config (setq org-alert-interval 300
                 org-alert-notify-cutoff 10
                 org-alert-notify-after-event-cutoff 10
@@ -1783,14 +1972,67 @@ the =alert= package configured in [[#core-ui-notifications]] above.
 
 #+BEGIN_SRC emacs-lisp
 (use-package org-bullets
+  :after org
   :config
   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 #+END_SRC
 
-** Agenda
+*** References
 
 #+BEGIN_SRC emacs-lisp :exports none
-(setq l2-msg (progress l1-msg "Agenda"))
+(progress l2-msg "References")
+#+END_SRC
+
+This adds [[https://github.com/jkitchin/org-ref][org-ref]] for citations and references, along with the nice
+[[https://github.com/alezost/org-ref-prettify.el][org-ref-prettify]].
+
+#+BEGIN_SRC emacs-lisp
+(use-package org-ref :after org)
+
+(use-package org-ref-prettify
+  :after org-ref
+  :hook (org-mode . org-ref-prettify-mode))
+#+END_SRC
+
+*** Completion Integration
+
+#+BEGIN_SRC emacs-lisp :exports none
+(progress l2-msg "Completion Integration")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package company-org-block
+  :after (company org)
+  :config
+  ;; style: 'auto, 'prompt, or 'inline
+  (setq company-org-block-edit-style 'auto)
+  (add-hook 'org-mode-hook
+            (lambda ()
+              (add-to-list (make-local-variable 'company-backends)
+                           'company-org-block))))
+
+(use-package org-ivy-search
+  :after (org ivy)
+  :bind ("C-c o" . org-ivy-search-view))
+
+(use-package ivy-todo
+  :after (org ivy)
+  :bind ("C-c t" . ivy-todo)
+  :commands ivy-todo
+  :config (setq ivy-todo-default-tags '("PROJECT")))
+#+END_SRC
+
+The following is installed by =org-ref= we just pull it in here.
+
+#+BEGIN_SRC emacs-lisp
+(require 'org-ref)
+(require 'org-ref-ivy)
+#+END_SRC
+
+** Org Agenda
+
+#+BEGIN_SRC emacs-lisp :exports none
+(setq l2-msg (progress l1-msg "Org Agenda"))
 #+END_SRC
 
 Set basic things for Agenda management. Note that we don't append to the list
@@ -1816,19 +2058,33 @@ Because opening the agenda has a tendency to "mess up" window layout...
       org-agenda-restore-windows-after-quit t)
 #+END_SRC
 
-Useful extras. Specifically the property package can be customized with
-~org-agenda-property-list~ and ~org-agenda-property-position~.
+The [[https://github.com/Malabarba/org-agenda-property][property package]] can be customized with ~org-agenda-property-list~ and
+~org-agenda-property-position~.
 
 #+BEGIN_SRC emacs-lisp
 (use-package org-agenda-property)
+#+END_SRC
 
-(use-package org-super-agenda)
+This [[https://github.com/alphapapa/org-super-agenda][package]] lets you "supercharge" your Org daily/weekly agenda. The idea is
+to group items into sections, rather than having them all in one big list.
+
+#+BEGIN_SRC emacs-lisp
+(use-package org-super-agenda :after org)
 #+END_SRC
 
 *** Custom Views
 
 #+BEGIN_SRC emacs-lisp :exports none
 (progress l2-msg "Custom Views")
+#+END_SRC
+
+Set a sensible default column view for all agenda views.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-columns-default-format-for-agenda
+      (skj/make-org-column-view
+       '(item todo priority blocked tags-all
+              scheduled deadline effort clock-sum clock-sum-today)))
 #+END_SRC
 
 This is useful for filtering by priority, when not using tag queries.
@@ -1849,18 +2105,24 @@ Set up some useful Agenda views.
 
 #+BEGIN_SRC emacs-lisp
 (setq org-agenda-custom-commands
-      '(("c" "TODO closed last week"
-         tags "TODO=\"DONE\"&CLOSED>=\"<-1w>\""
+      '(("c"
+         "TODO closed last week"
+         tags "CLOSED>=\"<-1w>\"&+TODO=\"DONE\"|+TODO=\"CANCELED\""
          ((org-agenda-overriding-header "TODO Closed last week:")
           (org-agenda-sorting-strategy '(priority-down effort-down))
-          (org-agenda-overriding-columns-format "%45ITEM(Task) %1PRIORITY(!) %23SCHEDULED(Scheduled to Start) %22DEADLINE(Deadline) %22CLOSED(Closed on) %30ALLTAGS(All Tags)")
+          (org-agenda-overriding-columns-format
+           (skj/make-org-column-view
+            '(item priority scheduled deadline closed tags-all)))
           (org-agenda-view-columns-initially t)))
+        ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
         ("d"
          "Daily agenda review"
-         ((tags "PRIORITY=\"A\"-TODO=\"DONE\""
+         ((tags "+PRIORITY=\"A\"&-TODO=\"DONE\"|-TODO=\"CANCELED\""
            ((org-agenda-overriding-header "High-priority unfinished tasks:")
             (org-agenda-sorting-strategy '(todo-state-down effort-up))))
+          ;; --=--=--=--=--=--=--=--=--=--=
           (agenda "")
+          ;; --=--=--=--=--=--=--=--=--=--=
           (alltodo ""
            ((org-agenda-skip-function
              '(or (skj/org-skip-subtree-if-priority ?A)
@@ -1868,21 +2130,6 @@ Set up some useful Agenda views.
             (org-agenda-sorting-strategy '(priority-down todo-state-down effort-up)))))
          nil
          ("~/daily-agenda.html"))))
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
-(setq org-columns-default-format-for-agenda
-      (string-join '("%45ITEM(Task)"
-                     "%10TODO(State)"
-                     "%1PRIORITY(!)"
-                     "%1BLOCKED()"
-                     "%30ALLTAGS(All Tags)"
-                     "%23SCHEDULED(Scheduled to Start)"
-                     "%22DEADLINE(Deadline)"
-                     "%10EFFORT(Effort){:}"
-                     "%10CLOCKSUM(Actual){:}"
-                     "%10CLOCKSUM(Actual/T){:}")
-                   " "))
 #+END_SRC
 
 *** Run on Idle
@@ -1897,6 +2144,7 @@ back to work.
 
 #+BEGIN_SRC emacs-lisp
 (use-package idle-org-agenda
+  :after org
   :config
   (idle-org-agenda-mode))
 #+END_SRC
@@ -1931,6 +2179,7 @@ Active notifications are shown every 3 minute, inactive every 3
 
 #+BEGIN_SRC emacs-lisp
 (use-package org-habit-stats
+  :after org
   :config (setq org-habit-following-days 7
                 org-habit-graph-column 60
                 org-habit-preceding-days 28
@@ -2001,6 +2250,7 @@ Now setup the client.
 
 #+BEGIN_SRC emacs-lisp
 (use-package org-gcal
+  :after org
   :config
   (setq org-gcal-fetch-file-alist (list (cons skj/primary-email
                                               skj/org-gcal-file))
@@ -2065,21 +2315,97 @@ Run during startup so that appointments are rebuilt.
 (setq l2-msg (progress l1-msg "Babel"))
 #+END_SRC
 
+This function is useful as we want to always add to the list of babel
+languages, but also it's nice to be able to pass a single value rather
+than a list in all cases.
+
+#+BEGIN_SRC emacs-lisp
+(defun skj/org-babel-load-languages (languages)
+  "Add language to babel and load.
+
+Add LANGUAGES to `'org-babel-load-languages' where LANGUAGES may
+be one of the following:
+
+1. a single symbol,
+1. a pair with a symbol and a value to denote the enable
+   state of the language,
+1. or a list where each element is one of the two above.
+
+Finally, the `org-babel-do-load-languages' is called with the
+normalized values of LANGUAGES."
+  (if (symbolp languages)
+      (add-to-list 'org-babel-load-languages (cons languages t))
+    (dolist (lang-pair languages)
+      (let ((language (cond
+                       ((symbolp lang-pair)
+                        (cons lang-pair t))
+                       ((and (consp lang-pair) (symbolp (car lang-pair)) (booleanp (cdr lang-pair)))
+                        lang-pair)
+                       (t (error "Invalid value for language: %s" lang-pair)))))
+        (add-to-list 'org-babel-load-languages language))))
+  (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages))
+#+END_SRC
+
 Load common builtin languages, also always redisplay images after =C-c C-c.=
 
 #+BEGIN_SRC emacs-lisp
-(use-package org
-  :config
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((emacs-lisp . t)
-     (shell . t)))
-  (add-hook 'org-babel-after-execute-hook 'org-display-inline-images 'append))
+(require 'ob) ;; built into org
+#+END_SRC
+
+Enable these built-in languages. These do not have their own sections as they
+do not have any specific configuration.
+
+- [[https://orgmode.org/worg/org-contrib/babel/languages/ob-doc-elisp.html][Emacs Lisp]] ...
+- [[https://orgmode.org/worg/org-contrib/babel/languages/ob-doc-sqlite.html][sqlite]] is a software library that implements a self-contained, serverless,
+  zero-configuration, transactional SQL database engine.
+- Org Babel works with several text based [[https://orgmode.org/worg/org-contrib/babel/languages/ob-doc-shell.html][shells]].
+
+#+BEGIN_SRC emacs-lisp
+(skj/org-babel-load-languages '(emacs-lisp sqlite shell))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-;;(use-package ob-latex-as-png)
+(add-hook 'org-babel-after-execute-hook 'org-display-inline-images 'append)
 #+END_SRC
+
+*** JavaScript
+
+#+BEGIN_SRC emacs-lisp :exports none
+(progress l2-msg "JavaScript")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(require 'ob-js)
+
+(skj/org-babel-load-languages 'js)
+
+(add-to-list 'org-babel-tangle-lang-exts '("js" . "js"))
+#+END_SRC
+
+*** ditaa
+
+#+BEGIN_SRC emacs-lisp :exports none
+(progress l2-msg "ditaa")
+#+END_SRC
+
+DIagrams Through Ascii Art ([[https://ditaa.sourceforge.net/][ditaa]], [[https://orgmode.org/worg/org-contrib/babel/languages/ob-doc-ditaa.html][ob-ditaa]]) is a command-line utility that converts
+diagrams drawn using ASCII art into bitmap graphics.
+
+#+BEGIN_SRC emacs-lisp
+(skj/org-babel-load-languages 'ditaa)
+(setq org-ditaa-jar-path "/opt/homebrew/opt/ditaa/libexec/ditaa-0.11.0-standalone.jar")
+#+END_SRC
+
+Use =artist-mode= when drawing diagrams in ditaa.
+
+#+BEGIN_SRC emacs-lisp
+(executable-required
+ "ditaa"
+ "brew install ditaa"
+ "required by package `ob-ditaa'")
+#+END_SRC
+
+(let ((prefix (string-trim (shell-command-to-string (concat brew " --prefix ditaa")))))
 
 *** GNUPlot
 
@@ -2087,13 +2413,13 @@ Load common builtin languages, also always redisplay images after =C-c C-c.=
 (progress l2-msg "GNUPlot")
 #+END_SRC
 
+Enable the builtin [[https://orgmode.org/worg/org-contrib/babel/languages/ob-doc-gnuplot.html][gnuplot babel]] support after adding the editing mode.
+
 #+BEGIN_SRC emacs-lisp
 (use-package gnuplot
   :mode ("\\.gp$" . gnuplot-mode)
   :config
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((gnuplot . t))))
+  (skj/org-babel-load-languages 'gnuplot))
 #+END_SRC
 
 *** GraphViz
@@ -2102,15 +2428,14 @@ Load common builtin languages, also always redisplay images after =C-c C-c.=
 (progress l2-msg "GraphViz")
 #+END_SRC
 
+Enable the builtin [[https://orgmode.org/worg/org-contrib/babel/languages/ob-doc-dot.html][dot babel]] support after adding the editing mode.
+
 #+BEGIN_SRC emacs-lisp
 (use-package graphviz-dot-mode
-  :hook (org-babel-after-execute . org-display-inline-images)
   :config
   (unless (version<= emacs-version "26")
     (setq graphviz-dot-indent-width tab-width))
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((dot . t))))
+(skj/org-babel-load-languages 'dot))
 
 (executable-required
  "dot"
@@ -2124,14 +2449,13 @@ Load common builtin languages, also always redisplay images after =C-c C-c.=
 (progress l2-msg "PlantUML")
 #+END_SRC
 
+Enable the builtin [[https://orgmode.org/worg/org-contrib/babel/languages/ob-doc-plantuml.html][PlantUML babel]] support after adding the editing mode.
 Configuring this to use the =plantuml= executable.
 
 #+BEGIN_SRC emacs-lisp
 (use-package plantuml-mode           
   :config (setq plantuml-default-exec-mode 'executable)
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((plantuml . t))))
+  (skj/org-babel-load-languages 'plantuml))
 
 (executable-required
  "plantuml"
@@ -2147,23 +2471,6 @@ Configuring this to use the =plantuml= executable.
 
 #+BEGIN_SRC emacs-lisp :exports none
 (setq l2-msg (progress l1-msg "Other Stuff"))
-#+END_SRC
-
-*** References
-
-#+BEGIN_SRC emacs-lisp :exports none
-(progress l2-msg "References")
-#+END_SRC
-
-This adds [[https://github.com/jkitchin/org-ref][org-ref]] for citations and references, along with the nice
-[[https://github.com/alezost/org-ref-prettify.el][org-ref-prettify]].
-
-#+BEGIN_SRC emacs-lisp
-(use-package org-ref)
-
-(use-package org-ref-prettify
-  :after org-ref
-  :hook (org-mode . org-ref-prettify-mode))
 #+END_SRC
 
 *** Exporting
@@ -2211,40 +2518,47 @@ Save Org buffers after refiling.
 (advice-add 'org-refile :after 'org-save-all-org-buffers)
 #+END_SRC
 
-*** Completion Integration
+*** Progress Reporting
 
 #+BEGIN_SRC emacs-lisp :exports none
-(progress l2-msg "Completion Integration")
+(progress l2-msg "Progress Reporting")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-(use-package company-org-block
-  :config
-  ;; style: 'auto, 'prompt, or 'inline
-  (setq company-org-block-edit-style 'auto)
-  (add-hook 'org-mode-hook
-            (lambda ()
-              (add-to-list (make-local-variable 'company-backends)
-                           'company-org-block))))
+(defun skj/org-dashboard-filter (entry)
+  (and (> (plist-get entry :progress-percent) 0)
+       (< (plist-get entry :progress-percent) 100)
+       (not (member "archive" (plist-get entry :tags)))))
 
-(use-package org-ivy-search
-  :after (org ivy)
-  :bind ("C-c o" . org-ivy-search-view))
-
-(use-package ivy-todo
-  :after (org ivy)
-  :bind ("C-c t" . ivy-todo)
-  :commands ivy-todo
-  :config (setq ivy-todo-default-tags '("PROJECT")))
+(use-package org-dashboard
+  :config (setq org-expiry-add-keyword t
+                org-dashboard-filter 'skj/org-dashboard-filter))
 #+END_SRC
 
-The following is installed by =org-ref= we just pull it in here.
+Might also consider:
 
-#+BEGIN_SRC emacs-lisp
-(require 'org-ref)
-(require 'org-ref-ivy)
+- =[[https://github.com/gizmomogwai/org-kanban][org-kanban]]=
+- =[[https://github.com/ianxm/emacs-scrum][org-scrum]]=
+- =[[orgtbl-ascii-plot]]= -- support for histograms within tables.
+- =[[https://github.com/tbanel/orgaggregate/blob/master/README.org][orgtbl-aggregate]]=
+  -- aggregating a table is creating a new table by computing sums, averages,
+  and so on, out of material from the first table.
+
+*** Extending Org Mode
+
+#+BEGIN_SRC emacs-lisp :exports none
+(progress l2-msg "Extending Org Mode")
 #+END_SRC
 
+Flexible extensions
+
+- =[[https://github.com/gizmomogwai/org-tagged][org-tagged]]=
+  
+Consider the following for writing extensions:
+
+- =[[https://hg.sr.ht/~zck/org-parser][org-parser]]=
+- =[[http://alhassy.com/org-special-block-extras/][org-special-block-extras]]=
+  
 ** Key Bindings
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -2551,6 +2865,19 @@ Automatically toggle Org mode LaTeX fragment previews as the cursor enters and e
 #+BEGIN_SRC emacs-lisp
 (use-package org-fragtog
   :hook (org-mode))
+#+END_SRC
+
+** RFC Reader
+
+#+BEGIN_SRC emacs-lisp :exports none
+(setq l2-msg (progress l1-msg "RFC Editing"))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package rfc-mode
+  :commands (rfc-mode-browse rfc-mode-read)
+  :config
+  (setq rfc-mode-directory (expand-file-name "~/Documents/rfc/")))
 #+END_SRC
 
 ** Spell and Style Checking
@@ -2956,6 +3283,30 @@ functionality offered by =lsp-mode=.
 (use-package coverlay)
 #+END_SRC
 
+- =toggle-test=
+
+*** REST Client
+
+#+BEGIN_SRC emacs-lisp :exports none
+(progress l2-msg "REST Client")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package restclient)
+
+(use-package company-restclient
+  :after restclient
+  :config (add-to-list 'company-backends 'company-restclient))
+
+(use-package restclient-test :after restclient)
+
+(use-package ob-restclient
+  :after (org restclient)
+  :config (skj/org-babel-load-languages '(restclient)))
+#+END_SRC
+
+- =soap-client=
+
 ** Data Formats
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -2985,6 +3336,20 @@ functionality offered by =lsp-mode=.
 (setq l2-msg (progress l1-msg "Language Environments"))
 #+END_SRC
 
+- =[[https://github.com/Wilfred/emacs-refactor][emr]]= -- Emacs refactoring
+  
+*** BNF-like
+
+#+BEGIN_SRC emacs-lisp :exports none
+(progress l2-msg "BNF-like")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package bnf-mode)
+
+(use-package ebnf-mode)
+#+END_SRC
+
 *** Emacs Lisp
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -2994,12 +3359,31 @@ functionality offered by =lsp-mode=.
 #+BEGIN_SRC emacs-lisp
 (use-package package-lint)
 
-(use-package flycheck-package)
+(use-package flycheck-package
+  :after (flycheck package-lint))
 
 (require 'checkdoc) ;; builtin
 
 (add-hook 'emacs-lisp-mode-hook 'checkdoc-minor-mode)
 #+END_SRC
+
+Because =ielm= (inferior emacs lisp mode) is damn hard to remember, here's a
+simple shortcut.
+
+#+BEGIN_SRC emacs-lisp
+(defalias 'emacs-list-repl 'ielm)
+#+END_SRC
+
+Also consider:
+
+- ERT -- Emacs Lisp Regression Testing, builtin (add =ert-expectations=,
+  =ert-junit=, and  =ert-modeline=).
+- =[[https://github.com/jorgenschaefer/emacs-buttercup][buttercup]]= -- BDD for
+  Emacs Lisp, along with
+  =[[https://bitbucket.org/olanilsson/buttercup-junit/src/master/][buttercup-junit]]=
+  for reporting.
+- =undercover=
+- =[[https://github.com/ecukes/ecukes][ecukes]] -- Cucumber for Emacs.
 
 *** Common Lisp
 
@@ -3201,6 +3585,21 @@ Org-Babel Integration
   :config (flycheck-pest-setup))
 #+END_SRC
 
+*** Ocaml
+
+#+BEGIN_SRC emacs-lisp :exports none
+(progress l2-msg "Ocaml")
+#+END_SRC
+
+- =dune-format=
+- =flycheck-ocaml=
+- =learn-ocaml=
+- =merlin=
+- =ocamlformat=
+- =opam-switch-mode=
+- =tuareg=
+- =utop=
+  
 *** SQL Stuff
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -3376,9 +3775,7 @@ SPARQL mode, including =org-mode= blocks.
 (use-package sparql-mode
   :mode (("\\.sparql\\'" . sparql-mode)
          ("\\.rq\\'" . sparql-mode))
-  :config (org-babel-do-load-languages
-           'org-babel-load-languages
-           '((sparql . t))))
+  :config (skj/org-babel-load-languages '(sparql)))
 #+END_SRC
 
 *** Proof Assistants
@@ -3389,13 +3786,14 @@ SPARQL mode, including =org-mode= blocks.
 
 [[https://proofgeneral.github.io/][Proof General]] is a generic Emacs interface for proof assistants (also known as
 interactive theorem provers). It is supplied ready to use for the proof
-assistants [[https://coq.inria.fr/][Coq]], EasyCrypt, qrhl, and PhoX.
+assistants [[https://coq.inria.fr/][Coq]], EasyCrypt, qrhl, and PhoX. This package provides =coq-mode=
+referenced in the sections following.
 
 #+BEGIN_SRC emacs-lisp
 (use-package proof-general)
 #+END_SRC
 
-Emacs commeting support tools for Coq proof assistance
+Emacs commenting support tools for Coq proof assistance
 
 #+BEGIN_SRC emacs-lisp
 (use-package coq-commenter
@@ -3413,6 +3811,25 @@ This package includes a collection of =company-mode= back-ends for
 #+BEGIN_SRC emacs-lisp
 (use-package company-coq
   :hook (coq-mode))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package org-contrib
+  :after org
+  :config
+  (require 'ob-coq)
+  (skj/org-babel-load-languages 'coq))
+#+END_SRC
+
+The =boogie-friends= package is an experimental collection of Emacs modes for
+writing verified programs in z3 and languages of the Boogie family (including
+Dafny).
+
+#+BEGIN_SRC emacs-lisp
+(use-package boogie-friends
+  :mode
+  ("\\.smt2\\'" . z3-smt2-mode)
+  ("\\.dfy\\'" . dafny-mode))
 #+END_SRC
 
 ** AWS Integration
