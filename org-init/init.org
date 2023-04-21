@@ -12,7 +12,7 @@ on the value of =debug-on-error= but can easily be overridden and set/unset
 explicitly.
 
 #+BEGIN_SRC emacs-lisp
-(defvar skj/debug-init t;;(and (boundp debug-on-error) debug-on-error)
+(defvar skj/debug-init (and (boundp debug-on-error) debug-on-error)
   "Do I want to debug the init process?")
 
 (defun init-message (message &rest args)
@@ -378,7 +378,7 @@ it I don't have to worry about a function ignoring the tilde.
 #+END_SRC
 
 This sets my most common location, and while mostly used by calendaring and
-[[*Org Agenda]], I keep it here. Note the three required packages are all Emacs
+[[*Agenda]], I keep it here. Note the three required packages are all Emacs
 builtins.
 
 #+BEGIN_SRC emacs-lisp
@@ -804,10 +804,10 @@ to not use it for everything.
 #+END_SRC
 
 Loading this package defines three ways of entering the non-ASCII
-printable characters with codes above 127: the prefix C-x 8, or the
-Alt key, or a dead accent key.  For example, you can enter uppercase
-A-umlaut as `C-x 8 " A' or `Alt-" A' (if you have an Alt key) or
-`umlaut A' (if you have an umlaut/diaeresis key).
+printable characters with codes above 127: the prefix =C-x 8=, or the
+Alt key, or a dead accent key.For example, you can enter uppercase
+=A-umlaut= as =C-x 8 " A= *or* =Alt-" A= (if you have an Alt key) *or*
+=umlaut A= (if you have an umlaut/diaeresis key).
 
 #+BEGIN_SRC emacs-lisp
 (use-package iso-transl
@@ -819,7 +819,7 @@ It is worth mentioning the ~set-input-method~ (=C-x RET=) function that allows f
 a number of input methods other than the usual keyboard changes. One useful
 tool is to set the input method to =TeX= which allows the use of character
 entities to be add by their TeX command names. Also, choose =sgml= for entering
-HTML entities. See [[*Org Entities]] later for an alternative tool
+HTML entities. See [[org-entities]] later for an alternative tool
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'encoding)
@@ -935,7 +935,8 @@ awesome, try it out.
 (skj/feature-start 'faces "Default Faces")
 #+END_SRC
 
-These are useful things to have around.
+These are useful things to have around, specifically it's valuable to track
+the base font details. For development I always use [[https://fonts.google.com/specimen/Fira+Code][Fira Code]].
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
@@ -1109,8 +1110,8 @@ packages are builtin.
     (column-number-mode t)))
 #+END_SRC
 
-For battery mode, simplify the usual and use icons, it makes it easier to
-find.
+For battery mode, simplify the usual and use Unicode characters as icons, it
+makes it easier to find.
 
 #+BEGIN_SRC emacs-lisp
 (use-package battery
@@ -1138,8 +1139,7 @@ find.
 (skj/feature-start 'hydra)
 #+END_SRC
 
-I like to keep this pretty simple, certainly no powerline!. Both of these
-packages are builtin.
+Just started with [[https://github.com/abo-abo/hydra][Hydra]], so there are hydra defined in sections below.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
@@ -1365,7 +1365,7 @@ Set fringes to appear only on the left-hand side.
 
 Using multiple side-by-side windows is a great way to utilize the
 large high-resolution displays that exists today. This [[https://github.com/Lindydancer/multicolumn][package]]
-provides the "missing features" of Emacs to create a side-by-side
+provides the /missing features/ of Emacs to create a side-by-side
 layout, to navigate efficiently, and to manage the windows.
 
 #+BEGIN_SRC emacs-lisp
@@ -1423,13 +1423,7 @@ The guidance is to do all this /before/ installing the [[https://github.com/abo-
     :config (all-the-icons-ivy-setup))
 
   (use-package all-the-icons-ivy-rich
-    :init (all-the-icons-ivy-rich-mode 1)))
-#+END_SRC
-
-Do these *before* ivy.
-
-#+BEGIN_SRC emacs-lisp
-(when (skj/current-feature-required-p)
+    :init (all-the-icons-ivy-rich-mode 1))
   
   (use-package historian)
 
@@ -1439,37 +1433,33 @@ Do these *before* ivy.
     :config (ivy-historian-mode +1)))
 #+END_SRC
 
-Ivy-resume (resumes the last Ivy-based completion) and other commands.
+Here's Ivy itself.
 
 #+BEGIN_SRC emacs-lisp
-(use-package ivy
-  :if (skj/current-feature-required-p)
-  :defer 1
-  :diminish ivy-mode
-  :config
-  (setq enable-recursive-minibuffers t
-        ivy-count-format "(%d/%d) "
-        ivy-use-virtual-buffers t)
-  (global-set-key (kbd "C-c v") 'ivy-push-view)
-  (global-set-key (kbd "C-c V") 'ivy-pop-view)
-  (global-set-key (kbd "C-c C-r") 'ivy-resume)
-  (global-set-key (kbd "C-x b") 'ivy-switch-buffer)
-  (ivy-mode 1))
+(when (skj/current-feature-required-p)
+  
+  (use-package ivy
+    :defer 1
+    :diminish ivy-mode
+    :config
+    (setq enable-recursive-minibuffers t
+          ivy-count-format "(%d/%d) "
+          ivy-use-virtual-buffers t)
+    (global-set-key (kbd "C-c v") 'ivy-push-view)
+    (global-set-key (kbd "C-c V") 'ivy-pop-view)
+    (global-set-key (kbd "C-c C-r") 'ivy-resume)
+    (global-set-key (kbd "C-x b") 'ivy-switch-buffer)
+    (ivy-mode 1))
+
+  (use-package swiper
+    :ensure nil
+    :defer 1
+    :after ivy
+    :config
+    (global-set-key (kbd "C-s") 'swiper-isearch)))
 #+END_SRC
 
-Swiper is a part of Ivy.
-
-#+BEGIN_SRC emacs-lisp
-(use-package swiper
-  :ensure nil
-  :defer 1
-  ;;:if (skj/current-feature-required-p)
-  :after ivy
-  :config
-  (global-set-key (kbd "C-s") 'swiper-isearch))
-#+END_SRC
-
-Do these *after* ivy, but right now do not activate them.
+Do these *after* Ivy.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
@@ -1478,9 +1468,6 @@ Do these *after* ivy, but right now do not activate them.
     :ensure nil
     :after (ivy hydra))
   
-  (use-package ivy-file-preview :after ivy)
-  ;;  :config (ivy-file-preview-mode 1))
-
   (use-package ivy-rich
     :after ivy
     :pin melpa
@@ -1546,6 +1533,7 @@ Counsel interface for [[https://github.com/sharkdp/fd][fd]]. If you have =fd= in
 #+BEGIN_SRC emacs-lisp
 (use-package counsel-fd
   :if (skj/current-feature-required-p)
+  :defer 2
   :ensure-system-package fd
   :after counsel)
 #+END_SRC
@@ -1563,6 +1551,7 @@ comfort of Emacs and ivy.
   
   (use-package counsel-web
     :after counsel
+    :defer 2
     :config
     (setq counsel-web-engine 'google
           counsel-web-search-action #'browse-url
@@ -1590,14 +1579,14 @@ comfort of Emacs and ivy.
 #+END_SRC
 
 [[https://company-mode.github.io/][Company]] is a text completion framework for Emacs. The name stands for
-"complete anything". It uses pluggable back-ends and front-ends to
+/complete anything/. It uses pluggable back-ends and front-ends to
 retrieve and display completion candidate.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
   
   (use-package company
-    :defer1
+    :defer 1
     :hook (after-init . global-company-mode)
     :config
     (setq company-files-exclusions '(".git/" ".DS_Store")
@@ -1719,7 +1708,7 @@ Install the base [[https://www.flycheck.org/en/latest/][Flycheck]] package, and 
     (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *")))
 #+END_SRC
 
-Emacs-libvterm, =/vterm/=, is fully-fledged terminal emulator inside GNU Emacs
+Emacs-libvterm, =vterm=, is fully-fledged terminal emulator inside GNU Emacs
 based on libvterm, a C library. As a result of using compiled code (instead of
 elisp), emacs-libvterm is fully capable, fast, and it can seamlessly handle
 large outputs.
@@ -1774,22 +1763,53 @@ large outputs.
 (skj/feature-start 'git)
 #+END_SRC
 
+Git support is entirely built into Emacs, so this section adds additional
+tools.
+
+Package =mo-git-blame= -- An interactive, interative /git blame/ mode for Emacs.
+
 #+BEGIN_SRC emacs-lisp
-(when (skj/current-feature-required-p)
-  (use-package mo-git-blame
-    :config
-    (global-set-key [?\C-c ?g ?c] 'mo-git-blame-current)
-    (global-set-key [?\C-c ?g ?f] 'mo-git-blame-file))
+(use-package mo-git-blame
+  :if (skj/current-feature-required-p)
+  :config
+  (global-set-key [?\C-c ?g ?c] 'mo-git-blame-current)
+  (global-set-key [?\C-c ?g ?f] 'mo-git-blame-file))
+#+END_SRC
 
-  (use-package git-commit-insert-issue
-    :hook (git-commit-mode))
+Package =git-commit-insert-issue= -- In a magit commit buffer, I want to complete the
+issue when I type “Fixes #”. This actaully works with any other keyword
+supported by Github: =close closes closed fix fixes fixed resolve resolves
+resolved=
+    
+#+BEGIN_SRC emacs-lisp
+(use-package git-commit-insert-issue
+  :if (skj/current-feature-required-p)
+  :hook (git-commit-mode))
+#+END_SRC
 
-  (use-package git-link)
+Package =git-link= -- Interactive Emacs functions that create URLs for files and
+commits in GitHub/Bitbucket/GitLab/... repositories.
+  
+#+BEGIN_SRC emacs-lisp
+(use-package git-link :if (skj/current-feature-required-p))
+#+END_SRC
 
-  (use-package git-timemachine
-    :config (setq git-timemachine-show-minibuffer-details t))
+Package =git-timemachine= -- Walk through git revisions of a file. Visit a
+git-controlled file and issue =M-x git-timemachine= (or bind it to a keybinding
+of your choice). If you just need to toggle the time machine you can use =M-x
+git-timemachine-toggle=.
+  
+#+BEGIN_SRC emacs-lisp
+(use-package git-timemachine
+  :if (skj/current-feature-required-p)
+  :config (setq git-timemachine-show-minibuffer-details t))
+#+END_SRC
 
-  (use-package git-modes))
+Package =git-modes= -- Emacs major modes for various Git configuration files:
+=gitattributes-mode=, =gitconfig-mode=, and =gitconfig-mode=.
+
+#+BEGIN_SRC emacs-lisp
+(use-package git-modes :if (skj/current-feature-required-p))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -1800,6 +1820,15 @@ large outputs.
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-start 'magit)
 #+END_SRC
+
+Magit is a complete text-based user interface to Git. It fills the glaring gap
+between the Git command-line interface and various GUIs, letting you perform
+trivial as well as elaborate version control tasks with just a couple of
+mnemonic key presses. Magit looks like a prettified version of what you get
+after running a few Git commands but in Magit every bit of visible information
+is also actionable to an extent that goes far beyond what any Git GUI provides
+and it takes care of automatically refreshing this output when it becomes
+outdated.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
@@ -1813,7 +1842,7 @@ large outputs.
 
 This package displays keyword entries from source code comments and Org files
 in the Magit status buffer.  Activating an item jumps to it in its file.  By
-default, it uses keywords from -hl-todo-, minus a few (like "NOTE").
+default, it uses keywords from =hl-todo=, minus a few (like "NOTE").
 
 #+BEGIN_SRC emacs-lisp
 (use-package magit-todos
@@ -1978,7 +2007,7 @@ First of all, the primary snippet tool is =yasnippet=.
   (yas-global-mode 1))
 #+END_SRC
 
-Remember to execute /=M-x yas-reload-all<RET>=/ when any snippets change.
+Remember to execute =M-x yas-reload-all<RET>= when any snippets change.
 
 Basic snippets, pretty useful.
 
@@ -1988,7 +2017,7 @@ Basic snippets, pretty useful.
 #+END_SRC
 
 These are super useful, create a new =.gitignore= file and type =emacs<RET>=
-followed by language such as =rust<RET>= and maybe =macos<RET>= for good measure.
+followed by language such as =rust<TAB>= and maybe =macos<TAB>= for good measure.
 
 #+BEGIN_SRC emacs-lisp
 (use-package gitignore-snippets
@@ -2003,7 +2032,7 @@ These are common license files, easy to add to a new project.
   :if (skj/current-feature-required-p))
 #+END_SRC
 
-=ivy-yasnippet= lets you preview yasnippet snippets with ivy. To use it, call
+Package =ivy-yasnippet= lets you preview yasnippet snippets with ivy. To use it, call
 ~ivy-yasnippet~ in =yas-minor-mode=.
 
 #+BEGIN_SRC emacs-lisp
@@ -2030,20 +2059,24 @@ The following are worth reading for more details and future ideas:
 - https://github.com/zzamboni/dot-emacs/blob/master/init.org
 - https://orgmode.org/worg/org-tutorials/encrypting-files.html
 - https://github.com/daviwil/emacs-from-scratch/blob/master/show-notes/Emacs-06.org
-(Agendas and Templates)
+  (Agendas and Templates)
 - https://orgmode.org/manual/Custom-Agenda-Views.html#Custom-Agenda-Views
 - https://www.lucacambiaghi.com/vanilla-emacs/readme.html (6.4. org capture
   templates)
   
 Flexible extensions
 
-- =[[https://github.com/gizmomogwai/org-tagged][org-tagged]]=
+- [[https://github.com/gizmomogwai/org-tagged][org-tagged]]
   
 Consider the following for writing extensions:
 
-- =[[https://hg.sr.ht/~zck/org-parser][org-parser]]=
-- =[[http://alhassy.com/org-special-block-extras/][org-special-block-extras]]=
+- [[https://hg.sr.ht/~zck/org-parser][org-parser]]
+- [[http://alhassy.com/org-special-block-extras/][org-special-block-extras]]
 
+For tables:
+
+- ~orgtbl-ascii-plot~ in =org-table=.
+  
 ** Initial Configuration
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -2168,7 +2201,7 @@ markers while the cursor is on a rich text word.
   :hook (org-mode . org-appear-mode))
 #+END_SRC
 
-Links in =org-mode= by default are displayed as “descriptive” links, meaning
+Links in =org-mode= by default are displayed as /descriptive/ links, meaning
 they hide their target URLs (or a destination in general). While this looks
 great, it makes it a bit tricky to figure out how you can edit their URL.
 
@@ -2250,8 +2283,8 @@ interfaces use integers, chars, /and/ strings.
    org-default-priority ?C))
 #+END_SRC
 
-Use fancy icons for different priority levels, this hooks into org-agenda but
-could be used without.
+Use fancy Unicode character icons for different priority levels, this hooks
+into =org-agenda= but could be used without.
 
 #+BEGIN_SRC emacs-lisp
 (use-package org-fancy-priorities
@@ -2274,7 +2307,7 @@ could be used without.
 
 *** Categories
 
-Would be nice to customize `org-agenda-category-icon-alist' but for two
+Would be nice to customize ~org-agenda-category-icon-alist~ but for two
 issues:
 
 1. Column views seem to ignore category properties and just use file names.
@@ -2614,7 +2647,7 @@ to the magit status buffer.
 (skj/feature-start 'ui "Core UI Additions")
 #+END_SRC
 
-The Org-Superstar package improves the look of Org mode headings by replacing
+The =org-superstar= package improves the look of Org mode headings by replacing
 the asterisk symbols with nicer looking circles. The package also enhances the
 looks of plain lists and todo items.
 
@@ -2625,7 +2658,7 @@ looks of plain lists and todo items.
   :hook (org-mode . org-superstar-mode))
 #+END_SRC
 
-The [[https://github.com/minad/org-modern][org-modern]] package implements a “modern” style for your Org buffers using font
+The [[https://github.com/minad/org-modern][org-modern]] package implements a /modern/ style for your Org buffers using font
 locking and text properties. The package styles headlines, keywords, tables
 and source blocks.
 
@@ -2692,11 +2725,18 @@ above.
                 org-alert-notification-title "Org Agenda"))
 #+END_SRC
 
-The [[https://github.com/emacs-mirror/emacs/blob/master/lisp/org/org-entities.el][org-entities]] package included in Org Mode allows for entering character
+<<org-entities>>The [[https://github.com/emacs-mirror/emacs/blob/master/lisp/org/org-entities.el][org-entities]] package included in Org Mode allows for entering character
 entries in TeX-like form, so =\approx= becomes =≈=. You can toggle the display
 between the entered form and the display form with
 ~org-toggle-pretty-entities~ (=C-c C-x \=). Additionally, ~org-entities-help~ will
 show a table of supported entities.
+
+#+BEGIN_SRC emacs-lisp
+(use-package org-entities
+  :ensure nil
+  :if (skj/current-feature-required-p)
+  :after org)
+#+END_SRC
 
 *** References
 
@@ -3105,10 +3145,9 @@ done (and has the property =RESET__CHECK__BOXES= set).
 
 Might also consider:
 
-- =[[https://github.com/gizmomogwai/org-kanban][org-kanban]]=
-- =[[https://github.com/ianxm/emacs-scrum][org-scrum]]=
-- =[[orgtbl-ascii-plot]]= -- support for histograms within tables.
-- =[[https://github.com/tbanel/orgaggregate/blob/master/README.org][orgtbl-aggregate]]=
+- [[https://github.com/gizmomogwai/org-kanban][org-kanban]]
+- [[https://github.com/ianxm/emacs-scrum][org-scrum]]
+- [[https://github.com/tbanel/orgaggregate/blob/master/README.org][orgtbl-aggregate]]
   -- aggregating a table is creating a new table by computing sums, averages,
   and so on, out of material from the first table.
 
@@ -3200,8 +3239,8 @@ Now setup the client.
         org-gcal-local-timezone calendar-time-zone-name))
 #+END_SRC
 
-Execute /=M-x org-gcal-fetch<RET>=/ to fetch new calendar updates. Or, execute
-/=M-x org-gcal-post-at-point<RET>=/ to turn a =TODO= into a calendar entry.
+Execute =M-x org-gcal-fetch<RET>= to fetch new calendar updates. Or, execute
+=M-x org-gcal-post-at-point<RET>= to turn a =TODO= into a calendar entry.
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'google-calendar)
@@ -3233,7 +3272,7 @@ Configure the base =appt= package.
     (appt-activate t)))
 #+END_SRC
 
-Rebuild the reminders every time we display the  agenda.
+Rebuild the reminders every time we display the agenda.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
@@ -3498,7 +3537,7 @@ The best way to produce a PDF from an org file is to export it to a
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'export)
 #+END_SRC
-q
+
 ** Key Bindings
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -3511,14 +3550,7 @@ q
   (global-set-key (kbd "C-c l") #'org-store-link)
   (global-set-key (kbd "C-c a") #'org-agenda)
   (global-set-key (kbd "C-c c") #'org-capture)
-
-  (global-set-key (kbd "<f5>") 'org-agenda)
-  (global-set-key (kbd "C-<f5>") 'org-store-agenda-views)
-
-  (global-set-key (kbd "<f6> i") 'org-clock-in)
-  (global-set-key (kbd "<f6> o") 'org-clock-out)
-  (global-set-key (kbd "<f6> g") 'org-clock-goto)
-  (global-set-key (kbd "<f6> <f6>") 'org-clock-menu))
+  (global-set-key (kbd "C-<f5>") 'org-store-agenda-views))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -3533,7 +3565,7 @@ q
 (skj/feature-start 'writing "Other Writing Modes")
 #+END_SRC
 
-For distraction-free editing, use the command /=M-x focus-mode=/ which will dim
+For distraction-free editing, use the command =M-x focus-mode= which will dim
 all but the block of text/code you are currently within.
 
 #+BEGIN_SRC emacs-lisp
@@ -3694,7 +3726,7 @@ Emacs major mode for managing [[https://jekyllrb.com/][jekyll]] blogs ([[https:/
   :if (skj/current-feature-required-p))
 #+END_SRC
 
-Thanks to https://cute-jumper.github.io/emacs/2013/10/06/orgmode-to-github-pages-with-jekyll
+Thanks to [[https://cute-jumper.github.io/emacs/2013/10/06/orgmode-to-github-pages-with-jekyll][Org-mode to GitHub pages with Jekyll]].
   
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
@@ -3883,7 +3915,7 @@ editing support. See [[https://kristofferbalintona.me/posts/202206141852/#citar]
 (skj/feature-start 'preview)
 #+END_SRC
 
-Use /=M-x latex-math-preview-expression=/
+Use =M-x latex-math-preview-expression=
 
 #+BEGIN_SRC emacs-lisp
 (when (and (skj/current-feature-required-p) window-system)
@@ -3924,7 +3956,6 @@ Automatically toggle Org mode LaTeX fragment previews as the cursor enters and e
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'rfc)
 #+END_SRC
-
 
 ** Spell and Style Checking
 
@@ -3979,7 +4010,7 @@ weasel words it is possible to add to the irregular passive voice verbs in
 #+END_SRC
 
 This is more a batch checker, you run the external tool =style= on a buffer or
-region. To check writing style, execute: /=M-x smog-check-buffer<RET>=/.
+region. To check writing style, execute: =M-x smog-check-buffer<RET>=.
 
 #+BEGIN_SRC emacs-lisp
 (use-package smog
@@ -4044,7 +4075,7 @@ The math package requires we set the delimiters before the module loaded.
 #+END_SRC
 
 =fira-code-mode= is a simple minor mode for [[https://github.com/tonsky/FiraCode][Fira Code]] ligatures. You can
-pre-install the fonts with the command /=M-x fira-code-mode-install-fonts<RET>=/.
+pre-install the fonts with the command =M-x fira-code-mode-install-fonts<RET>=.
 
 #+BEGIN_SRC emacs-lisp
 (use-package fira-code-mode
@@ -4135,7 +4166,7 @@ Turns on /sub-word/ [[https://www.gnu.org/software/emacs/manual/html_node/ccmode
   :diminish subword-mode)
 #+END_SRC
 
-A simple but effective thing, `eldoc-mode= is a MinorMode which [[https://www.emacswiki.org/emacs/ElDoc][shows you]],
+A simple but effective thing, =eldoc-mode= is a MinorMode which [[https://www.emacswiki.org/emacs/ElDoc][shows you]],
 in the echo area, the argument list of the function call you are currently
 writing.
 
@@ -4385,16 +4416,16 @@ is a very useful tool to have when you are TDDing.
   (global-set-key (kbd "C-c t") 'tgt-toggle))
 #+END_SRC
 
-cov shows code coverage data for your program in emacs. Currently, it supports
-gcov, lcov, coverage.py, and clover output, as well as the Coveralls format
-produced by undercover.el.
+=cov= shows code coverage data for your program in emacs. Currently, it supports
+=gcov==, =lcov=, =coverage.py=, and =clover= output, as well as the Coveralls format
+produced by =undercover.el=.
 
 #+BEGIN_SRC emacs-lisp
 (use-package cov)
 #+END_SRC
 
-Need to customize either `cov-coverage-file-paths' or
-`cov-coverage-file-paths' for different coverage tools/languages.
+Need to customize either ~cov-coverage-file-paths~ or
+~cov-coverage-file-paths~ for different coverage tools/languages.
 
 *** DAP Settings
 
@@ -4766,12 +4797,12 @@ buffer if you change your mind.
 
 Get an implementation:
 
-- SBCL – [[SBCL – Steel Bank Common Lisp (SBCL) is a high performance Common Lisp compiler. It is open source / free software, with a permissive license. In addition to the compiler and runtime system for ANSI Common Lisp, it provides an interactive environment including a debugger, a statistical profiler, a code coverage tool, and many other extensions. (http://www.sbcl.org/)][Steel Bank Common Lisp (SBCL)]] is a high performance Common Lisp
+- SBCL – [[http://www.sbcl.org/][Steel Bank Common Lisp]] is a high performance Common Lisp
   compiler. It is open source / free software, with a permissive license. In
   addition to the compiler and runtime system for ANSI Common Lisp, it
   provides an interactive environment including a debugger, a statistical
   profiler, a code coverage tool, and many other extensions.
-- [[https://clisp.sourceforge.io/][GNU Common Lisp]] (CLISP)
+- CLISP - [[https://clisp.sourceforge.io/][GNU Common Lisp]]
 - Allegro CL ® is the most powerful dynamic object-oriented development system
   available today, and is especially suited to enterprise-wide, complex
   application development. Complex applications with billions of objects are
@@ -5019,17 +5050,15 @@ DAP debugger profile for Rust.
 #+END_SRC
  
 Access Rust documentation from within emacs. You can now convert
-package-specific documentation with
-`rustic-doc-convert-current-package'.
-Search the org files with `rustic-doc-search' (bound to =C-#= by
-default) if you are in Rust mode, Rustic mode or Org mode. If you
-hover over a symbol when you invoke the command, `rustic-doc-search'
-will insert a default value.
+package-specific documentation with ~rustic-doc-convert-current-package~. Search
+the org files with ~rustic-doc-search~ (bound to =C-#= by default) if you are in
+Rust mode, Rustic mode or Org mode. If you hover over a symbol when you invoke
+the command, ~rustic-doc-search~ will insert a default value.
 
 #+BEGIN_SRC emacs-lisp
 (use-package rustic-doc
     :ensure nil
-    ;;:if (skj/current-feature-required-p)
+    :if (skj/current-feature-required-p)
     :after (org rustic)
     :ensure-system-package
     (fd
@@ -5680,10 +5709,10 @@ implement the Mastodon API. For info see https://joinmastodon.org/.
 =M-x mastadon= Opens a =*mastodon-home*= buffer in the major mode and displays toots. If your
 credentials are not yet saved, you will be prompted for email and password.
 The app registration process will take place if your =mastodon-token-file= does
-not contain =:client=_id and =:client_secret=.
+not contain =:client_id= and =:client_secret=.
 
 =M-x mastodon-toot= (or =t= from a mastodon.el buffer) Pops a new buffer/window in
-text-mode and mastodon-toot minor mode. Enter the contents of your toot here.
+=text-mode= and =mastodon-toot= minor mode. Enter the contents of your toot here.
 =C-c C-c= sends the toot. =C-c C-k= cancels. Both actions kill the buffer and
 window.
 
