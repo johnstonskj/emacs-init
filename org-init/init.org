@@ -9,7 +9,7 @@ The following function gates logging in the rest of the file. It's first so I ca
 this file. Note that this depends on the value of =debug-on-error= but can easily be overridden and set/unset explicitly.
 
 #+BEGIN_SRC emacs-lisp
-(defvar skj/debug-init t ;; (and (boundp debug-on-error) debug-on-error)
+(defvar skj/debug-init (and (boundp debug-on-error) debug-on-error)
   "Do I want to debug the init process?")
 
 (defun init-message (message &rest args)
@@ -935,6 +935,17 @@ and /visual fill column mode/ which wraps lines at ~fill-column~.
     :after visual-fill-column))
 #+END_SRC
 
+This is super useful, especially in writing and modes where you want to wrap text in parenthesis or quotes. Note that
+the customization group for this is ~electricity~.
+
+#+BEGIN_SRC emacs-lisp
+(use-package elec-pair
+  :if (skj/current-feature-required-p)
+  :ensure nil
+  :defer 1
+  :diminish electric-pair-mode)
+#+END_SRC
+
 OMG!! Enable the overwriting of selected text when you type... like every sane editor and O/S!
 
 #+BEGIN_SRC emacs-lisp
@@ -1250,14 +1261,20 @@ Just started with [[https://github.com/abo-abo/hydra][Hydra]], so there are hydr
 (skj/feature-start 'buffers "Files and Buffers")
 #+END_SRC
 
-[[https://github.com/Alexander-Miller/treemacs][Treemacs]] is a file and project explorer similar to NeoTree or vim’s NerdTree, but largely inspired by the Project
-Explorer in Eclipse. It shows the file system outlines of your projects in a simple tree layout allowing quick
-navigation and exploration, while also possessing basic file management utilities.
+[[https://github.com/Alexander-Miller/treemacs][Treemacs]] is a file and project explorer similar to NeoTree or vim’s
+NerdTree, but largely inspired by the Project Explorer in Eclipse. It shows the file system outlines of your projects in
+a simple tree layout allowing quick navigation and exploration, while also possessing basic file management utilities.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
-  (use-package treemacs)
+  (use-package treemacs
+    :config
+    (treemacs-filewatch-mode 1)
+    (treemacs-follow-mode 1)
+    (treemacs-git-commit-diff-mode 1)
+    (treemacs-git-mode 1)
+    (treemacs-indent-guide-mode 1))
 
   (use-package treemacs-all-the-icons
     :if window-system
@@ -1265,16 +1282,14 @@ navigation and exploration, while also possessing basic file management utilitie
 
   (use-package treemacs-icons-dired
     :if window-system
-    :after treemacs)
+    :after treemacs
+    :hook (dired-mode . treemacs-icons-dired-enable-once))
 
   (use-package treemacs-magit
     :after (treemacs magit))
 
   (use-package treemacs-projectile
-    :after (treemacs projectile))
-
-  (use-package lsp-treemacs
-    :after (treemacs lsp)))
+    :after (treemacs projectile)))
 #+END_SRC
 
 [[https://www.emacswiki.org/emacs/RecentFiles][Recentf]] is a minor mode that builds a list of recently opened files. This list is automatically saved across sessions on
@@ -1585,6 +1600,7 @@ it.
   :if (skj/current-feature-required-p)
   :defer 1
   :after ivy
+  :diminish counsel-mode
   :custom
   (counsel-find-file-ignore-regexp "\\(?:\\`\\|[/\\]\\)\\(?:[#.]\\)")
   :config
@@ -1674,6 +1690,7 @@ front-ends to retrieve and display completion candidate.
 
   (use-package company
     :defer 1
+    :diminish company-mode
     :custom
     (company-files-exclusions '(".git/" ".DS_Store"))
     (company-idle-delay 0)
@@ -1899,7 +1916,16 @@ Install the base [[https://www.flycheck.org/en/latest/][Flycheck]] package, and 
 
   (use-package flycheck-inline
     :hook (flycheck-mode . flycheck-inline-mode)
-    :diminish flycheck-inline-mode))
+    :diminish flycheck-inline-mode
+    :custom
+    (flycheck-inline-display-function
+      (lambda (msg pos err)
+        (let* ((ov (quick-peek-overlay-ensure-at pos))
+               (contents (quick-peek-overlay-contents ov)))
+          (setf (quick-peek-overlay-contents ov)
+                (concat contents (when contents "\n") msg))
+          (quick-peek-update ov)))
+      flycheck-inline-clear-function #'quick-peek-hide)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -2207,32 +2233,39 @@ I *always* setup =abbrev-mode= as it's builtin and this way have a backup if no 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
+  (defconst skj/snippet-default-dir
+    (concat-path user-emacs-directory "snippets"))
+  
   (defcustom
     skj/snippet-repo-dir
     (concat-path skj/project-root-dir "emacs-snippets")
     "Snippet repository local path."
     :tag "Snippet repository local path"
     :group 'skj
-    :type 'directory))
+    :type 'directory)
+
+  (defun skj/snippets-initialize ()
+    "Load my local snippets directories."
+    ;; NOTE: we add the symbol `yasnippet-snippets-dir' rather than its
+    ;; value, so that yasnippet will automatically find the directory
+    ;; after this package is updated (i.e., moves directory).
+    (add-to-list 'yas-snippet-dirs 'skj/snippet-default-dir t)
+    (yas-load-directory skj/snippet-default-dir t)
+    (add-to-list 'yas-snippet-dirs 'skj/snippet-repo-dir t)
+    (yas-load-directory skj/snippet-repo-dir t)))
 #+END_SRC
 
 First of all, the primary snippet tool is =yasnippet=.
 
 #+BEGIN_SRC emacs-lisp
 (use-package yasnippet
-  :defer 5
+  :defer 3
   :if (skj/current-feature-required-p)
-  :hook (prog-mode . yas-minor-mode)
+  :custom
+  (yas-snippet-dirs (list skj/snippet-repo-dir skj/snippet-default-dir))  :hook (prog-mode . yas-minor-mode)
   :diminish yas-minor-mode
-  :init
-  (dolist (path (list
-                 (concat-path user-emacs-directory "snippets")
-                 skj/snippet-repo-dir))
-    (unless (member path yas-snippet-dirs)
-      (setq yas-snippet-dirs
-            (cons path yas-snippet-dirs))))
   :config
-  (yas-global-mode 1))
+  (skj/snippets-initialize))
 #+END_SRC
 
 Remember to execute =M-x yas-reload-all<RET>= when any snippets change.
@@ -2241,7 +2274,7 @@ Basic snippets, pretty useful.
 
 #+BEGIN_SRC emacs-lisp
 (use-package yasnippet-snippets
-  :defer 10
+  :defer 4
   :if (skj/current-feature-required-p)
   :after yasnippet
   :config
@@ -2369,6 +2402,8 @@ For tables:
     (org-startup-folded 'content)
     (org-startup-indented t)
     (org-startup-with-inline-images t)
+    :hook
+    (org-mode . electric-pair-local-mode)
     :config
     (require 'org-mouse)))
 #+END_SRC
@@ -3338,14 +3373,15 @@ to remember tasks after come back to work.
 
 See https://superuser.com/questions/579281/advanced-time-tracking-in-org-mode
 
+Also, consider https://github.com/dfeich/org-clock-convenience
+
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
   (use-package org-clock
-    :ensure nil
+    :ensure nil ;; builtin
     :after org
     :custom
-    
     ;; Save the running clock and all clock history when exiting Emacs, load it on startup
     (org-clock-persist 'history)
 
@@ -3359,7 +3395,10 @@ See https://superuser.com/questions/579281/advanced-time-tracking-in-org-mode
     (org-clock-into-drawer t)
 
     ;; Surely, by definition ...
-    (org-clock-in-switch-to-state "INPROGESS")
+    (org-clock-in-switch-to-state "INPROGRESS")
+    
+    ;; Clock out when moving task to a done state
+    (org-clock-out-when-done t)
 
     ;; Resume clocking task on clock-in if the clock is open
     (org-clock-in-resume t)
@@ -3379,6 +3418,12 @@ See https://superuser.com/questions/579281/advanced-time-tracking-in-org-mode
     ;; Include current clocking task in clock reports
     (org-clock-report-include-clocking-task t)
 
+    ;; If idle for more than 30 minutes, resolve the things by asking what to do
+    ;; with the clock time
+    (org-clock-idle-time 30)
+
+    (org-clock-clocked-in-display 'both)
+    
     ;; Agenda clock report parameters
     (org-agenda-clockreport-parameter-plist
      (quote (:link t :maxlevel 5 :fileskip0 t :compact t :narrow 80)))
@@ -3390,7 +3435,7 @@ See https://superuser.com/questions/579281/advanced-time-tracking-in-org-mode
     (org-clock-persistence-insinuate)
 
     (pretty-hydra-define hydra-org-clock
-      (:color blue :quit-key "q" :title " Org Clock")
+      (:color blue :quit-key "q" :title "  Org Clock")
       ("Clock"
        (("i"   org-clock-in                     "Clock In")
         ("c"   org-clock-in-last                "Continue")
@@ -3416,7 +3461,30 @@ See https://superuser.com/questions/579281/advanced-time-tracking-in-org-mode
         ("t i" org-timer                        "Insert Timer")
         ("t I" org-timer-item                   "Insert Timer Item"))))
 
-    (bind-key "<f9> c" 'hydra-org-clock/body)))
+    (bind-key "<f9> c" 'hydra-org-clock/body)
+
+    (defun skj/mode-line-append (value)
+      "Append VALUE to `mode-line-format' before any end spaces."
+      (if (member value mode-line-format)
+          mode-line-format
+        (let* ((mode-line-format/rev (reverse mode-line-format))
+               (mode-line-format/last (car (seq-take mode-line-format/rev 1)))
+               (mode-line-format/rest (seq-drop mode-line-format/rev 1)))
+          (reverse
+           (if (eq mode-line-format/last 'mode-line-end-spaces)
+               (cons mode-line-format/last
+                     (cons value mode-line-format/rest))
+             (cons value
+                   (cons mode-line-format/last mode-line-format/rest)))))))
+
+    (setq mode-line-format
+          (skj/mode-line-append '(:propertize
+                                  (t org-mode-line-string)
+                                  face (:foreground "cyan" :weight 'bold))))
+    (add-hook 'org-clock-out-hook
+              (lambda ()
+                 (setq org-mode-line-string nil)
+                 (force-mode-line-update)))))
 #+END_SRC
 
 Active notifications are shown every 3 minute, inactive every 3
@@ -3424,6 +3492,7 @@ Active notifications are shown every 3 minute, inactive every 3
 #+BEGIN_SRC emacs-lisp
 (use-package org-clock-reminder
   :if (skj/current-feature-required-p)
+  :defer 1
   :after org-clock
   :custom
   (org-clock-reminder-interval (cons 3 10))
@@ -3571,9 +3640,7 @@ Use my secrets store to load the Google Calendar credentials.
 (use-package skj-secrets
   :if (skj/current-feature-required-p)
   :ensure nil ;; locally stored
-  :custom
-  (org-gcal-client-id (skj/secrets-value 'gcal-id))
-  (org-gcal-client-secret (skj/secrets-value 'gcal-secret)))
+  :defer nil)
 #+END_SRC
 
 Store synced calendar entries in the following file.
@@ -3594,11 +3661,13 @@ Now setup the client.
 #+BEGIN_SRC emacs-lisp
 (use-package org-gcal
   :if (skj/current-feature-required-p)
-  :after org
+  :after (org skj-secrets)
   :custom
   (org-gcal-fetch-file-alist (list (cons skj/primary-email
                                          skj/org-gcal-file)))
   (org-gcal-local-timezone calendar-time-zone-name)
+  (org-gcal-client-id (skj/secrets-value 'gcal-id))
+  (org-gcal-client-secret (skj/secrets-value 'gcal-secret))
   :hook (emacs-startup . org-gcal-fetch))
 #+END_SRC
 
@@ -3839,6 +3908,12 @@ The [[https://github.com/abrochard/mermaid-mode/tree/master][mermaid-mode]] allo
 Enable the builtin [[https://orgmode.org/worg/org-contrib/babel/languages/ob-doc-plantuml.html][PlantUML babel]] support after adding the editing mode. Configuring this to use the =plantuml=
 executable.
 
+#+BEGIN_NOTE
+You will likely want to set the variables =plantuml-jar-path= and =org-plantuml-jar-path= with the path to your local
+installation of PlantUML. Alternatively, set the variable =plantuml-default-exec-mode= to =executable= to use your local
+plantuml executable.
+#+END_NOTE
+
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
@@ -3856,6 +3931,11 @@ executable.
     :ensure nil
     :demand t
     :after (ob plantuml-mode)
+    :custom
+    (plantuml-jar-path (concat-path (homebrew-prefix/package-prefix)
+                                    "plantuml/libexec/plantuml.jar"))
+    (org-plantuml-jar-path (concat-path (homebrew-prefix/package-prefix)
+                                        "plantuml/libexec/plantuml.jar"))
     :init(skj/org-babel-add-languages 'plantuml)))
 #+END_SRC
 
@@ -4071,11 +4151,7 @@ modes for generic markdown and GitHub-flavored markdown.
 #+BEGIN_SRC emacs-lisp
 (use-package markdown-mode
   :if (skj/current-feature-required-p)
-  :mode (("\\.markdown\\'" . markdown-mode)
-         ("\\.md\\'" . markdown-mode)
-         ("README\\.md\\'" . gfm-mode))
-  :hook (markdown-mode . markdown-toggle-fontify-code-blocks-natively)
-  :config
+  :custom
   ;; font lock for inline and display LaTeX math expressions
   (markdown-enable-math t)
 
@@ -4089,14 +4165,14 @@ modes for generic markdown and GitHub-flavored markdown.
   (markdown-hide-markup t)
 
   ;; use markdown-electric-backquote for interactive insertion of
-  ;; GFM code blocks when backquote is pressed three times 
+  ;; GFM code blocks when you press backquote three times 
   (markdown-gfm-use-electric-backquote t)
 
   ;; when non-nil, complete GFM task list items with =[X]= instead of =[x]=
-  markdown-gfm-uppercase-checkbox t
+  (markdown-gfm-uppercase-checkbox t)
   
   ;; whether GitHub Flavored Markdown style task lists should
-  ;; be turned into buttons
+  ;; turn into buttons
   (markdown-make-gfm-checkboxes-buttons t)
   
   ;; put opening atx header markup in the left margin
@@ -4104,8 +4180,13 @@ modes for generic markdown and GitHub-flavored markdown.
 
   ;; width of margin used for marginalized headers
   (markdown-marginalize-headers-margin-width 6)
-
-  :custom
+  :mode (("\\.markdown\\'" . markdown-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("README\\.md\\'" . gfm-mode))
+  :hook
+  (markdown-mode . markdown-toggle-fontify-code-blocks-natively)
+  (org-mode . electric-pair-local-mode)
+  :config
   (set-italic-face-attributes 'markdown-italic-face))
 #+END_SRC
 
@@ -4230,7 +4311,9 @@ XWiki mode is an offline editing mode only.
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
   (use-package tex
-    :ensure auctex)
+    :ensure auctex
+    :hook
+    (LaTeX-mode . electric-pair-local-mode))
 
   (setq latex-run-command "xelatex"
         TeX-auto-save t
@@ -4437,8 +4520,8 @@ mode. As well as the additional weasel words it is possible to add to the irregu
   :if (skj/current-feature-required-p)
   :diminish writegood-mode
   :custom
-  (writegood-weasel-words (append '("least" "most" "occasionally")
-                                  writegood-weasel-words))
+  (dolist (word '("least" "most" "occasionally"))
+    (add-to-list 'writegood-weasel-words word))
   :bind (("\C-c g" . writegood-mode)
          ("\C-c \C-g g" . writegood-grade-level)
          ("\C-c \C-g e" . writegood-reading-ease))
@@ -4515,7 +4598,7 @@ delimiters before the module loaded.
        ("``" asciimath block))))
 
   (use-package prettify-greek
-    :custom
+    :config
     (prettify-symbols-alist
      (append prettify-symbols-alist prettify-greek-lower))))
 #+END_SRC
@@ -4638,6 +4721,8 @@ default, all open repositories known to projectile).
 
 =project-explorer= provides a tree-based project explorer sidebar.
 
+=org-projectile= ([[https://github.com/IvanMalison/org-projectile][link]]) provides functions for the creation of =org-mode= TODOs that are associated with =projectile= projects.
+
 After adding/removing projects, run =M-x projectile-discover-projects-in-search-path=.
 
 #+BEGIN_SRC emacs-lisp
@@ -4660,25 +4745,26 @@ After adding/removing projects, run =M-x projectile-discover-projects-in-search-
     :config
     ;; steal more from https://docs.projectile.mx/projectile/configuration.html#projectile-commander    
     (pretty-hydra-define hydra-projectile
-      (:color blue :quit-key "q" :title "Projectile")
+      (:color blue :quit-key "q" :title "🗁  Projectile")
       ("Projects"
        (("a"   projectile-discover-projects-in-directory "Discover Projects")
-        ("s"   projectile-switch-project           "Switch Project")
+        ("s"   counsel-projectile-switch-project           "Switch Project")
         ("x"   projectile-remove-known-project     "Remove Known Project")
         ("c"   projectile-invalidate-cache         "Clear Cache")
         ("X"   projectile-cleanup-known-projects   "Cleanup Known Projects")
         ("c"   projectile-configure-project        "Configure"))
        "Directories"
-       (("d"   projectile-find-dir                 "Find Directory")
+       (("d"   counsel-projectile-find-dir                 "Find Directory")
         ("e"   projectile-dired                    "Open Dired at root")
         ("v"   projectile-vc                       "Open Magit"))
        "Files"
-       (("f"   projectile-find-file                "Find File")
+       (("f"   counsel-projectile-find-file                "Find File")
         ("r"   projectile-recentf                  "Recent Files")
+        ("g"   counsel-projectile-rg                  "Ripgrep Files")
         ("z"   projectile-cache-current-file       "Cache Current File"))
        "Buffers"
        (("o"   projectile-multi-occur              "Multi Occur")
-        ("b"   projectile-switch-to-buffer         "Switch to Buffer")
+        ("b"   counsel-projectile-switch-to-buffer         "Switch to Buffer")
         ("k"   projectile-kill-buffers             "Kill Buffers"))))   
     (bind-key "<f9> p" 'hydra-projectile/body)
     (projectile-global-mode))
@@ -4690,15 +4776,18 @@ After adding/removing projects, run =M-x projectile-discover-projects-in-search-
   (use-package projectile-ripgrep
     :after (ripgrep projectile))
 
+  (use-package org-projectile
+    :after (org projectile))
+
   (use-package counsel-projectile
     :after (counsel projectile)
-    :config
-    (counsel-projectile-mode 1)
-    (projectile-mode +1))
+    :hook (projectile-mode . counsel-projectile))
 
   ;; invoke via flycheck-projectile-list-errors
   (use-package flycheck-projectile
-    :after (flycheck projectile)))
+    :after (flycheck projectile)
+    :bind (:map projectile-command-map
+                ("A" . flycheck-projectile-list-errors))))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -4714,6 +4803,7 @@ After adding/removing projects, run =M-x projectile-discover-projects-in-search-
 #+BEGIN_SRC emacs-lisp
 (use-package ibuffer-projectile
   :if (skj/current-feature-required-p)
+  :after (ibuffer projectile)
   :hook
   (ibuffer . (lambda ()
                (ibuffer-projectile-set-filter-groups)
@@ -5158,7 +5248,12 @@ commands for a variety of languages, including elisp itself!
 
   (use-package bnf-mode)
 
-  (use-package ebnf-mode))
+  (use-package ebnf-mode
+    :custom
+    (ebnf-mode-eop-char ?;)
+    (ebnf-mode-indent-offset 4)
+    (ebnf-mode-indent-by-production nil)
+    (ebnf-mode-production-re "^\\s-*\\([[:alnum:]_]+\\)\\s-*::=")))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -5540,6 +5635,7 @@ Emacs' basic scheme major mode.
     :hook (geiser-mode . smartparens-strict))
 
   (use-package geiser-repl
+    :ensure nil ;; included in geiser
     :after geiser
     :hook (geiser-repl-mode . smartparens-strict))
 
@@ -5631,10 +5727,8 @@ The key to Rust development in Emacs is the [[https://github.com/brotzeit/rustic
            (rustic-mode . lsp-lens-mode)
            (rustic-mode . lsp-rust-analyzer-inlay-hints-mode)
            (rustic-mode . (lambda () (set-fill-column 100)))
-           (rustic-mode . subword-mode)))
-  ;;Not quite ready...
-  ;;(rustic-mode . tree-sitter-mode)
-  ;;(rustic-mode . tree-sitter-hl-mode)
+           (rustic-mode . subword-mode)
+           (rustic-mode . (lambda () (lsp-lens-show)))))
 
   (use-package cargo-mode
     :after rustic
@@ -5655,8 +5749,9 @@ Flycheck for Rust.
   :ensure-system-package (cargo-clippy . "cargo install cargo-clippy")
   :after (rustic cargo-mode)
   :commands rustic-clippy
-  :init
+  :custom
   (flycheck-rustic-clippy-executable "cargo-clippy")
+  :init
   (add-to-list 'flycheck-checkers #'rustic-clippy)
   :hook (flycheck-mode . flycheck-rust-setup))
 #+END_SRC
@@ -5708,15 +5803,16 @@ insert a default value.
 
 #+BEGIN_SRC emacs-lisp
 (use-package rustic-doc
-    :ensure nil
-    :if (skj/current-feature-required-p)
-    :after (org rustic)
-    :ensure-system-package
-    (fd
-     pandoc
-     (cargo-makedocs . "cargo install cargo-makedocs"))
-    :config
-    (rustic-doc-setup))
+  :ensure nil
+  :if (skj/current-feature-required-p)
+  :after (org rustic)
+  :ensure-system-package
+  (fd
+   pandoc
+   (cargo-makedocs . "cargo install cargo-makedocs"))
+  :diminish rustic-doc-mode
+  :config
+  (rustic-doc-setup))
 #+END_SRC
 
 Make a better ~rustic-popup~.
@@ -5727,34 +5823,41 @@ Make a better ~rustic-popup~.
   (pretty-hydra-define hydra-rust
     (:color blue :quit-key "q" :title "🦀 Rust")
     ("Build"
-     (("b"     rustic-cargo-build              "Build")
-      ("c d"   rustic-cargo-build-doc          "Build Docs")
-      ("c o"   rustic-cargo-doc                "Open Docs")
-      ("c t"   rustic-cargo-test               "Run Tests")
-      ("c f"   rustic-cargo-fmt                "Format")
-      ("c k"   rustic-cargo-check              "Check")
-      ("c c"   rustic-cargo-clippy             "Clippy")
-      ("c x"   rustic-cargo-clean              "Clean"))
+     (("b"    rustic-cargo-build              "Build")
+      ("c d"  rustic-cargo-build-doc          "Build Docs")
+      ("c o"  rustic-cargo-doc                "Open Docs")
+      ("c t"  rustic-cargo-test               "Run Tests")
+      ("c f"  rustic-cargo-fmt                "Format")
+      ("c k"  rustic-cargo-check              "Check")
+      ("c c"  rustic-cargo-clippy             "Clippy")
+      ("c x"  rustic-cargo-clean              "Clean"))
      "Source"
-     (("s r"   lsp-rename                      "Rename"))
+     (("g i"  lsp-find-implementation         "Find Implementations")
+      ("g d"  lsp-find-declaration            "Find Declaration")
+      ("g g"  lsp-find-definition             "Find Definition")
+      ("g r"  lsp-find-references             "Find References")
+      ("g r"  lsp-find-type-definition        "Find Type Definition")
+      ("s u"  lsp-rust-analyzer-move-item-up  "Move Up")
+      ("s d"  lsp-rust-analyzer-move-item-down "Move Down")
+      ("s j"  lsp-rust-analyzer-join-lines    "Join Lines")
+      ("s r"  lsp-rename                      "Rename")
+      ("s x"  lsp-rust-analyzer-expand-macro  "eXpand Macro"))
      "Run"
-     (("r"   rustic-cargo-run                  "Run")
-      ("c b"   rustic-cargo-bench              "Run Benchmarks"))
+     (("r"    rustic-cargo-run                "Run")
+      ("c b"  rustic-cargo-bench              "Run Benchmarks"))
      "Dependencies"
-     (("o"   rustic-cargo-outdated             "Show Outdated")
-      ("d u"   rustic-cargo-update             "Update All")
-      ("d a"   rustic-cargo-add                "Add")
-      ("d r"   rustic-cargo-rm                 "Remove")
-      ("d o"   rustic-cargo-outdated           "Show Outdated"))
-     "LSP"
-     (("a"   lsp-execute-code-action           "Code Action")
-      ("l c"   lsp-rust-analyzer-open-cargo-toml "Open Cargo.toml")
-      ("l d"   lsp-rust-analyzer-open-external-docs "Open External Doc")
-      ("l x"   lsp-rust-analyzer-expand-macro  "Expand Macro")
-      ("l r"   lsp-rust-analyzer-related-tests "Find Tests")
-      ("l s"   lsp-rust-analyzer-status        "Show Status")
-      ("l t"   lsp-rust-analyzer-syntax-tree   "Show Syntax Tree")
-      ("l i"   lsp-ui-imenu                    "Show Module Tree"))))
+     (("o"    rustic-cargo-outdated           "Show Outdated")
+      ("d u"  rustic-cargo-update             "Update All")
+      ("d a"  rustic-cargo-add                "Add")
+      ("d r"  rustic-cargo-rm                 "Remove")
+      ("d o"  rustic-cargo-outdated           "Show Outdated"))
+     "LSP Other"
+     (("a"    lsp-execute-code-action           "Code Action")
+      ("l c"  lsp-rust-analyzer-open-cargo-toml "Open Cargo.toml")
+      ("l d"  lsp-rust-analyzer-open-external-docs "Open External Doc")
+      ("l r"  lsp-rust-analyzer-related-tests "Find Tests")
+      ("l s"  lsp-rust-analyzer-status        "Show Status")
+      ("l i"  lsp-ui-imenu                    "Show Module Tree"))))
 
   (bind-key "<f9> r" 'hydra-rust/body))
 #+END_SRC
@@ -5871,7 +5974,7 @@ Org-Babel Integration
 
 #+BEGIN_SRC emacs-lisp
 (use-package smithy-mode
-  :if (skj/current-feature-required-p)
+  :if nil ;;(skj/current-feature-required-p)
   :after tree-sitter
   :hook
   (smithy-mode tree-sitter-mode)
@@ -6511,6 +6614,7 @@ Set the API key in =~/.wakatime.cfg=.
 (use-package wakatime-mode
   :if (skj/current-feature-required-p)
   :demand t
+  :diminish wakatime-mode
   :custom
   (wakatime-cli-path (locate-file "wakatime-cli" exec-path))
   :config
