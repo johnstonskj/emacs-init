@@ -1452,8 +1452,8 @@ Set fringes to appear only on the left-hand side.
   (use-package fringe
     :ensure nil
     :config
-    (set-fringe-mode 10)
-    (fringe-mode 'left-only)))
+    ;; set left and right to 10px width
+    (fringe-mode 10)))
     #+END_SRC
 
 Using multiple side-by-side windows is a great way to utilize the large high-resolution displays that exists today. This
@@ -3798,6 +3798,18 @@ Also, always redisplay images after =C-c C-c.=
   (add-hook 'org-mode-hook 'skj/org-babel-do-load-languages))
 #+END_SRC
 
+By default, Org-mode doesn’t let you edit things in an indirect buffer except for source blocks.
+
+This package extends `org-edit-special' so it can be used to edit (almost) any type of block in Org-mode, things like
+`quote', `verse', `comment' blocks, etc.
+
+#+BEGIN_SRC emacs-lisp
+(use-package org-edit-indirect
+  :if (skj/current-feature-required-p)
+  :after '(edit-indirect org)
+  :hook (org-mode . org-edit-indirect-mode))
+#+END_SRC
+
 *** ditaa
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -4203,6 +4215,18 @@ flexible object oriented design. Creating new polymodes normally takes a few lin
     :mode ("\\.md" . poly-markdown-mode)))
 #+END_SRC
 
+Edit regions in separate buffers, like `org-edit-src-code' but for arbitrary regions.
+
+#+BEGIN_SRC emacs-lisp
+(when (skj/current-feature-required-p)
+
+  (use-package edit-indirect)
+
+  (use-package poly-markdown
+    :after (polymode markdown-mode)
+    :mode ("\\.md" . poly-markdown-mode)))
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'markdown)
 #+END_SRC
@@ -4348,6 +4372,14 @@ This add-on defines three =company-mode= backends.
   :init
   ;; global activation of the unicode symbol completion
   (add-to-list 'company-backends 'company-math-symbols-unicode))
+#+END_SRC
+
+Edit regions in separate buffers based on `edit-indirect' especially for latex.
+
+#+BEGIN_SRC emacs-lisp
+(use-package company-mathedit-indirect-region-latex
+  :if (skj/current-feature-required-p)
+  :after edit-indirect)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -5014,6 +5046,8 @@ test text. Use =C-c C-c= to force an update.  Use =C-c C-k= to quit all the rege
 (skj/feature-start 'clients "REST & SOAP Clients")
 #+END_SRC
 
+The REST client set of tools.
+
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
@@ -5048,6 +5082,16 @@ To inspect a loaded WSDL document, you can do the following:
 
 (soap-inspect previously-loaded-wsdl)
 #+END_EXAMPLE
+
+
+#+BEGIN_SRC emacs-lisp
+(use-package http
+  :if (skj/current-feature-required-p)
+  :config
+  (add-to-list 'http-content-type-mode-alist
+               '("application/json" . json-mode))
+  )
+#+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'clients)
@@ -5127,7 +5171,9 @@ The JSON parser package `json' is builtin.
   (use-package json-mode
     :mode "\\.json\\'")
 
-  (use-package json-navigator))
+  (use-package json-navigator)
+
+  (use-package json-reformat))
 #+END_SRC
 
 Support for JQ-uery.
@@ -5179,7 +5225,7 @@ Support for JQ-uery.
     :hook lsp
     :mode "\\.yaml\\'"
     :init
-    (setq-default yaml-indent-offset tab-width))
+    (setq-default yaml-indent-offset 2))
 
   (use-package yaml-imenu
     :after yaml-mode
@@ -5250,10 +5296,11 @@ commands for a variety of languages, including elisp itself!
 
   (use-package ebnf-mode
     :custom
-    (ebnf-mode-eop-char ?;)
+    (ebnf-mode-eop-char ?\;)
     (ebnf-mode-indent-offset 4)
     (ebnf-mode-indent-by-production nil)
-    (ebnf-mode-production-re "^\\s-*\\([[:alnum:]_]+\\)\\s-*::=")))
+    :config
+    (setq ebnf-mode-production-re "^\\s-*\\([[:alnum:]_]+\\)\\s-*::=")))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -5924,7 +5971,7 @@ Org-Babel Integration
     :after (tree-sitter tree-sitter-indent ts-fold)
     :commands sdml-mode-setup
     :mode "\\.sdml?\\'"
-    :load-path "/Users/simonjo/Projects/emacs-sdml-mode")
+    :load-path "/Users/simonjo/Projects/sdm-lang/emacs-sdml-mode")
 
   (require 'sdml-mode)
   (sdml-mode-setup)
@@ -5935,7 +5982,7 @@ Org-Babel Integration
     :defer nil
     :after (sdml-mode tree-sitter-ispell)
     :commands sdml-ispell-setup
-    :load-path "/Users/simonjo/Projects/emacs-sdml-mode"
+    :load-path "/Users/simonjo/Projects/sdm-lang/emacs-sdml-mode"
     :config (sdml-ispell-setup))
   (require 'sdml-ispell)
   
@@ -5945,7 +5992,7 @@ Org-Babel Integration
     :defer nil
     :after (flycheck tsc sdml-mode)
     :commands flycheck-sdml-setup
-    :load-path "/Users/simonjo/Projects/emacs-sdml-mode"
+    :load-path "/Users/simonjo/Projects/sdm-lang/emacs-sdml-mode"
     :hook (sdml-mode . flycheck-mode)
     :config (flycheck-sdml-setup))
   (require 'flycheck-sdml))
