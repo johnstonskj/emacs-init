@@ -700,6 +700,16 @@ Additional paths and locations that are really not feature-specific.
   (exec-path-prepend (homebrew-prefix/bin)))
 #+END_SRC
 
+I should move all these into =~/.local/bin=
+
+#+BEGIN_SRC emacs-lisp
+(when (skj/current-feature-required-p)
+
+  (exec-path-prepend (expand-file-name "~/bin")))
+#+END_SRC
+
+This is the XDG local binary path.
+
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
@@ -1018,7 +1028,7 @@ always use [[https://fonts.google.com/specimen/Fira+Code][Fira Code]].
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
-  (defcustom skj/default-font-family "fira code"
+  (defcustom skj/default-font-family "Fira Code"
     "Default font family."
     :tag "Default font family"
     :type 'string
@@ -1127,8 +1137,6 @@ Good to know...
   (message "Emacs does not have imagemagick support :("))
 #+END_SRC
 
-To ensure fonts have been installed on your system, execute: /=M-x all-the-icons-install-fonts<RET>=/
-
 #+BEGIN_SRC emacs-lisp
 (when (and (skj/current-feature-required-p) window-system)
 
@@ -1136,9 +1144,22 @@ To ensure fonts have been installed on your system, execute: /=M-x all-the-icons
     :demand t
     :config (all-the-icons-completion-mode))
 
-  (use-package all-the-icons-completion
-    :after all-the-icons))
+  (use-package all-the-icons-completion :after all-the-icons)
+
+  (use-package all-the-icons-dired :after all-the-icons)
+
+  (use-package all-the-icons-gnus :after all-the-icons)
+
+  (use-package all-the-icons-ibuffer :after all-the-icons)
+
+  (use-package all-the-icons-ivy :after all-the-icons)
+
+  (use-package all-the-icons-ivy-rich :after all-the-icons)
+
+  (use-package all-the-icons-nerd-fonts :after all-the-icons))
 #+END_SRC
+
+To ensure supporting fonts are installed on your system, execute: /=M-x all-the-icons-install-fonts<RET>=/
 
 The VSCode common icons.
 
@@ -1159,6 +1180,34 @@ Now enable modes using the icons above.
 
   (use-package major-mode-icons
     :config (major-mode-icons-mode 1)))
+#+END_SRC
+
+Nerd Icons -- An alternative to /all-the-icons/.
+
+Requires the following fonts from [[https://www.nerdfonts.com/font-downloads][Nerd Font Downloads]]:
+
+- =FiraCode= - family: "FiraCode Nerd Font Mono"
+- =NerdFontsSymbolsOnly= - family: "Symbols Nerd Font Mono"
+
+#+BEGIN_SRC emacs-lisp :noeval
+(when (and (skj/current-feature-required-p) window-system)
+
+  (use-package nerd-icons
+    :custom
+    ;; This should be a safe back-up font
+    ;; (nerd-icons-font-family "Symbols Nerd Font Mono")
+    (nerd-icons-font-family "FiraCode Nerd Font Mono"))
+
+  (use-package nerd-icons-completion :after nerd-icons)
+
+  (use-package nerd-icons-dired :after nerd-icons)
+
+  (use-package nerd-icons-ibuffer :after nerd-icons)
+
+  (use-package nerd-icons-ivy-rich :after nerd-icons)
+
+  (use-package all-the-icons-nerd-fonts
+    :after (all-the-icons nerd-icons)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -1943,12 +1992,7 @@ Install the base [[https://www.flycheck.org/en/latest/][Flycheck]] package, and 
 
   (use-package sh-script
     :ensure nil
-    :hook
-    (sh-mode . (lambda ()
-                 (if (string-match "\\.zsh$" buffer-file-name)
-                     (sh-set-shell "zsh"))))
-    :config
-    (add-to-list 'auto-mode-alist '("\\.zsh\\'" . sh-mode)))
+    :mode '("\\.zsh\\'" . sh-mode))
 
   (use-package term
     :ensure nil
@@ -2132,6 +2176,38 @@ without pulling all topics and even without having to clone the respective Git r
 
 Forge uses the Ghub package to access the APIs of supported Git forges. How this works and how to create and store a
 token is documented in the magit [[https://magit.vc/manual/ghub.html#Getting-Started][Getting Started]] section.
+
+- ~gh-notify~ -- A veneer for Magit/Forge GitHub notifications
+
+Review Github Pull Request from Emacs!
+
+#+BEGIN_SRC emacs-lisp
+(use-package pr-review
+  :if (skj/current-feature-required-p)
+  :after (magit ghub)
+  :config
+  (add-to-list 'browse-url-default-handlers
+             '(pr-review-url-parse . pr-review-open-url)))
+#+END_SRC
+
+Automatically set ~bug-reference-url-format~ and enable ~bug-reference-prog-mode~ buffers from Github repositories.
+
+#+BEGIN_SRC emacs-lisp
+(use-package bug-reference-github
+  :if (skj/current-feature-required-p)
+  :after magit
+  :hook (prog-mode . bug-reference-github-set-url-format))
+#+END_SRC
+
+This library provides a minor mode and an interactive function to fetch issues of your project when you type "Fixes #"
+in a commit message. Github, Gitlab and Bitbucket.
+
+#+BEGIN_SRC emacs-lisp
+(use-package git-commit-insert-issue
+  :if (skj/current-feature-required-p)
+  :after magit
+  :hook (git-commit-mode . git-commit-insert-issue-mode))
+#+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'forge)
@@ -2351,7 +2427,11 @@ Consider the following for writing extensions:
 
 For tables:
 
-- ~orgtbl-ascii-plot~ in =org-table=.
+- ~orgtbl-aggretate~ -- Create an aggregated Org table from another one
+- ~orgtbl-ascii-plot~ -- ascii-art bar plots in org-mode tables
+- ~orgtbl-fit~ -- Regression-fit a column in an Org Mode table
+- ~orgtbl-join~ -- Join columns from another Org Mode table
+- ~orgtbl-show-header~ -- Show the header of the current column in the minibuffer
 - ~chart~ builtin package -- see [[https://francismurillo.github.io/2017-04-15-Exploring-Emacs-chart-Library/][Exploring Emacs Chart Library]]
 
 ** Initial Configuration
@@ -2499,6 +2579,14 @@ the indentation a bit so that the levels are more visible.
   (org-indent-indentation-per-level 4))
 #+END_SRC
 
+#+BEGIN_SRC emacs-lisp
+(use-package org-autolist
+  :if (skj/current-feature-required-p)
+  :after org
+  :hook (org-mode . org-autolist-mode)
+  :diminish)
+#+END_SRC
+  
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
@@ -3000,6 +3088,25 @@ expiring them. The package is a part of =org-contrib=.
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'faces)
+#+END_SRC
+
+*** Lists, Checkboxes, and Radios
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'lists)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package org-list
+  :if (skj/current-feature-required-p)
+  :ensure nil
+  :after org
+  :defer 1
+  :hook (org-mode . org-list-checkbox-radio-mode))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-end 'lists)
 #+END_SRC
 
 *** Project File Integration
@@ -3968,7 +4075,66 @@ Load the underlying =org-export= package.
 (use-package ox
   :if (skj/current-feature-required-p)
   :ensure nil
-  :after org)
+  :after org
+  :custom
+  (org-export-with-smart-quotes t))
+#+END_SRC
+
+Configure the ASCII export.
+
+#+BEGIN_SRC emacs-lisp
+(use-package ox-ascii
+  :if (skj/current-feature-required-p)
+  :ensure nil
+  :after ox
+  :custom
+  (org-ascii-links-to-notes nil))
+#+END_SRC
+
+Configure the HTML export.
+
+#+BEGIN_SRC emacs-lisp
+(when (skj/current-feature-required-p)
+  
+  (use-package ox-html
+    :ensure nil
+    :after ox
+    :custom
+    (org-html-coding-system 'utf-8-unix)
+    (org-link-file-path-type "relative")
+    (org-html-head-include-default-style t) ;; turn off per-project
+    (org-html-head-include-scripts nil)
+    (org-html-table-default-attributes
+     '(:border "0" :cellspacing "0" :cellpadding "6" :rules "none" :frame "none"))
+    (org-html-validation-link nil))
+
+  (setf org-html-mathjax-options
+        '((path "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js")
+          (scale "100")
+          (align "center")
+          (indent "2em")
+          (linebreaks "false")
+          (indent "0em")
+          (multlinewidth "85%")
+          (autonumber "AMS")
+          (tagindent "0.8em")
+          (tagside "right")))
+
+  (setf org-html-mathjax-template
+        "<script>
+MathJax = {
+  tex: {
+    ams: {
+      multlineWidth: '%MULTLINEWIDTH',
+      multlineIndent: '1em'
+    },
+    tags: 'ams'
+  }
+};
+</script>
+<script id=\"MathJax-script\" async
+  src=\"%PATH\">
+</script>"))
 #+END_SRC
 
 The package [[https://github.com/emacsorphanage/ox-pandoc][ox-pandoc]] is an exporter for Org mode which converts Org-mode files to a wide variety of other formats using
@@ -4374,14 +4540,6 @@ This add-on defines three =company-mode= backends.
   (add-to-list 'company-backends 'company-math-symbols-unicode))
 #+END_SRC
 
-Edit regions in separate buffers based on `edit-indirect' especially for latex.
-
-#+BEGIN_SRC emacs-lisp
-(use-package company-mathedit-indirect-region-latex
-  :if (skj/current-feature-required-p)
-  :after edit-indirect)
-#+END_SRC
-
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'auctex)
 #+END_SRC
@@ -4641,7 +4799,7 @@ fira-code-mode-install-fonts<RET>=.
 #+BEGIN_SRC emacs-lisp
 (use-package fira-code-mode
   :if (and (skj/current-feature-required-p) window-system)
-  :hook (prog-mode . fire-code)
+  :hook (prog-mode . fira-code)
   :config (fira-code-mode-set-font))
 #+END_SRC
 
@@ -5046,7 +5204,18 @@ test text. Use =C-c C-c= to force an update.  Use =C-c C-k= to quit all the rege
 (skj/feature-start 'clients "REST & SOAP Clients")
 #+END_SRC
 
-The REST client set of tools.
+~[[https://github.com/federicotdn/verb][verb-mode]]~ - a powerful HTTP/REST client. This allows an org-mode first approach
+to testing and documenting services.
+
+#+BEGIN_SRC emacs-lisp
+(use-package verb
+  :if (skj/current-feature-required-p)
+  :config
+  (add-to-list 'http-content-type-mode-alist
+               '("application/json" . json-mode)))
+#+END_SRC
+
+The ~[[https://github.com/pashky/restclient.el][restclient-mode]]~ REST client set of tools.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
@@ -5083,14 +5252,14 @@ To inspect a loaded WSDL document, you can do the following:
 (soap-inspect previously-loaded-wsdl)
 #+END_EXAMPLE
 
+~[[https://github.com/emacs-pe/http.el][http-mode]]~ a simplified HTTP client.
 
 #+BEGIN_SRC emacs-lisp
 (use-package http
   :if (skj/current-feature-required-p)
   :config
   (add-to-list 'http-content-type-mode-alist
-               '("application/json" . json-mode))
-  )
+               '("application/json" . json-mode)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -5104,8 +5273,9 @@ To inspect a loaded WSDL document, you can do the following:
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-(use-package swagger-to-org
-  :if (skj/current-feature-required-p))
+(when (skj/current-feature-required-p)
+  (use-package swagg)
+  (use-package swagger-to-org))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -6642,6 +6812,22 @@ Also consider =aws-ec2=.
 (skj/feature-end 'aws)
 #+END_SRC
 
+** Issue Tracking
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'issues "Issue Tracking")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package org-sync
+  :if (skj/current-feature-required-p)
+  :after org)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-end 'issues)
+#+END_SRC
+
 ** Developer Services
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -6805,6 +6991,23 @@ Add the following to the =use-package= above if enrolled in the GPT-4 beta.
 (setq org-ai-default-chat-model "gpt-4")
 #+END_EXAMPLE
 
+The following are individual alternatives to the above.
+
+#+BEGIN_SRC emacs-lisp :noeval
+(use-package org-assistant
+  :if (skj/current-feature-required-p))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :noeval
+(use-package ob-chatgpt-shell
+  :if (skj/current-feature-required-p))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :noeval
+(use-package ob-dall-e-shell
+  :if (skj/current-feature-required-p))
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'llm)
 #+END_SRC
@@ -6816,126 +7019,11 @@ Add the following to the =use-package= above if enrolled in the GPT-4 beta.
 (skj/feature-start 'work "Work Configuration")
 #+END_SRC
 
-Only basic information should exist in here, put the rest in external resources referenced in [[*Work Packages]].
+The following should be a symlink to work configuration under version control.
 
-** Paths
-
-#+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-start 'paths)
-#+END_SRC
-
-These are either common on development boxes or laptop environments.
+#+INCLUDE: work-init.org
 
 #+BEGIN_SRC emacs-lisp :exports none
-(when (skj/current-feature-required-p)
-
-  (dolist (path '("~/bin" "~/.toolbox/bin"))
-    (exec-path-prepend path)))
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-end 'paths)
-#+END_SRC
-
-** Customization
-
-#+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-start 'customization)
-#+END_SRC
-
-These variables parallel their non-work values.
-
-#+BEGIN_SRC emacs-lisp
-(when (skj/current-feature-required-p)
-
-  (defcustom
-    skj/work-email
-    "simonjo@amazon.com"
-    "Primary email address for work."
-    :tag "Work email address"
-    :group 'skj
-    :type 'string)
-
-  (defcustom
-    skj/work-organization
-    "Amazon Advertising"
-    "Display name for employing organization."
-    :tag "Work Organization"
-    :group 'skj
-    :type 'string)
-
-  (defcustom
-    skj/work-project-root-dir
-    (expand-file-name (concat-path skj/project-root-dir "Amazon"))
-    "Root directory for work development projects."
-    :tag "Work projects' root directory"
-    :group 'skj
-    :type 'directory))
-#+END_SRC
-
-Add work packages that include LaTeX here.
-
-#+BEGIN_SRC emacs-lisp
-(when (skj/current-feature-required-p)
-
-  (setq skj/latex-shared-paths
-        (add-to-list 'skj/latex-shared-paths
-                     (concat-path skj/work-project-root-dir
-                                  "FreshDocumentationTemplates/configuration"))))
-#+END_SRC
-
-Add any work BibTeX files here.
-
-#+BEGIN_SRC emacs-lisp
-(when (skj/current-feature-required-p)
-
-  (setq skj/bibtex-files
-        (add-to-list 'skj/bibtex-files
-                     (concat-path skj/work-project-root-dir
-                                  "SimonjoDocuments/tex-shared/amazon.bib"))))
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-end 'customization)
-#+END_SRC
-
-** Work Packages
-
-#+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-start 'packages)
-#+END_SRC
-
-The =work= directory should be a symlink to a Git repository containing any work-specific packages.
-
-#+BEGIN_SRC emacs-lisp
-(when (skj/current-feature-required-p)
-  (add-to-list 'load-path (concat-path user-emacs-directory "lib/work")))
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-end 'packages)
-#+END_SRC
-
-** Org Mode
-
-#+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-start 'org "Org Mode")
-#+END_SRC
-
-Load initial work Org files, there may be more, but this is a start.
-
-#+BEGIN_SRC emacs-lisp
-(when (skj/current-feature-required-p)
-
-  (setq org-agenda-files
-        (append org-agenda-files
-                (list (org-file-name "work-todo.org.gpg")
-                      (org-file-name "work-people.org.gpg")
-                      (org-file-name "work-travel.org.gpg")))))
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-end 'org)
 (skj/feature-end 'work)
 #+END_SRC
 
