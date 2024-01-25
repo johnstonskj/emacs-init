@@ -55,16 +55,20 @@ custom file, call esup with a prefix argument. That is, =C-u M-x esup=.
 
 * Utility Functions
 
+These are all useful things to have around. Note that the function ~concat-path~ is defined in the bootstrap =init.el= and
+the /initial/ version of the function ~init-message~ is defined at the top of this file.
+
 ** Feature Management
 
-A simple implementation to turn on/off blocks of initialization below.
+The expands a list of features that should not be installed. it adds names from the environment variable
+=EMACS_LOCAL_FEATURES_OFF= which may contain a colon separated list of feature paths.
 
 #+BEGIN_SRC emacs-lisp :lexical t
 (require 'subr-x) ;; builtin convenience functions.
 
 (init-message "processing not-required features")
 
-(defvar skj/feature--not-required
+(defconst skj/feature--not-required
   '("dev/aws"
     "dev/lang/ada"
     "dev/lang/common-lisp"
@@ -82,9 +86,17 @@ A simple implementation to turn on/off blocks of initialization below.
     (add-to-list 'skj/feature--not-required p)))
 
 (init-message "not-required = %s" skj/feature--not-required)
+#+END_SRC
 
+First, define a variable that will track the nested feature names as they are entered and left.
+
+#+BEGIN_SRC emacs-lisp :lexical t
 (defvar skj/feature--stack '())
+#+END_SRC
 
+Now we can redefine ~init-message~ to include the current feature stack.
+
+#+BEGIN_SRC emacs-lisp :lexical t
 (defun init-message (&optional msg &rest args)
   (when skj/debug-init
 	(let* ((init-prefix "INIT: ")
@@ -97,7 +109,15 @@ A simple implementation to turn on/off blocks of initialization below.
 			             ((and (not has-feature-prefix) msg) msg)
 			             ((and has-feature-prefix (not msg)) "...")))))
 	  (apply 'message msg args))))
+#+END_SRC
 
+Now we get to the main components
+
+- ~skj/feature-start~ :: ::
+- ~skj/feature-end~ ::
+- ~skj/current-feature-required-p~ ::
+
+#+BEGIN_SRC emacs-lisp :lexical t
 (defun skj/feature--required (name)
   (let* ((path-parts (reverse (cons name (mapcar (lambda (elt) (car elt)) skj/feature--stack))))
 	     (path (string-join path-parts "/")))
@@ -136,8 +156,6 @@ Note that this returns t if the stack is empty which usually means
 it's been called by `eval-buffer' or `eval-region'."
   (or (null skj/feature--stack)
       (caddr (car skj/feature--stack))))
-
-(init-message "installed feature stack")
 #+END_SRC
 
 ** Utilities
@@ -391,27 +409,21 @@ Basic identity values, these are my common non-work values.
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
-  (defcustom
-    skj/default-user-name
-    "johnstonskj"
+  (defcustom skj/default-user-name "johnstonskj"
     "A default user name, or user name prefix."
     :tag "Default user name"
     :group 'skj
     :type 'string)
 
-  (defcustom
-    skj/primary-email
-    (concat skj/default-user-name "@gmail.com")
+  (defcustom skj/primary-email (concat skj/default-user-name "@gmail.com")
     "Primary, non-work, email address."
     :tag "Primary email address"
     :group 'skj
     :type 'string)
 
-  (defcustom
-    skj/full-name
-    "Simon Johnston"
-    "Name to go with email-address."
-    :tag "Primary email name"
+  (defcustom skj/full-name "Simon Johnston"
+    "Full name to go with email-address."
+    :tag "Full name"
     :group 'skj
     :type 'string))
 #+END_SRC
@@ -739,9 +751,7 @@ Set the root for all my projects, home and work.
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
-  (defcustom
-    skj/project-root-dir
-    (expand-file-name "~/Projects")
+  (defcustom skj/project-root-dir (expand-file-name "~/Projects")
     "Root directory for development projects."
     :tag "Project root directory"
     :group 'skj
@@ -829,6 +839,49 @@ And configure this in Emacs as well as using the local password store.
 #+END_SRC
 
 These are customizations beyond those needed for startup in [[*Startup Settings]].
+
+*** Theme Support
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'themes "Theme Support")
+#+END_SRC
+
+How anyone uses anything other than [[https://ethanschoonover.com/solarized/][solarized]] is beyond me.
+
+#+BEGIN_SRC emacs-lisp
+(use-package color-theme-sanityinc-solarized
+  :if (skj/current-feature-required-p)
+  :init
+  (setq custom-enabled-themes '(sanityinc-solarized-light)
+        custom-safe-themes
+        '("4cf3221feff536e2b3385209e9b9dc4c2e0818a69a1cdb4b522756bcdf4e00a4" default))
+  :config (setq color-theme-is-global t)
+  (color-theme-sanityinc-solarized-light))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(defconst skj/theme-core-color-alist
+  '((base03  . "#002b36")
+    (base02  . "#073642")
+    (base01  . "#586e75")
+    (base00  . "#657b83")
+    (base0   . "#839496")
+    (base1   . "#93a1a1")
+    (base2   . "#93a1a1")
+    (base3   . "#fdf6e3")
+    (yellow  . "#b58900")
+    (orange  . "#cb4b16")
+    (red     . "#dc322f")
+    (magenta . "#d33682")
+    (violet  . "#6c71c4")
+    (blue    . "#268bd2")
+    (cyan    . "#2aa198")
+    (green   . "#859900")))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-end 'themes)
+#+END_SRC
 
 *** Input Encoding
 
@@ -1029,25 +1082,25 @@ always use [[https://fonts.google.com/specimen/Fira+Code][Fira Code]].
 (when (skj/current-feature-required-p)
 
   (defcustom skj/default-font-family "Fira Code"
-    "Default font family."
+    "Default code/monospace font family."
     :tag "Default font family"
     :type 'string
     :group 'skj)
 
   (defcustom skj/default-font-weight 'light
-    "Default font weight."
-    :type '(choice (const light)
-                   (const semi-light)
-                   (const normal)
-                   (const semi-bold)
-                   (const bold))
+    "Default code/monospace font weight."
+    :type '(radio (const :tag "Light" light)
+                  (const :tag "Semi-Light" semi-light)
+                  (const :tag "Normal" normal)
+                  (const :tag "Semi-Bold" semi-bold)
+                  (const :tag "Bold" bold))
     :tag "Default font weight"
     :group 'skj)
 
   (defcustom skj/default-font-size 130
-    "Default font size."
+    "Default code/monospace font size; in Emacs units."
     :tag "Default font size"
-    :type 'int
+    :type 'integer
     :group 'skj))
 #+END_SRC
 
@@ -1100,29 +1153,6 @@ Make the menu system readable, the default colors after theming are kind of hein
 (skj/feature-end 'faces)
 #+END_SRC
 
-*** Theme Support
-
-#+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-start 'themes "Theme Support")
-#+END_SRC
-
-How anyone uses anything other than [[https://ethanschoonover.com/solarized/][solarized]] is beyond me.
-
-#+BEGIN_SRC emacs-lisp
-(use-package color-theme-sanityinc-solarized
-  :if (skj/current-feature-required-p)
-  :init
-  (setq custom-enabled-themes '(sanityinc-solarized-light)
-        custom-safe-themes
-        '("4cf3221feff536e2b3385209e9b9dc4c2e0818a69a1cdb4b522756bcdf4e00a4" default))
-  :config (setq color-theme-is-global t)
-  (color-theme-sanityinc-solarized-light))
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-end 'themes)
-#+END_SRC
-
 *** Icons
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -1136,6 +1166,8 @@ Good to know...
     (message "Emacs has imagemagick support :)")
   (message "Emacs does not have imagemagick support :("))
 #+END_SRC
+
+Note that these should *all* be guarded to install *only* for windowed systems.
 
 #+BEGIN_SRC emacs-lisp
 (when (and (skj/current-feature-required-p) window-system)
@@ -1314,6 +1346,10 @@ Just started with [[https://github.com/abo-abo/hydra][Hydra]], so there are hydr
 NerdTree, but largely inspired by the Project Explorer in Eclipse. It shows the file system outlines of your projects in
 a simple tree layout allowing quick navigation and exploration, while also possessing basic file management utilities.
 
+/Note/: The persisted state is saved under =user-emacs-directory/.cache/treemacs-persist= by default. The exact file
+location is saved in the variable ~treemacs-persist-file~.
+
+
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
@@ -1323,7 +1359,11 @@ a simple tree layout allowing quick navigation and exploration, while also posse
     (treemacs-follow-mode 1)
     (treemacs-git-commit-diff-mode 1)
     (treemacs-git-mode 1)
-    (treemacs-indent-guide-mode 1))
+    (treemacs-indent-guide-mode 1)
+    (treemacs-project-follow-mode 1)
+    (treemacs-tag-follow-mode 1)
+    (define-key treemacs-mode-map [mouse-1] #'treemacs-single-click-expand-action)
+    )
 
   (use-package treemacs-all-the-icons
     :if window-system
@@ -1963,6 +2003,10 @@ Install the base [[https://www.flycheck.org/en/latest/][Flycheck]] package, and 
     :hook (after-init . global-flycheck-mode)
     :diminish flycheck-mode)
 
+  (use-package flycheck-indicator
+    :after flycheck
+    :hook (flycheck-mode . flycheck-indicator-mode))
+
   (use-package flycheck-inline
     :hook (flycheck-mode . flycheck-inline-mode)
     :diminish flycheck-inline-mode
@@ -1992,7 +2036,7 @@ Install the base [[https://www.flycheck.org/en/latest/][Flycheck]] package, and 
 
   (use-package sh-script
     :ensure nil
-    :mode '("\\.zsh\\'" . sh-mode))
+    :mode ("\\.zsh\\'" . sh-mode))
 
   (use-package term
     :ensure nil
@@ -2074,16 +2118,6 @@ Package =mo-git-blame= -- An interactive, interative /git blame/ mode for Emacs.
   (global-set-key [?\C-c ?g ?f] 'mo-git-blame-file))
   #+END_SRC
 
-Package =git-commit-insert-issue= -- In a magit commit buffer, I want to complete the issue when I type “Fixes #”. This
-actaully works with any other keyword supported by Github: =close closes closed fix fixes fixed resolve resolves resolved=
- 
-#+BEGIN_SRC emacs-lisp
-(use-package git-commit-insert-issue
-  :if (skj/current-feature-required-p)
-  :after git
-  :hook (git-commit-mode))
-#+END_SRC
-
 Package =git-link= -- Interactive Emacs functions that create URLs for files and commits in GitHub/Bitbucket/GitLab/...
 repositories.
 
@@ -2141,17 +2175,28 @@ care of automatically refreshing this output when it becomes outdated.
     :init
     (setq-default magit-git-executable (executable-find "git")))
 
-  (use-package magit-lfs :after magit))
+  (use-package magit-lfs :after magit)
+  
+  (use-package magit-filenotify
+    :after magit
+    :hook
+    (after-save . magit-after-save-refresh-status))
+
+  (use-package magit-gh-pulls
+    :after magit
+    :hook
+    (after-save magit-after-save-refresh-status)))
 #+END_SRC
 
 This package displays keyword entries from source code comments and Org files in the Magit status buffer. Activating an
 item jumps to it in its file. By default, it uses keywords from =hl-todo=, minus a few (like "NOTE").
 
 #+BEGIN_SRC emacs-lisp
-(use-package magit-todos
-  :if (skj/current-feature-required-p)
-  :after magit
-  :config (magit-todos-mode))
+(when (skj/current-feature-required-p)
+
+  (use-package magit-todos
+    :after magit
+    :config (magit-todos-mode)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -2179,7 +2224,12 @@ token is documented in the magit [[https://magit.vc/manual/ghub.html#Getting-Sta
 
 - ~gh-notify~ -- A veneer for Magit/Forge GitHub notifications
 
-Review Github Pull Request from Emacs!
+Review Github pull requests from Emacs. This package provides the following entrypoint:
+
+- =M-x pr-review=: open a PR with given URL.
+- =M-x pr-review-notification=: list github notifications in a buffer, and open PRs from it.
+- =M-x pr-review-search-open=: search in github and select a PR from search result.
+- =M-x pr-review-search=: like above, but list results in a buffer.
 
 #+BEGIN_SRC emacs-lisp
 (use-package pr-review
@@ -2197,16 +2247,6 @@ Automatically set ~bug-reference-url-format~ and enable ~bug-reference-prog-mode
   :if (skj/current-feature-required-p)
   :after magit
   :hook (prog-mode . bug-reference-github-set-url-format))
-#+END_SRC
-
-This library provides a minor mode and an interactive function to fetch issues of your project when you type "Fixes #"
-in a commit message. Github, Gitlab and Bitbucket.
-
-#+BEGIN_SRC emacs-lisp
-(use-package git-commit-insert-issue
-  :if (skj/current-feature-required-p)
-  :after magit
-  :hook (git-commit-mode . git-commit-insert-issue-mode))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -2312,11 +2352,9 @@ I *always* setup =abbrev-mode= as it's builtin and this way have a backup if no 
   (defconst skj/snippet-default-dir
     (concat-path user-emacs-directory "snippets"))
   
-  (defcustom
-    skj/snippet-repo-dir
-    (concat-path skj/project-root-dir "emacs-snippets")
-    "Snippet repository local path."
-    :tag "Snippet repository local path"
+  (defcustom skj/snippet-repo-dir (concat-path skj/project-root-dir "emacs-snippets")
+    "Snippet repository's local path."
+    :tag "Snippet repository path"
     :group 'skj
     :type 'directory)
 
@@ -2401,6 +2439,16 @@ Package =ivy-yasnippet= lets you preview yasnippet snippets with ivy. To use it,
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-start 'org "Org-Mode")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(when (skj/current-feature-required-p)
+  
+  (defgroup skj-org nil
+    "Simon's org-mode settings."
+    :group 'skj
+    :tag "skj-org"
+    :prefix "skj-org/"))
 #+END_SRC
 
 The almighty [[https://orgmode.org/][Emacs Org Mode]]!
@@ -2672,6 +2720,7 @@ Load =org-crypt= to enable selective encryption/decryption using GPG within
 #+BEGIN_SRC emacs-lisp
 (use-package org-crypt
   :ensure nil
+  :if (skj/current-feature-required-p)
   :after org
   :custom
   (org-crypt-key skj/primary-email)
@@ -3168,6 +3217,13 @@ I use the [[https://github.com/sabof/org-bullets][org-bullets]] package to displ
 
 The [[https://orgmode.org/worg/org-contrib/org-collector.html][org-collector]] package collects headline properties into tables with optional pre-processing.
 
+**Example**:
+
+#+BEGIN_EXAMPLE org
+,#+BEGIN: propview :id "december" :conds ((string= SPENDTYPE "food")) :cols (ITEM AMOUNT)
+,#+END:
+#+END_EXAMPLE
+
 #+BEGIN_SRC emacs-lisp :exports none
 (use-package org-collector
   :ensure nil
@@ -3177,6 +3233,8 @@ The [[https://orgmode.org/worg/org-contrib/org-collector.html][org-collector]] p
 
 The [[https://github.com/nobiot/org-transclusion][org-transclusion]] package lets you insert a copy of text content via a file link or ID link within an Org file. It
 lets you have the same content present in different buffers at the same time without copy-and-pasting it.
+
+**Example**: ~#+transclude: [[id:20210501T171427.051019][Bertrand Russell]]~
 
 #+BEGIN_SRC emacs-lisp :exports none
 (use-package org-transclusion
@@ -3446,6 +3504,14 @@ Set up some useful Agenda views.
                        '(priority-down todo-state-down effort-up)))))
            nil
            ("~/daily-agenda.html")))))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package org-timeline
+  :if (skj/current-feature-required-p)
+  :after org-agenda
+  :config
+  (add-hook 'org-agenda-finalize-hook 'org-timeline-insert-timeline :append))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -3755,12 +3821,11 @@ Store synced calendar entries in the following file.
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
-  (defcustom skj/org-gcal-file
-    (org-file-name "gcal.org")
+  (defcustom skj/org-gcal-file (org-file-name "gcal.org")
     "Location of `org-mode' file to sync with Google Calendar."
     :tag "Org Agenda file for Google Calendar"
-    :group 'skj
-    :type 'file))
+    :group 'skj-org
+    :type '(file :must-match t)))
 #+END_SRC
 
 Now setup the client.
@@ -4018,6 +4083,24 @@ The [[https://github.com/abrochard/mermaid-mode/tree/master][mermaid-mode]] allo
 (skj/feature-end 'mermaid)
 #+END_SRC
 
+*** HTTP
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'http)
+#+END_SRC
+
+https://github.com/zweifisch/ob-http
+
+#+BEGIN_SRC emacs-lisp
+(use-package ob-http
+  :if (skj/current-feature-required-p)
+  :init (skj/org-babel-add-languages 'http))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-end 'http)
+#+END_SRC
+
 *** PlantUML
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -4108,33 +4191,8 @@ Configure the HTML export.
      '(:border "0" :cellspacing "0" :cellpadding "6" :rules "none" :frame "none"))
     (org-html-validation-link nil))
 
-  (setf org-html-mathjax-options
-        '((path "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js")
-          (scale "100")
-          (align "center")
-          (indent "2em")
-          (linebreaks "false")
-          (indent "0em")
-          (multlinewidth "85%")
-          (autonumber "AMS")
-          (tagindent "0.8em")
-          (tagside "right")))
-
-  (setf org-html-mathjax-template
-        "<script>
-MathJax = {
-  tex: {
-    ams: {
-      multlineWidth: '%MULTLINEWIDTH',
-      multlineIndent: '1em'
-    },
-    tags: 'ams'
-  }
-};
-</script>
-<script id=\"MathJax-script\" async
-  src=\"%PATH\">
-</script>"))
+  ;; Set this to an empty string as I'd rather use KaTeX than MathJax.
+  (setf org-html-mathjax-template ""))
 #+END_SRC
 
 The package [[https://github.com/emacsorphanage/ox-pandoc][ox-pandoc]] is an exporter for Org mode which converts Org-mode files to a wide variety of other formats using
@@ -4179,6 +4237,42 @@ PDF.
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'export)
+#+END_SRC
+
+** Publishing
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'publish)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package ox-publish
+  :ensure nil
+  :if (skj/current-feature-required-p)
+  :defer 3
+  :after ox
+  :custom
+  (org-publish-use-timestamps-flag t)
+  (org-publish-sitemap-sort-folders 'first))
+#+END_SRC
+
+Use ~(setq org-publish-cache nil)~ to reset the timestamp cache.
+
+Dir locals are stored in the variable ~safe-local-variable-values~. This is cleared on startup, a bit of a pain, but
+safety first. Note that it *is not* gated by the current feature, this is a global action.
+
+#+BEGIN_SRC emacs-lisp
+(use-package files
+  :ensure nil
+  :config
+  ;; (setq dir-local-variables-alist nil)
+  (setq dir-locals-directory-cache nil)
+  (setq dir-locals-class-alist nil)
+  (setq safe-local-variable-values nil))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-end 'publish)
 #+END_SRC
 
 ** Key Bindings
@@ -4475,18 +4569,14 @@ XWiki mode is an offline editing mode only.
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
-  (defcustom
-    skj/latex-shared-paths
-    (list (expand-file-name "~/Projects/latex/texmf"))
+  (defcustom skj/latex-shared-paths (list (expand-file-name "~/Projects/latex/texmf"))
     "A list of directories holding shared files for LaTeX writing."
     :tag "Shared LaTeX directories"
     :group 'skj
     :type '(repeat directory))
 
-  (defcustom
-    skj/bibtex-files
-    (list (expand-file-name "~/Projects/latex/personal.bib"))
-    "A list of BibTeX files."
+  (defcustom skj/bibtex-files (list (expand-file-name "~/Projects/latex/personal.bib"))
+    "A list of BibTeX files to use for citation searches."
     :tag "Shared BibTeX files"
     :group 'skj
     :type '(repeat file)))
@@ -4581,9 +4671,8 @@ Tools to retrieve content.
   (use-package gscholar-bibtex))
 #+END_SRC
 
-The [[https://github.com/emacs-citar/citar][ccitar]] package provides a completing-read front-end to browse and act on BibTeX,
-BibLaTeX, and CSL JSON bibliographic data, and LaTeX, markdown, and org-cite
-editing support. See [[https://kristofferbalintona.me/posts/202206141852/#citar][this page]] for some configuration ideas.
+The [[https://github.com/emacs-citar/citar][citar]] package provides a completing-read front-end to browse and act on BibTeX, BibLaTeX, and CSL JSON bibliographic
+data, and LaTeX, markdown, and org-cite editing support. See [[https://kristofferbalintona.me/posts/202206141852/#citar][this page]] for some configuration ideas.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
@@ -4619,7 +4708,9 @@ Use =M-x latex-math-preview-expression=
     :config (latex-preview-pane-enable)))
 #+END_SRC
 
-Automatically toggle Org mode LaTeX fragment previews as the cursor enters and exits them
+Automatically toggle Org mode LaTeX fragment previews as the cursor enters and exits them. Basically, in window mode
+LaTeX previews are generated for math (for example) and shown as previews in-line. These previews are then turned off as
+you enter them so that you can edit the underlying source.
 
 #+BEGIN_SRC emacs-lisp
 (use-package org-fragtog
@@ -4743,6 +4834,16 @@ This is more a batch checker, you run the external tool =style= on a buffer or r
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-start 'dev "Development Configuration")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(when (skj/current-feature-required-p)
+  (defgroup skj-dev nil
+    "Simon's developer settings."
+    :tag "Developer settings"
+    :group 'skj
+    :tag "skj-dev"
+    :prefix "skj-dev/"))
 #+END_SRC
 
 ** UI Settings
@@ -5066,8 +5167,7 @@ After adding/removing projects, run =M-x projectile-discover-projects-in-search-
   (lsp-signature-doc-lines 5))
 #+END_SRC
 
-This package contains all the higher level UI modules of =lsp-mode=, like
-flycheck support and code lenses.
+This package contains all the higher level UI modules of =lsp-mode=, like flycheck support and code lenses.
 
 #+BEGIN_SRC emacs-lisp
 (use-package lsp-ui
@@ -5093,8 +5193,7 @@ flycheck support and code lenses.
     (imenu-list-smart-toggle)))
 #+END_SRC
 
-This package provides an interactive =ivy= interface to the workspace symbol
-functionality offered by =lsp-mode=.
+This package provides an interactive =ivy= interface to the workspace symbol functionality offered by =lsp-mode=.
 
 - ~lsp-ivy-workspace-symbol~ - workspace symbols for the current workspace
 - ~lsp-ivy-global-workspace-symbol~ - workspace symbols from all of the active
@@ -5146,10 +5245,10 @@ produced by =undercover.el=.
 Need to customize either ~cov-coverage-file-paths~ or
 ~cov-coverage-file-paths~ for different coverage tools/languages.
 
-*** Regex Tester
+*** Regex Tools
 
 #+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-start 'regex-tester)
+(skj/feature-start 'regex-tools)
 #+END_SRC
 
 The [[https://github.com/jwiegley/regex-tool][regex-tool]] package provides the common three-pane (regex, text, groups) view for testing regular expressions against
@@ -5161,7 +5260,7 @@ test text. Use =C-c C-c= to force an update.  Use =C-c C-k= to quit all the rege
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-end 'regex-tester)
+(skj/feature-end 'regex-tools)
 #+END_SRC
 
 *** DAP Settings
@@ -5271,6 +5370,11 @@ To inspect a loaded WSDL document, you can do the following:
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-start 'swagger)
 #+END_SRC
+
+- =swagg= :: [[https://github.com/isamert/swagg.el][allows you to]] take parse a swagger.json file, and produce an org-mode buffer/file out of it's
+  contents.
+- =swagger-to-org= :: [[https://github.com/ahungry/swagger-to-org][allows you to]] take parse a =swagger.json= file, and produce an org-mode buffer/file out of it's
+  contents.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
@@ -5767,51 +5871,97 @@ Get an implementation:
   suited to enterprise-wide, complex application development. Complex applications with billions of objects are now made
   easy with [[https://franz.com/products/allegro-common-lisp/][Allegro CL 10]]. The command-line tool is =alisp=.
 
+#+BEGIN_SRC emacs-lisp
+(when (skj/current-feature-required-p)
+  
+  (defcustom skj-dev/common-lisp-packages '(clisp sbcl)
+    "Name of Common Lisp implementations to enable."
+    :tag "Enabled Common Lisps"
+    :type '(set (const :tag "Allegro CL" allegro)
+                (const :tag "GNU Common Lisp" clisp)
+                (const :tag "Steel Bank Common Lisp" sbcl))
+    :group 'skj-dev)
+  
+  (defcustom skj-dev/common-lisp-program "sbcl"
+    "Name of the default Common Lisp interpreter to connect to."
+    :tag "Common Lisp interpreter"
+    :type '(set (const :tag "Allegro CL (ANSI))" "alisp")
+                (const :tag "Allegro Express" "allegro-express")
+                (const :tag "GNU Common Lisp" "clisp")
+                (const :tag "Steel Bank Common Lisp" "sbcl"))
+    :group 'skj-dev))
+#+END_SRC
+
 Quicklisp – [[https://www.quicklisp.org/beta/][Quicklisp]] is a library manager for Common Lisp. It works with your existing Common Lisp implementation to
 download, install, and load any of over 1,200 libraries with a few simple commands.
-
-#+BEGIN_EXAMPLE bash
-curl -O https://beta.quicklisp.org/quicklisp.lisp
-curl -O https://beta.quicklisp.org/quicklisp.lisp.asc
-gpg --verify quicklisp.lisp.asc quicklisp.lisp
-echo "Type this into CLisp (quicklisp-quickstart:install)"
-sbcl --load quicklisp.lisp
-#+END_EXAMPLE
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
   (defvar quicklisp-directory
-    (expand-file-name "~/quicklisp")))
+    (expand-file-name "~/quicklisp"))
+
+  (unless (file-directory-p quicklisp-directory)
+    (make-directory quicklisp-directory)
+
+    (let ((quicklisp-source (expand-file-name
+                             (concat-path quicklisp-directory
+                                          "tmp-quicklisp.lisp")))
+          (quicklisp-sig (expand-file-name
+                          (concat-path quicklisp-directory
+                                       "tmp-quicklisp.lisp.sig"))))
+      (require 'url) ; built-in
+      (url-copy-file "https://beta.quicklisp.org/quicklisp.lisp"
+                     quicklisp-source)
+      (url-copy-file "https://beta.quicklisp.org/quicklisp.lisp.sig"
+                     quicklisp-sig)
+      
+      (require 'epa) ; built-in
+      (epa-verify-file quicklisp-sig)
+
+      (cond
+       ((eq skj-dev/common-lisp-program "clisp")
+        (call-process
+         (format "clisp -i %s -x '(quicklisp-quickstart:install)'"
+                 quicklisp-source)))
+       ((eq skj-dev/common-lisp-program "sbcl")
+        (call-process
+         (format "sbcl --load %s --eval '(quicklisp-quickstart:install)' --quit"
+                 quicklisp-source)))
+       (t
+        (init-message "Could not load quicklisp for %s" skj-dev/common-lisp-program))))))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
   (use-package slime
-    :ensure-system-package (clisp sbcl)
     :custom
-    (inferior-lisp-program (executable-find "sbcl"))
+    (inferior-lisp-program (executable-find skj-dev/common-lisp-program))
     (slime-complete-symbol*-fancy t)
     (slime-complete-symbol-function 'slime-fuzzy-complete-symbol)
-    (slime-contribs '(slime-fancy))
-    :config
-    (load (expand-file-name (concat-path "slime-helper.el"))))
+    (slime-contribs '(slime-fancy slime-fancy-inspector slime-fancy-inspector slime-quicklisp)))
 
   (use-package slime-company
     :after (slime company)
     :init
-    (slime-setup '(slime-fancy slime-asdf slime-company)))
+    (slime-setup '(slime-company))
+    :config
+    (setq slime-company-completion 'fuzzy
+          slime-company-after-completion 'slime-company-just-one-space))
 
   (use-package slime-repl-ansi-color
     :after slime
     :config
-    (slime-setup '(slime-fancy slime-repl-ansi-color)))
+    (slime-setup '(slime-repl-ansi-color)))
 
   (use-package elisp-slime-nav
     :after slime
-    :hook ((emacs-lisp-mode ielm-mode) . elisp-slime-nav-mode)))
+    :hook
+    ((emacs-lisp-mode ielm-mode) . elisp-slime-nav-mode)))
 #+END_SRC
+
+Here would be a good place for Clojure too.
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'common-lisp)
@@ -5826,18 +5976,53 @@ sbcl --load quicklisp.lisp
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
+  (defcustom skj-dev/scheme-packages '(guile racket)
+    "Name of Scheme implementations to enable."
+    :tag "Enabled Schemes"
+    :type '(set (const :tag "Chez Scheme" chez)
+                (const :tag "chibi-scheme" chibi)
+                (const :tag "CHICKEN Scheme" chicken)
+                (const :tag "Gambit Scheme" gambit)
+                (const :tag "Gauche" gauche)
+                (const :tag "Guile" guile)
+                (const :tag "MIT/GNU Scheme" mit)
+                (const :tag "Racket" racket))
+    :group 'skj-dev)
+
+  (defcustom skj-dev/scheme-program "racket"
+    "Name of Scheme program to run as default intepreter."
+    :tag "Scheme intepreter"
+    :type '(radio (const :tag "Chez Scheme" "scheme")
+                  (const :tag "Chez Scheme (Petite)" "petite")
+                  (const :tag "chibi-scheme" "chibi-scheme")
+                  (const :tag "CHICKEN Scheme" "csi")
+                  (const :tag "Gambit Scheme" "gsi")
+                  (const :tag "Gauche" "gosh")
+                  (const :tag "Guile" "guile")
+                  (const :tag "MIT/GNU Scheme" "mit-scheme")
+                  (const :tag "Racket" "racket"))
+    :group 'skj-dev))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(when (skj/current-feature-required-p)
+
   (use-package scheme
     :ensure nil
     :custom
-    (scheme-program-name  "racket"))
+    (scheme-program-name  skj-dev/scheme-program))
 
   (use-package quack
-    :after scheme)
+    :after scheme
+    :defer 4)
 
   (use-package scheme-complete
-    :after scheme)
+    :after scheme
+    :defer 4)
 
   (use-package lsp-scheme
+    :after scheme
+    :defer 4
     :hook
     (scheme-mode . lsp-gambit-scheme)))
 #+END_SRC
@@ -5856,17 +6041,58 @@ Emacs' basic scheme major mode.
     :after geiser
     :hook (geiser-repl-mode . smartparens-strict))
 
-  (use-package geiser-chez :after geiser)
-
-  (use-package geiser-gauche :after geiser)
-
-  (use-package geiser-racket :after geiser)
-
   (use-package macrostep-geiser
     :after (geiser geiser-repl)
     :hook
     ((geiser-mode . macrostep-geiser-setup)
-     (geiser-repl-mode . macrostep-geiser-setup))))
+     (geiser-repl-mode . macrostep-geiser-setup)))
+
+  ;; Backends!
+  
+  (when (and (member 'chez skj-dev/scheme-packages)
+             (not (system-mac-p)))
+    (use-package geiser-chez
+      :ensure-system-package chezscheme
+      :after geiser))
+
+  (when (member 'chibi skj-dev/scheme-packages)
+    (use-package geiser-chibi
+      :ensure-system-package chibi-scheme
+      :after geiser))
+
+  (when (member 'chicken skj-dev/scheme-packages)
+    (use-package geiser-chicken
+      :ensure-system-package chicken
+      :after geiser))
+
+  (when (member 'gambit skj-dev/scheme-packages)
+    (use-package geiser-gambit
+      :ensure-system-package gambit-scheme
+      :after geiser))
+
+  (when (member 'gauche skj-dev/scheme-packages)
+    (use-package geiser-gauche
+      :ensure-system-package gauche
+      :after geiser))
+
+  (when (member 'guile skj-dev/scheme-packages)
+    (use-package geiser-guile
+      :ensure-system-package guile
+      :after geiser))
+
+  (when (member 'mit skj-dev/scheme-packages)
+    (use-package geiser-mit
+      :ensure-system-package mit-scheme
+      :after geiser))
+  
+  (when (member 'racket skj-dev/scheme-packages)
+    (use-package geiser-racket
+      :after (geiser racket-mode))))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(when (member 'guile skj-dev/scheme-packages)
+  (use-package flycheck-guile))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -5884,7 +6110,8 @@ Emacs' basic scheme major mode.
 
   (use-package dr-racket-like-unicode)
 
-  (use-package racket-mode)
+  (use-package racket-mode
+    :ensure-system-package racket)
 
   (use-package scribble-mode :after racket-mode))
 #+END_SRC
@@ -5900,6 +6127,7 @@ Not currently using this, but have used the following:
 - =eglot= as an LSP client to the AdaCore (GNAT) [[https://github.com/AdaCore/ada_language_server][ALS]].
 - =ada-mode=
 - =ada-ref-man=
+- =ob-ada-spark=
 
 It is important to note that you not only need a compiler (again, AdaCore) but also the [[https://alire.ada.dev/][Alire]] package manager. Download
 =alr= and run =alr toolchain --select= to get an Ada environment installed.
@@ -6323,6 +6551,13 @@ Support for editing common template pages, specifically Jinja mode.
   :if (skj/current-feature-required-p))
 #+END_SRC
 
+#+BEGIN_SRC emacs-lisp
+(use-package html-check-frag
+  :if (skj/current-feature-required-p)
+  :after html-mode
+  :hook (html-mode . (lambda () (html-check-frag-mode 1))))
+#+END_SRC
+
 Extensions to the standard =html-mode=.
 
 #+BEGIN_SRC emacs-lisp
@@ -6330,6 +6565,18 @@ Extensions to the standard =html-mode=.
   
   (use-package auto-rename-tag
     :hook html-mode)
+
+  (use-package css-mode
+    :ensure nil
+    :defer 2)
+
+  (use-package scss-mode
+    :after css-mode
+    :defer 3)
+  
+  (use-package less-css-mode
+    :after css-mode
+    :defer 3)
 
   (use-package cakecrumbs
     :custom
@@ -6351,7 +6598,10 @@ Extensions to the standard =html-mode=.
       (message "Not in an html mode")))
 
   (use-package show-css
-    :bind ("C-c C-k" . skj/toggle-showcss)))
+    :bind ("C-c C-k" . skj/toggle-showcss))
+
+  (use-package flycheck-css-colorguard
+    :after (css-mode flycheck)))
 #+END_SRC
 
 Completion
@@ -6378,6 +6628,40 @@ Some support for React development.
 #+BEGIN_SRC emacs-lisp
 (use-package react-snippets
   :if (skj/current-feature-required-p))
+#+END_SRC
+
+Basic GraphQL support. See [[https://github.com/jdormit/ob-graphql][ob-graphql]] for more information.
+
+#+BEGIN_SRC emacs-lisp
+(when (skj/current-feature-required-p)
+  
+  (use-package graphql-mode
+    :after (request json))
+
+  (use-package ob-graphql
+    :after (ob graphql-mode)))
+#+END_SRC
+
+This is a really nice extension that allows you to render an HTML snippet using Chrome. It creates a result block that
+is a PNG export, see [[https://github.com/nikclayton/ob-html-chrome][ob-html-chrome]] for more information.
+
+#+BEGIN_SRC org :tangle no
+,#+NAME: src:flag-example
+,#+BEGIN_SRC html-chrome :exports both :flags --window-size=320,240 --force-device-scale-factor=2
+  <p>This is an HTML paragraph.</p>
+,#+END_SRC
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package ob-html-chrome
+  :if (skj/current-feature-required-p)
+  :after (ob)
+  :custom
+  (org-confirm-babel-evaluate
+   (lambda (lang body)
+        (not (string= lang "html-chrome"))))
+  (org-babel-html-chrome-chrome-executable
+   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -6991,20 +7275,11 @@ Add the following to the =use-package= above if enrolled in the GPT-4 beta.
 (setq org-ai-default-chat-model "gpt-4")
 #+END_EXAMPLE
 
-The following are individual alternatives to the above.
+The following, [[https://github.com/tyler-dodge/org-assistant][org-assistant]], is an alternative to =org-ai= but according to the assistant home page it is focused more on
+the Babel cases for /reproducible sessions/ and /allows for notebook style prompt development/.
 
 #+BEGIN_SRC emacs-lisp :noeval
 (use-package org-assistant
-  :if (skj/current-feature-required-p))
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp :noeval
-(use-package ob-chatgpt-shell
-  :if (skj/current-feature-required-p))
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp :noeval
-(use-package ob-dall-e-shell
   :if (skj/current-feature-required-p))
 #+END_SRC
 
@@ -7021,7 +7296,7 @@ The following are individual alternatives to the above.
 
 The following should be a symlink to work configuration under version control.
 
-#+INCLUDE: work-init.org
+#+INCLUDE: "/Users/simonjo/.emacs.d/org-init/work-init.org"
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'work)

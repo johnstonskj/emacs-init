@@ -24,3 +24,4 @@ path, the result is relative to the current buffer path."
 (provide 'init)
 
 ;;; init.el ends here
+(put 'upcase-region 'disabled nil)
