@@ -1,5 +1,10 @@
 #+TITLE: Emacs Initialization
-#+OPTIONS: toc:2
+#+SUBTITLE: Org-Mode Init.el
+#+AUTHOR: Simon Johnston
+#+EMAIL: johnstonskj@gmail.com
+#+LANGUAGE: en
+#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-readtheorg.setup
+#+OPTIONS: toc:3
 
 This is the org-mode version of my Emacs configuration. It is pretty long, but after having a modular version I've
 actually found having a hyperlinked output is super useful. Also, I do like literate programming in general although
@@ -18,8 +23,6 @@ this file. Note that this depends on the value of =debug-on-error= but can easil
 
 (init-message "init file: " user-init-file)
 #+END_SRC
-
-#+RESULTS:
 
 Set the garbage collection threshold to a high value during initialization to speed things along.
 
@@ -94,7 +97,7 @@ First, define a variable that will track the nested feature names as they are en
 (defvar skj/feature--stack '())
 #+END_SRC
 
-Now we can redefine ~init-message~ to include the current feature stack.
+Now we can redefine ~init-message~ which will include the current feature stack.
 
 #+BEGIN_SRC emacs-lisp :lexical t
 (defun init-message (&optional msg &rest args)
@@ -111,11 +114,11 @@ Now we can redefine ~init-message~ to include the current feature stack.
 	  (apply 'message msg args))))
 #+END_SRC
 
-Now we get to the main components
+Now we get to the main functions, which are:
 
-- ~skj/feature-start~ :: ::
-- ~skj/feature-end~ ::
-- ~skj/current-feature-required-p~ ::
+- ~skj/feature-start~ :: Starting a feature pushes it's symbol argument onto the feature stack.
+- ~skj/feature-end~ :: Ending a feature will pop the stack.
+- ~skj/current-feature-required-p~ :: This returns `t` if the top item on the stack matches the argument.
 
 #+BEGIN_SRC emacs-lisp :lexical t
 (defun skj/feature--required (name)
@@ -160,11 +163,13 @@ it's been called by `eval-buffer' or `eval-region'."
 
 ** Utilities
 
+These are simple utilities, all of which /should/ include documentation strings.
+
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-start 'utilities "Utility Functions")
 #+END_SRC
 
-The functions manipulate the path for executable commands outside of Emacs. They affect both Emacs =exec-path= variable
+This function manipulates the path for executable commands outside of Emacs. It affects both Emacs =exec-path= variable
 and the =PATH= environment variable.
 
 #+BEGIN_SRC emacs-lisp
@@ -176,8 +181,7 @@ and the shell's `$PATH` variable."
     (setenv "PATH" (concat path ":" (getenv "PATH")))))
 #+END_SRC
 
-The following is a simple predicate that allows for us to add others and be more descriptive than dealing with the
-=system-type= (and other) variables directly.
+The following is a simple predicate that allows for us to gate actions to only occur on macos.
 
 #+BEGIN_SRC emacs-lisp
 (defun system-mac-p ()
@@ -210,7 +214,10 @@ Italics usually don't show up well on terminals, so pick a common color and set 
 #+END_SRC
 
 
-* Initial Customization
+* Initial Environment
+
+This sets up an initial environment such that low-level customization and key components like the package manager are
+setup. At the end of this we should have a working, but uninteresting state.
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-start 'initial "Initial Customization")
@@ -218,11 +225,13 @@ Italics usually don't show up well on terminals, so pick a common color and set 
 
 ** Startup Settings
 
+These are key settings that we want to ensure early in the process, they affect core Emacs behavior.
+
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-start 'startup "Startup Settings")
 #+END_SRC
 
-The following should all be pretty self-explanatory.
+The following are either console settings or affect both console and graphical clients.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
@@ -267,7 +276,7 @@ The following should all be pretty self-explanatory.
   (setq initial-major-mode 'fundamental-mode))
 #+END_SRC
 
-The following enable/disable features for graphical clients only.
+The following are for graphical clients only.
 
 #+BEGIN_SRC emacs-lisp
 (when (and (skj/current-feature-required-p) window-system)
@@ -390,7 +399,7 @@ this file proactively.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
-
+  (init-message "loading customize settings from %s" custom-file)
   (load-file custom-file))
 #+END_SRC
 
@@ -438,8 +447,8 @@ The following are used by Emacs.
         user-mail-address skj/primary-email))
 #+END_SRC
 
-This is just useful to have, the expanded version ensures that anywhere I use
-it I don't have to worry about a function ignoring the tilde.
+This is just useful to have, the expanded version ensures that anywhere I use it I don't have to worry about a function
+ignoring the tilde.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
@@ -447,9 +456,8 @@ it I don't have to worry about a function ignoring the tilde.
   (defvar user-home-directory (expand-file-name "~")))
 #+END_SRC
 
-This sets my most common location, and while mostly used by calendaring and
-[[*Agenda]], I keep it here. Note the three required packages are all Emacs
-builtins.
+This sets my most common location, and while mostly used by calendaring and [[*Agenda]], I keep it here. Note the three
+required packages are all Emacs builtins.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
@@ -477,8 +485,8 @@ builtins.
 
 #+END_SRC
 
-This isn't absolutely necessary, but keeping a use-case neutral form seems
-like a good idea. See also [[*Google Calendar]].
+This isn't absolutely necessary, but keeping a use-case neutral form seems like a good idea. See also [[*Google
+Calendar]].
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
@@ -497,7 +505,7 @@ like a good idea. See also [[*Google Calendar]].
 (skj/feature-start 'package-manager "Package Management Setup")
 #+END_SRC
 
-This section sets up the package management used in the rest of the file. I use =use-package= rather than calling
+This section sets up the package management used in the rest of the file. I prefer =use-package= over calling
 =install-package= as it groups a lot of configuration in a sane and readable manner.
 
 *** Add Package Repositories
@@ -560,14 +568,6 @@ loaded at startup, or =:defer n= to load the package, but only =n= seconds after
   (setq use-package-always-defer t))
 #+END_SRC
 
-The ~use-package-verbose~ variable enables verbose loading of packages, useful for debugging. I set/unset this according
-to need.
-
-#+BEGIN_SRC emacs-lisp
-(eval-and-compile
-  (setq use-package-verbose nil))
-#+END_SRC
-
 The main advantage to the `use-package-expand-minimally' variable is that, if you know your configuration works, it will
 make the byte-compiled file as minimal as possible. It can also help with reading macro-expanded definitions, to
 understand the main intent of what’s happening.
@@ -590,6 +590,14 @@ be removed in favor of =use-package=.
 (use-package diminish)
 #+END_SRC
 
+The ~use-package-verbose~ variable enables verbose loading of packages, useful for debugging. I set/unset this according
+to need.
+
+#+BEGIN_SRC emacs-lisp
+(eval-and-compile
+  (setq use-package-verbose (if skj/debug-init 'debug 'nil)))
+#+END_SRC
+
 If we are debugging, let's go ahead and get a =use-package= statistics report at the end of the startup process.
 
 #+BEGIN_SRC emacs-lisp
@@ -609,7 +617,8 @@ If we are debugging, let's go ahead and get a =use-package= statistics report at
 #+END_SRC
 
 The [[https://gitlab.com/jabranham/system-packages][system-packages]] package is a collection of functions to make handling installed system packages more convenient
-through Emacs.
+through Emacs. Specifically this is set up to use the Homebrew package manager for installing commands that may then be
+called by Emacs code.
 
 #+BEGIN_SRC emacs-lisp
 (use-package system-packages
@@ -619,8 +628,8 @@ through Emacs.
   (system-packages-use-sudo nil))
 #+END_SRC
 
-This extension adds a ~:ensure-system-package~ keyword which allows you to ensure system binaries exist alongside your
-package declarations.
+This extension adds a ~:ensure-system-package~ keyword to the ~use-package~ function which allows you to ensure system
+binaries exist alongside your package declarations.
 
 #+BEGIN_SRC emacs-lisp
 (use-package use-package-ensure-system-package
@@ -639,7 +648,7 @@ package declarations.
 (skj/feature-start 'auto-compile "Auto-Compile Packages")
 #+END_SRC
 
-Always compile packages, and use the newest version available.
+Always compile packages, and use the newest version available, this speeds up startup considerably.
 
 #+BEGIN_SRC emacs-lisp
 (use-package auto-compile
@@ -814,19 +823,25 @@ a =.gpg= extension. By default it asks about the key to use, but I configure it 
   (epa-file-enable))
 #+END_SRC
 
-And configure this in Emacs as well as using the local password store.
+And configure a simple /authinfo/ source in Emacs as well as using the local password store.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
+  (auth-source-pass-enable)
+  
   (setq auth-sources
-        (list '(password-store)
-              (concat-path user-emacs-directory "authinfo.gpg"))))
-;; or?
-;; (use-package auth-source)
-;; (use-package auth-source-pass)
-;; (auth-source-pass-enable)
+        (cons (concat-path user-emacs-directory "authinfo.gpg")
+              auth-sources)))
 #+END_SRC
+
+Alternatively, the following packages exist that may be useful in setting up auth stores.
+
+#+BEGIN_EXAMPLE emacs-lisp
+(use-package auth-source)
+(use-package auth-source-pass)
+(auth-source-pass-enable)
+#+END_EXAMPLE
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'auth)
@@ -838,7 +853,12 @@ And configure this in Emacs as well as using the local password store.
 (skj/feature-start 'core-ui "Core UI Settings")
 #+END_SRC
 
-These are customizations beyond those needed for startup in [[*Startup Settings]].
+These are customizations of the basic UI beyond those needed for startup in [[*Startup Settings]].
+
+Packages I tried, but ultimately decided against:
+
+- ~expand-region~ :: A pretty simple package, takes your cursor and semantically expands the region, so words, sentences,
+  maybe the contents of some parentheses, it’s awesome, try it out.
 
 *** Theme Support
 
@@ -846,7 +866,8 @@ These are customizations beyond those needed for startup in [[*Startup Settings]
 (skj/feature-start 'themes "Theme Support")
 #+END_SRC
 
-How anyone uses anything other than [[https://ethanschoonover.com/solarized/][solarized]] is beyond me.
+Theming is a core Emacs feature but we need to actually install a theme and how anyone uses anything other than
+[[https://ethanschoonover.com/solarized/][solarized]] is beyond me.
 
 #+BEGIN_SRC emacs-lisp
 (use-package color-theme-sanityinc-solarized
@@ -858,6 +879,9 @@ How anyone uses anything other than [[https://ethanschoonover.com/solarized/][so
   :config (setq color-theme-is-global t)
   (color-theme-sanityinc-solarized-light))
 #+END_SRC
+
+It's useful to have a way to refer to the colors used in a theme and the following allows a simple lookup by name for
+the color's RGB value.
 
 #+BEGIN_SRC emacs-lisp
 (defconst skj/theme-core-color-alist
@@ -889,14 +913,19 @@ How anyone uses anything other than [[https://ethanschoonover.com/solarized/][so
 (skj/feature-start 'encoding "Input Encoding")
 #+END_SRC
 
-We really like UTF-8; seriously, on a modern system there isn't a good excuse to not use it for everything.
+We really like UTF-8; seriously, on a modern system there isn't a good excuse to not use it for everything. Some modern
+programming languages and other tools also require UTF-8 input, so it's the most useful default.
+
+Note that in setting the locale language and encoding we ignore the process environment variables such as =LC_ALL= to
+ensure we don't hork Emacs if the shell environment is incorrect/mangled.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
-  (defvar locale-language "en")
-  (defvar locale-country "US")
-  (defvar locale-encoding 'utf-8)
+  (init-message "System locale (LC_ALL): %s" (getenv "LC_ALL"))
+  (defconst locale-language "en" "My preferred locale language.")
+  (defconst locale-country "US" "My preferred locale country")
+  (defconst locale-encoding 'utf-8 "My preferred locale encoding/codeset.")
 
   (let ((language-string (concat locale-language "_" locale-country))
         (encoding-string  (upcase (symbol-name locale-encoding))))
@@ -914,9 +943,9 @@ We really like UTF-8; seriously, on a modern system there isn't a good excuse to
                 terminal-coding-system locale-encoding))
 #+END_SRC
 
-Loading this package defines three ways of entering the non-ASCII printable characters with codes above 127: the prefix
-=C-x 8=, or the Alt key, or a dead accent key.For example, you can enter uppercase =A-umlaut= as =C-x 8 " A= *or* =Alt-" A= (if
-you have an Alt key) *or* =umlaut A= (if you have an umlaut/diaeresis key).
+Loading the following package defines three ways of entering the non-ASCII printable characters with codes above 127:
+the prefix =C-x 8=, or the Alt key, or a dead accent key.For example, you can enter uppercase =A-umlaut= as =C-x 8 " A= *or*
+=Alt-" A= (if you have an Alt key) *or* =umlaut A= (if you have an umlaut/diaeresis key).
 
 #+BEGIN_SRC emacs-lisp
 (use-package iso-transl
@@ -939,10 +968,11 @@ alternative tool
 (skj/feature-start 'editing "Basic Editing Customization")
 #+END_SRC
 
-Because this *is not* the 1950's!
+Because this *is not* the 1950's! These settings are actually in a core file named ~paragraphs~, however we can't access
+that directly as a package so we have to rely on the ~emacs~ package.
 
 #+BEGIN_SRC emacs-lisp
-(use-package emacs ;; can't access `paragraphs' package directly.
+(use-package emacs
   :ensure nil
   :if (skj/current-feature-required-p)
   :custom
@@ -950,7 +980,8 @@ Because this *is not* the 1950's!
   (colon-double-space nil))
 #+END_SRC
 
-=TAB= and =SPC= handling.
+The whole tabs vs. spaces thing may be funny, but only because it's sad that people still think tabs are cool. Set up
+the *correct* =TAB= and =SPC= handling.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
@@ -1019,7 +1050,7 @@ OMG!! Enable the overwriting of selected text when you type... like every sane e
   :config (delete-selection-mode t))
 #+END_SRC
 
-Save place in files between sessions.
+Save your location within files between sessions.
 
 #+BEGIN_SRC emacs-lisp
 (use-package saveplace
@@ -1029,7 +1060,9 @@ Save place in files between sessions.
   :config (save-place-mode 1))
 #+END_SRC
 
-How does anyone work without an [[https://gitlab.com/tsc25/undo-tree][Undo Tree]]!
+How does anyone work without an [[https://gitlab.com/tsc25/undo-tree][Undo Tree]]! Note that there is a nice feature to show the timestamps along with the diff
+for each change by setting ~undo-tree-visualizer-timestamps~ to ~t~; however, this seems to make the whole experience
+unstable.
 
 #+BEGIN_SRC emacs-lisp
 (use-package undo-tree
@@ -1037,8 +1070,6 @@ How does anyone work without an [[https://gitlab.com/tsc25/undo-tree][Undo Tree]
   :defer 1
   :diminish undo-tree-mode
   :config
-  ;; Enabling timestamps seems to make everything wonky
-  ;; (setq undo-tree-visualizer-timestamps nil)
   (setq-default undo-tree-visualizer-diff t)
   (global-undo-tree-mode))
 #+END_SRC
@@ -1053,16 +1084,6 @@ highlighted now.
   :defer 1
   :diminish beacon-mode
   :config (beacon-mode 1))
-#+END_SRC
-
-A pretty simple package, takes your cursor and semantically expands the region, so words, sentences, maybe the contents
-of some parentheses, it’s awesome, try it out.
-
-#+BEGIN_SRC emacs-lisp
-;; This seems to get in an infinte loop
-;; (use-package expand-region
-;;   :if (skj/current-feature-required-p)
-;;   :bind ("C-=" . er/expand-region))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -1115,14 +1136,17 @@ This isn't so useful on macOS as it doesn't seem to decode weight and width corr
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
+  (defconst default-background-color (alist-get 'base3 skj/theme-core-color-alist))
+  (defconst default-foreground-color (alist-get 'base00 skj/theme-core-color-alist))
+
   (set-face-attribute
    'default
    nil
    :inherit nil
    :extend nil
    :stipple nil
-   :background "#fdf6e3"
-   :foreground "#657b83"
+   :background default-background-color
+   :foreground default-foreground-color
    :inverse-video nil
    :box nil
    :strike-through nil
@@ -1136,17 +1160,25 @@ This isn't so useful on macOS as it doesn't seem to decode weight and width corr
    :family skj/default-font-family))
 #+END_SRC
 
-Make the menu system readable, the default colors after theming are kind of heinous.
+Make the menu system readable using theme colors -- the default colors after theming are kind of heinous.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
-  (set-face-attribute 'tty-menu-disabled-face nil
-                      :background "slategray" :foreground "lightgray")
-  (set-face-attribute 'tty-menu-enabled-face nil
-                      :background "slategray" :foreground "brightwhite" :weight 'bold)
-  (set-face-attribute 'tty-menu-selected-face nil
-                      :background "darkslategray"))
+  (let* ((disabled-background default-foreground-color)
+         (disabled-foreground (alist-get 'base1 skj/theme-core-color-alist))
+         (enabled-background disabled-background)
+         (enabled-foreground default-background-color)
+         (selected-background (alist-get 'base02 skj/theme-core-color-alist)))
+    (set-face-attribute 'tty-menu-disabled-face nil
+                        :background disabled-background
+                        :foreground disabled-foreground)
+    (set-face-attribute 'tty-menu-enabled-face nil
+                        :background enabled-background
+                        :foreground enabled-foreground
+                        :weight 'bold)
+    (set-face-attribute 'tty-menu-selected-face nil
+                        :background selected-background)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -1264,13 +1296,13 @@ I like to keep this pretty simple, certainly no powerline!. Both of these packag
     (display-time-string-forms
      '((propertize (concat " " 24-hours ":" minutes " "))))
     (display-time-default-load-average nil)
-    (display-time-world-list '(("Etc/UTC" "UTC")
+    (world-clock-list '(("Etc/UTC" "UTC")
                                ("America/Los_Angeles" "Seattle")
                                ("America/New_York" "New York")
                                ("Europe/Athens" "Athens")
                                ("Pacific/Auckland" "Auckland")
                                ("Asia/Shanghai" "Shanghai")))
-    (display-time-world-time-format "%a, %d %b %I:%M %p %Z")
+    (world-clock-time-format "%a, %d %b %I:%M %p %Z")
     :config
     (display-time-mode t))
 
@@ -1342,45 +1374,6 @@ Just started with [[https://github.com/abo-abo/hydra][Hydra]], so there are hydr
 (skj/feature-start 'buffers "Files and Buffers")
 #+END_SRC
 
-[[https://github.com/Alexander-Miller/treemacs][Treemacs]] is a file and project explorer similar to NeoTree or vim’s
-NerdTree, but largely inspired by the Project Explorer in Eclipse. It shows the file system outlines of your projects in
-a simple tree layout allowing quick navigation and exploration, while also possessing basic file management utilities.
-
-/Note/: The persisted state is saved under =user-emacs-directory/.cache/treemacs-persist= by default. The exact file
-location is saved in the variable ~treemacs-persist-file~.
-
-
-#+BEGIN_SRC emacs-lisp
-(when (skj/current-feature-required-p)
-
-  (use-package treemacs
-    :config
-    (treemacs-filewatch-mode 1)
-    (treemacs-follow-mode 1)
-    (treemacs-git-commit-diff-mode 1)
-    (treemacs-git-mode 1)
-    (treemacs-indent-guide-mode 1)
-    (treemacs-project-follow-mode 1)
-    (treemacs-tag-follow-mode 1)
-    (define-key treemacs-mode-map [mouse-1] #'treemacs-single-click-expand-action)
-    )
-
-  (use-package treemacs-all-the-icons
-    :if window-system
-    :after treemacs)
-
-  (use-package treemacs-icons-dired
-    :if window-system
-    :after treemacs
-    :hook (dired-mode . treemacs-icons-dired-enable-once))
-
-  (use-package treemacs-magit
-    :after (treemacs magit))
-
-  (use-package treemacs-projectile
-    :after (treemacs projectile)))
-#+END_SRC
-
 [[https://www.emacswiki.org/emacs/RecentFiles][Recentf]] is a minor mode that builds a list of recently opened files. This list is automatically saved across sessions on
 exiting Emacs - you can then access this list through a command or the menu.
 
@@ -1440,7 +1433,7 @@ killed and with its content restored.
   :hook (after-init))
 #+END_SRC
 
-Finally, set the default buffer mode.
+Finally, set the default buffer mode to ~text-mode~.
 
 #+BEGIN_SRC emacs-lisp
 (use-package text-mode
@@ -1453,6 +1446,19 @@ Finally, set the default buffer mode.
   :config
   (setq-default major-mode 'text-mode))
 #+END_SRC
+
+This enables left-hand line numbers, the types are ~'relative~, ~'visual~, and ~t~ for absolute.
+
+#+BEGIN_SRC emacs-lisp
+(use-package simple
+  :ensure nil
+  :if (skj/current-feature-required-p)
+  :defer nil
+  :config
+  (setq display-line-numbers-type 'visual)
+  (display-line-numbers-mode 1))
+#+END_SRC
+
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'buffers)
@@ -1533,7 +1539,7 @@ use is fully customizable by the user.
 (skj/feature-start 'misc)
 #+END_SRC
 
-Set fringes to appear only on the left-hand side.
+Set fringes to appear only on the left-hand side in graphical windows.
 
 #+BEGIN_SRC emacs-lisp
 (when (and (skj/current-feature-required-p) window-system)
@@ -1614,14 +1620,18 @@ The guidance is to do all this /before/ installing the [[https://github.com/abo-
     :config (all-the-icons-ivy-setup))
 
   (use-package all-the-icons-ivy-rich
-    :init (all-the-icons-ivy-rich-mode 1))
+    :init (all-the-icons-ivy-rich-mode 1)))
+#+END_SRC
+
+Historian stores the results of completing-read and similar functions persistently. This provides a way to give
+completion candidates that are more frequently or more recently used a better position in the candidates list.
+
+#+BEGIN_SRC emacs-lisp
+(when (and (skj/current-feature-required-p) window-system)
 
   (use-package historian)
 
-  (use-package ivy-historian
-    :after historian
-    :init (historian-mode +1)
-    :config (ivy-historian-mode +1)))
+  (use-package ivy-historian))
 #+END_SRC
 
 Here's Ivy itself.
@@ -1630,7 +1640,6 @@ Here's Ivy itself.
 (when (skj/current-feature-required-p)
 
   (use-package ivy
-    :defer 1
     :diminish ivy-mode
     :custom
     (enable-recursive-minibuffers t)
@@ -1638,8 +1647,10 @@ Here's Ivy itself.
     (ivy-use-virtual-buffers t)
     (ivy-wrap t)
     :init
-    (ivy-mode 1)
+    (ivy-mode +1)
+    (historian-mode +1)
     :config
+    (ivy-historian-mode +1)
     (global-set-key (kbd "C-c v") 'ivy-push-view)
     (global-set-key (kbd "C-c V") 'ivy-pop-view)
     (global-set-key (kbd "C-c C-r") 'ivy-resume)
@@ -1647,7 +1658,6 @@ Here's Ivy itself.
 
   (use-package swiper
     :ensure nil
-    :defer 1
     :after ivy
     :config
     (global-set-key (kbd "C-s") 'swiper-isearch)))
@@ -1659,12 +1669,10 @@ Do these *after* Ivy. Note that the Hydra can is invoked in any Ivy minibuffer w
 (when (skj/current-feature-required-p)
 
   (use-package ivy-hydra
-    :defer 2
     :commands (hydra-ivy/body ivy-hydra-read-action)
     :after (ivy hydra))
 
   (use-package ivy-rich
-    :defer 2
     :after ivy
     :pin melpa
     :init
@@ -1687,7 +1695,6 @@ it.
 #+BEGIN_SRC emacs-lisp
 (use-package counsel
   :if (skj/current-feature-required-p)
-  :defer 1
   :after ivy
   :diminish counsel-mode
   :custom
@@ -1729,7 +1736,6 @@ Counsel interface for [[https://github.com/sharkdp/fd][fd]]. If you have =fd= in
 #+BEGIN_SRC emacs-lisp
 (use-package counsel-fd
   :if (skj/current-feature-required-p)
-  :defer 2
   :ensure-system-package fd
   :after counsel)
 #+END_SRC
@@ -1744,7 +1750,6 @@ Search the web with dynamic suggestions and browse the results – all from the 
 
   (use-package counsel-web
     :after counsel
-    :defer 2
     :custom
     (counsel-web-engine 'google)
     (counsel-web-search-action #'browse-url)
@@ -1778,7 +1783,6 @@ front-ends to retrieve and display completion candidate.
 (when (skj/current-feature-required-p)
 
   (use-package company
-    :defer 1
     :diminish company-mode
     :custom
     (company-files-exclusions '(".git/" ".DS_Store"))
@@ -1813,24 +1817,23 @@ front-ends to retrieve and display completion candidate.
 Company. Extension packages such as =ivy-prescient.el= and =company-prescient.el= adapt the library for usage with various
 frameworks.
 
+For some reason the ~:config~ section of these has been a problem, not sure why but it's not triggering correctly and so
+the mode functions are simply called after the ~use-package~ calls below.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
   (use-package prescient
-    :config
-    (prescient-persist-mode 1))
+    :commands prescient-persist-mode)
 
-  (use-package ivy-prescient
-    :after (ivy prescient)
-    :config
-    (ivy-prescient-mode 1))
+  (use-package ivy-prescient)
 
-  (use-package company-prescient
-    :after (company prescient)
-    :config
-    (company-prescient-mode 1)))
-    #+END_SRC
+  (use-package company-prescient)
+
+  (ivy-prescient-mode 1)
+  (prescient-persist-mode 1)
+  (company-prescient-mode 1))
+#+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'prescient)
@@ -1845,9 +1848,7 @@ frameworks.
 
 The following is a necessary [[https://emacs-tree-sitter.github.io/installation/][package]] until tree-sitter is added to the Emacs core in version 29, in =treesit.el=. The
 minor mode =tree-sitter-mode= provides a buffer-local syntax tree, which is kept up-to-date with changes to the buffer’s
-text.
-
-In this case I only enable support for specific languages and modes in their own configuration below via hooks.
+text. In this case I only enable support for specific languages and modes in their own configuration below via hooks.
 Alternatively support can be enabled for all languages with =:config (global-tree-sitter-mode)=.
 
 #+BEGIN_SRC emacs-lisp
@@ -1877,12 +1878,14 @@ Alternatively support can be enabled for all languages with =:config (global-tre
   (use-package tree-sitter-ispell
     :after tree-sitter))
 #+END_SRC
+
+Code folding is a great feature, unfortunately at this point the ~ts-fold~ packages need to be loaded directly from the
+filesystem.
   
 #+BEGIN_SRC emacs-lisp
 (when (and (skj/current-feature-required-p)
            (< emacs-version-number 29))
 
-  ;; FIX: this needs to be better!
   (use-package ts-fold
     :after tree-sitter
     :diminish ts-fold-mode
@@ -1916,7 +1919,7 @@ modern (Python and [[https://github.com/joddie/pcre2el][pcre2el]]) engines -- no
   (use-package visual-regexp
     :commands (vr/replace vr/query-replace vr/mc-mark)
     :init
-    (define-key global-map (kbd "C-c r") #'vr/replace)
+    (define-key global-map (kbd "C-c r") #'vr/replace)
     (define-key global-map (kbd "C-c q") #'vr/query-replace)
     ;; if you use multiple-cursors, this is for you:
     (define-key global-map (kbd "C-c m") #'vr/mc-mark))
@@ -1968,6 +1971,8 @@ Also see the following interesting regex packages:
 
   (use-package reveal-in-osx-finder))
 #+END_SRC
+
+Re-mapping the macos keyboard for super is just a nightmare.
 
 #+BEGIN_SRC emacs-lisp
 (when (and (system-mac-p) (skj/current-feature-required-p))
@@ -2066,20 +2071,43 @@ outputs.
 (skj/feature-start 'tramp "Remote (TRAMP) Editing")
 #+END_SRC
 
+Setup the builtin [[https://www.gnu.org/software/tramp/][TRAMP]] module, not much to see here, but it enables the extended file syntax such as:
+
+- =/ssh:user@host:/path/to/file=
+- =/ssh:localhost:= opens a remote connection to yourself on the local host
+- =/sudo::/path/to/file= open a file under sudo
+- =/ssh:user@host|sudo::/path/to/file=
+
 #+BEGIN_SRC emacs-lisp
-(when (skj/current-feature-required-p)
+(use-package tramp
+  :ensure nil
+  :defer 2
+  :if (skj/current-feature-required-p)
+  :custom
+  (tramp-default-method "ssh"))
+#+END_SRC
 
-  (use-package tramp
-    :ensure nil
-    :defer 2
-    :custom
-    (tramp-default-method "ssh"))
+Open your =~/.ssh/config= with counsel interface and you can connect your server with tramp. If the default shell of the
+server is zsh it is recommended to connect with bash.
 
-  (use-package counsel-tramp
-    :after (counsel tramp))
+#+BEGIN_SRC emacs-lisp
+(use-package counsel-tramp
+  :if (skj/current-feature-required-p)
+  :after (counsel tramp)
+  :bind
+  ("C-c s" . counsel-tramp)
+  :config
+  (setenv "SHELL" (executable-find "bash")))
+#+END_SRC
 
-  (use-package docker-tramp
-    :after tramp))
+=docker-tramp= offers a TRAMP method for Docker containers; it adds the TRAMP method docker to access running containers.
+
+=C-x C-f /docker:user@container:/path/to/file=
+
+#+BEGIN_SRC emacs-lisp
+(use-package docker-tramp
+  :if (skj/current-feature-required-p)
+  :after tramp)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -2092,20 +2120,22 @@ outputs.
 (skj/feature-start 'vcs "Version Control")
 #+END_SRC
 
+Version control is a basic human right, and hopefully this gets things pretty damn close to perfect.
+
 *** Core Git
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-start 'git)
 #+END_SRC
 
-Git support is entirely built into Emacs, so this section adds additional tools.
+Git support is entirely built into Emacs, so this section only adds additional tools.
 
 #+BEGIN_SRC emacs-lisp
 (use-package git
   :ensure nil
   :if (skj/current-feature-required-p)
   :ensure-system-package git)
-  #+END_SRC
+#+END_SRC
 
 Package =mo-git-blame= -- An interactive, interative /git blame/ mode for Emacs.
 
@@ -2113,17 +2143,20 @@ Package =mo-git-blame= -- An interactive, interative /git blame/ mode for Emacs.
 (use-package mo-git-blame
   :if (skj/current-feature-required-p)
   :after git
-  :config
-  (global-set-key [?\C-c ?g ?c] 'mo-git-blame-current)
-  (global-set-key [?\C-c ?g ?f] 'mo-git-blame-file))
-  #+END_SRC
+  :bind
+  ("C-c C-g c" . mo-git-blame-current)
+  ("C-c C-g f" . mo-git-blame-file))
+#+END_SRC
 
-Package =git-link= -- Interactive Emacs functions that create URLs for files and commits in GitHub/Bitbucket/GitLab/...
+Package =git-link= -- Interactive Emacs functions that create URLs for files and commits in GitHub, Bitbucket, GitLab, ...
 repositories.
 
 #+BEGIN_SRC emacs-lisp
 (use-package git-link
   :if (skj/current-feature-required-p)
+  :bind
+  ("C-c C-g l" . git-link)
+  ("C-c C-g C-l" . git-link-commit)
   :after git)
 #+END_SRC
 
@@ -2135,6 +2168,8 @@ git-timemachine-toggle=.
 (use-package git-timemachine
   :if (skj/current-feature-required-p)
   :after git
+  :bind
+  ("C-c C-g h" . git-timemachine)
   :custom
   (git-timemachine-show-minibuffer-details t))
 #+END_SRC
@@ -2175,17 +2210,13 @@ care of automatically refreshing this output when it becomes outdated.
     :init
     (setq-default magit-git-executable (executable-find "git")))
 
-  (use-package magit-lfs :after magit)
+  (use-package magit-lfs
+    :after magit)
   
   (use-package magit-filenotify
     :after magit
     :hook
-    (after-save . magit-after-save-refresh-status))
-
-  (use-package magit-gh-pulls
-    :after magit
-    :hook
-    (after-save magit-after-save-refresh-status)))
+    (after-save . magit-after-save-refresh-status)))
 #+END_SRC
 
 This package displays keyword entries from source code comments and Org files in the Magit status buffer. Activating an
@@ -2369,20 +2400,21 @@ I *always* setup =abbrev-mode= as it's builtin and this way have a backup if no 
     (yas-load-directory skj/snippet-repo-dir t)))
 #+END_SRC
 
-First of all, the primary snippet tool is =yasnippet=.
+First of all, the primary snippet tool is =yasnippet=, there are others but this one works
 
 #+BEGIN_SRC emacs-lisp
 (use-package yasnippet
   :defer 3
   :if (skj/current-feature-required-p)
-  :custom
-  (yas-snippet-dirs (list skj/snippet-repo-dir skj/snippet-default-dir))  :hook (prog-mode . yas-minor-mode)
   :diminish yas-minor-mode
+  :custom
+  (yas-snippet-dirs (list skj/snippet-repo-dir skj/snippet-default-dir))
+  :hook (prog-mode . yas-minor-mode)
   :config
   (skj/snippets-initialize))
 #+END_SRC
 
-Remember to execute =M-x yas-reload-all<RET>= when any snippets change.
+Remember to execute =M-x yas-reload-all<RET>= when /any/ snippets change.
 
 Basic snippets, pretty useful.
 
@@ -2420,14 +2452,15 @@ These are common license files, easy to add to a new project.
   (license-snippets-init))
 #+END_SRC
 
-Package =ivy-yasnippet= lets you preview yasnippet snippets with ivy. To use it, call
-~ivy-yasnippet~ in =yas-minor-mode=.
+Package =ivy-yasnippet= lets you preview yasnippet snippets with ivy. To use it, call ~ivy-yasnippet~, or use =C-c i= in
+=yas-minor-mode=.
 
 #+BEGIN_SRC emacs-lisp
 (use-package ivy-yasnippet
   :defer 10
   :if (skj/current-feature-required-p)
-  :after (ivy yasnippet))
+  :after (ivy yasnippet)
+  :bind ("C-c i" . ivy-yasnippet))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -3151,6 +3184,7 @@ expiring them. The package is a part of =org-contrib=.
   :ensure nil
   :after org
   :defer 1
+  :diminish org-list-checkbox-radio-mode
   :hook (org-mode . org-list-checkbox-radio-mode))
 #+END_SRC
 
@@ -4306,13 +4340,17 @@ For distraction-free editing, use the command =M-x focus-mode= which will dim al
 currently within.
 
 #+BEGIN_SRC emacs-lisp
-(use-package focus
-  :if (skj/current-feature-required-p)
-  :custom-face
-  (focus-unfocused ((t (:inherit font-lock-comment-face :foreground "white")))))
+(when (skj/current-feature-required-p)
+
+  (let ((dimmed-foreground (alist-get 'base2 skj/theme-core-color-alist)))
+    (use-package focus
+      :if (skj/current-feature-required-p)
+      :custom-face
+      (focus-unfocused
+       ((t (:inherit font-lock-comment-face :foreground ,dimmed-foreground)))))))
 #+END_SRC
 
-Add lorem ipsum filler text inro an Emacs buffer.
+Add a simple /lorem ipsum/ tool to add filler text into an Emacs buffer.
 
 #+BEGIN_SRC emacs-lisp
 (use-package lorem-ipsum
@@ -4323,11 +4361,11 @@ Add lorem ipsum filler text inro an Emacs buffer.
 
 This will setup the following keybindings:
 
-| Key Binding | Function                        |
-|-------------+---------------------------------|
-| =C-c l p=     | `lorem-ipsum-insert-paragraphs' |
-| =C-c l s=     | `lorem-ipsum-insert-sentences'  |
-| =C-c l l=     | `lorem-ipsum-insert-list'       |
+| Key Binding | Function                      |
+|-------------+-------------------------------|
+| =C-c l p=     | ~lorem-ipsum-insert-paragraphs~ |
+| =C-c l s=     | ~lorem-ipsum-insert-sentences~  |
+| =C-c l l=     | ~lorem-ipsum-insert-list~       |
 
 ** Emoji Support
 
@@ -4350,7 +4388,7 @@ like =:)=. It tries to be as efficient as possible, while also providing a lot o
 (when (and (skj/current-feature-required-p) window-system)
 
   (use-package emojify))
-  #+END_SRC
+#+END_SRC
 
 =emojify-mode= can be enabled/disabled separately for a buffer by using the command =emojify-mode=, to enable/disable it
 globally use the command =global-emojify-mode=.
@@ -4419,38 +4457,31 @@ modes for generic markdown and GitHub-flavored markdown.
 - Markup hiding can be toggled using =C-c C-x C-m= (~markdown-toggle-markup-hiding~).
 - Native code fontify can be toggled interactively by pressing =C-c C-x C-f=
   (~markdown-toggle-fontify-code-blocks-natively~).
+
+| Variable                                  | Description                                                                                                       |
+|-------------------------------------------+-------------------------------------------------------------------------------------------------------------------|
+| ~markdown-enable-math~                      | Font lock for inline and display LaTeX math expressions                                                           |
+| ~markdown-enable-html~                      | Font lock for HTML tags and attributes                                                                            |
+| ~markdown-fontify-code-blocks-natively~     | Whether to fontify code in code blocks using the native major mode                                                |
+| ~markdown-hide-markup~                      | Determines whether all possible markup is hidden or otherwise beautified                                          |
+| ~markdown-gfm-use-electric-backquote~       | Use ~markdown-electric-backquote~ for interactive insertion of GFM code blocks when you press backquote three times |
+| ~markdown-gfm-uppercase-checkbox~           | When non-nil, complete GFM task list items with =[X]= instead of =[x]=                                                |
+| ~markdown-make-gfm-checkboxes-buttons~      | Whether GitHub Flavored Markdown style task lists should turn into buttons                                        |
+| ~markdown-marginalize-headers~              | Put opening atx header markup in the left margin                                                                  |
+| ~markdown-marginalize-headers-margin-width~ | Width of margin used for marginalized headers                                                                     |
   
 #+BEGIN_SRC emacs-lisp
 (use-package markdown-mode
   :if (skj/current-feature-required-p)
   :custom
-  ;; font lock for inline and display LaTeX math expressions
   (markdown-enable-math t)
-
-  ;; font lock for HTML tags and attributes
   (markdown-enable-html t)
-
-  ;; whether to fontify code in code blocks using the native major mode
   (markdown-fontify-code-blocks-natively t)
-  
-  ;; determines whether all possible markup is hidden or otherwise beautified
   (markdown-hide-markup t)
-
-  ;; use markdown-electric-backquote for interactive insertion of
-  ;; GFM code blocks when you press backquote three times 
   (markdown-gfm-use-electric-backquote t)
-
-  ;; when non-nil, complete GFM task list items with =[X]= instead of =[x]=
   (markdown-gfm-uppercase-checkbox t)
-  
-  ;; whether GitHub Flavored Markdown style task lists should
-  ;; turn into buttons
   (markdown-make-gfm-checkboxes-buttons t)
-  
-  ;; put opening atx header markup in the left margin
   (markdown-marginalize-headers t)
-
-  ;; width of margin used for marginalized headers
   (markdown-marginalize-headers-margin-width 6)
   :mode (("\\.markdown\\'" . markdown-mode)
          ("\\.md\\'" . markdown-mode)
@@ -4779,18 +4810,14 @@ you enter them so that you can edit the underlying source.
     :config
     (flyspell-lazy-mode +1))
 
-  ;; For some reason this keeps choosing Portugal as my language.
-  ;; (use-package auto-dictionary
-  ;;   :defer 2
-  ;;   :after flyspell
-  ;;   :hook
-  ;;   (flyspell-mode . (lambda () (auto-dictionary-mode 1))))
-
   (use-package flyspell-correct-ivy
     :after (flyspell ivy)
     :custom
     (flyspell-correct-interface #'flyspell-correct-ivy)))
 #+END_SRC
+
+I tried the package =auto-dictionary= but for some reason this keeps choosing Portuguese as my language. Funnily enough, I
+don't speak Portuguese.
 
 [[https://github.com/bnbeckwith/writegood-mode][Writegood mode]] is a minor mode to aid in finding common writing problems. Matt Might’s [[http://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/][weaselwords]] scripts inspired this
 mode. As well as the additional weasel words it is possible to add to the irregular passive voice verbs in
@@ -4803,9 +4830,6 @@ mode. As well as the additional weasel words it is possible to add to the irregu
   :custom
   (dolist (word '("least" "most" "occasionally"))
     (add-to-list 'writegood-weasel-words word))
-  :bind (("\C-c g" . writegood-mode)
-         ("\C-c \C-g g" . writegood-grade-level)
-         ("\C-c \C-g e" . writegood-reading-ease))
   :hook ((markdown-mode . writegood-mode)
          (gfm-mode . writegood-mode)
          (LaTeX-mode . writegood-mode)
@@ -4836,6 +4860,8 @@ This is more a batch checker, you run the external tool =style= on a buffer or r
 (skj/feature-start 'dev "Development Configuration")
 #+END_SRC
 
+Create a sub-group for developer settings, this keeps them away from core configuration.
+
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
   (defgroup skj-dev nil
@@ -4858,7 +4884,8 @@ This is more a batch checker, you run the external tool =style= on a buffer or r
 (skj/feature-start 'pretty "Prettify Things")
 #+END_SRC
 
-Emacs 24.4 =prog-mode= comes with a builtin =prettify-symbols-mode=. It is customized by changing =prettify-symbols-alist=.
+While "/prettification/" may be a nice feature throughout it is particularly nice when programming. Emacs 24.4 =prog-mode=
+comes with a builtin =prettify-symbols-mode=. It is customized by changing =prettify-symbols-alist=.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
@@ -4914,6 +4941,9 @@ fira-code-mode-install-fonts<RET>=.
 (skj/feature-start 'structure "Structural Editing")
 #+END_SRC
 
+Mostly useful for lispy languages this keeps parentheses matching so it's not possible to screw up, well, it's less
+likely.
+
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
@@ -4933,7 +4963,7 @@ fira-code-mode-install-fonts<RET>=.
       racket-repl-mode) . smartparens-strict-mode)))
 #+END_SRC
 
-Add [[https://github.com/Fanael/rainbow-delimiters][rainbow-delimiters]] for easy parenthesis matching.
+But definitely add [[https://github.com/Fanael/rainbow-delimiters][rainbow-delimiters]] so you can more easily see matching parenthesis.
 
 #+BEGIN_SRC emacs-lisp
 (use-package rainbow-delimiters
@@ -4941,6 +4971,8 @@ Add [[https://github.com/Fanael/rainbow-delimiters][rainbow-delimiters]] for eas
   :diminish rainbow-delimiters-mode
   :hook (prog-mode . 'rainbow-delimiters))
 #+END_SRC
+
+This can be a real benefit where indent rules are well-defined.
 
 #+BEGIN_SRC emacs-lisp
 (use-package aggressive-indent
@@ -4950,6 +4982,8 @@ Add [[https://github.com/Fanael/rainbow-delimiters][rainbow-delimiters]] for eas
   (add-to-list 'aggressive-indent-excluded-modes 'make-mode))
 #+END_SRC
 
+Visual cues for indentation can also be helpful for lining up in languages like HTML or lisp.
+
 #+BEGIN_SRC emacs-lisp
 (use-package highlight-indent-guides
   :if (skj/current-feature-required-p)
@@ -4957,7 +4991,8 @@ Add [[https://github.com/Fanael/rainbow-delimiters][rainbow-delimiters]] for eas
   :custom
   (highlight-indent-guides-method 'character)
   (highlight-indent-guides-responsive 'stack)
-  (set-face-foreground 'highlight-indent-guides-character-face "brightmagenta"))
+  (set-face-foreground 'highlight-indent-guides-character-face
+                       (alist-get 'magenta skj/theme-core-color-alist)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -4979,12 +5014,14 @@ This package [[https://github.com/tarsius/hl-todo][highlights TODO]]-like tags i
   :hook (prog-mode . hl-todo-mode))
 #+END_SRC
 
-Turns on /sub-word/ [[https://www.gnu.org/software/emacs/manual/html_node/ccmode/Subword-Movement.html][movement and editing]].
+Optional minor mode to enable /sub-word/ [[https://www.gnu.org/software/emacs/manual/html_node/ccmode/Subword-Movement.html][movement and editing]].
 
 #+BEGIN_SRC emacs-lisp
-(use-package subword
-  :if (skj/current-feature-required-p)
-  :diminish subword-mode)
+(when (skj/current-feature-required-p)
+
+  (use-package syntax-subword
+    :diminish syntax-subword-mode
+    :hook (subword-mode . syntax-subword-mode)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -5164,7 +5201,10 @@ After adding/removing projects, run =M-x projectile-discover-projects-in-search-
   (lsp-idle-delay 0.6)
   (lsp-keep-workspace-alive nil)
   (lsp-keymap-prefix "M-o")
-  (lsp-signature-doc-lines 5))
+  (lsp-lens-enable t)
+  (lsp-signature-doc-lines 5)
+  :hook (lsp-mode . yas-minor-mode)
+  :hook (lsp-mode . lsp-lens-mode))
 #+END_SRC
 
 This package contains all the higher level UI modules of =lsp-mode=, like flycheck support and code lenses.
@@ -5173,14 +5213,14 @@ This package contains all the higher level UI modules of =lsp-mode=, like flyche
 (use-package lsp-ui
   :if (skj/current-feature-required-p)
   :commands lsp-ui-mode
-  :hook (lsp-mode . lsp-ui-mode)
   :custom
   (lsp-ui-doc-enable nil)
   (lsp-ui-doc-position 'bottom)
   (lsp-ui-peek-always-show t)
   (lsp-ui-peek-fontify 'always)
   (lsp-ui-sideline-enable t)
-  (lsp-ui-sideline-show-hover t))
+  (lsp-ui-sideline-show-hover t)
+  :hook (lsp-mode . lsp-ui-mode))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -6132,7 +6172,7 @@ Not currently using this, but have used the following:
 It is important to note that you not only need a compiler (again, AdaCore) but also the [[https://alire.ada.dev/][Alire]] package manager. Download
 =alr= and run =alr toolchain --select= to get an Ada environment installed.
 
-*** Rust Language
+*** Rust
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-start 'rust)
@@ -6147,59 +6187,57 @@ The key to Rust development in Emacs is the [[https://github.com/brotzeit/rustic
 
   (defun rustic-mode-auto-save-hook ()
     "Enable auto-saving in rustic-mode buffers."
+    (init-message "rustic-mode-auto-save-hook")
     (when buffer-file-name
       (setq-local compilation-ask-about-save nil)))
 
+  (defun rustic-mode-minor-modes ()
+    (init-message "rustic-mode-minor-modes")
+    ;; Mode for displaying inlay hints.
+    (lsp-rust-analyzer-inlay-hints-mode)
+    ;; Mode for displaying code-lens overlays.
+    (lsp-lens-mode 1)
+    ;; Enable subword movement and editing (Subword mode).
+    (syntax-subword-mode 1)
+    ;; Set buffer default fill column.
+    (set-fill-column 100))
+  
   (use-package rustic
-    :after (lsp lsp-lens-mode subword-mode)
-    :custom
-    (rustic-babel-format-src-block t)
-    (rustic-babel-auto-wrap-main t)
-    (rustic-format-on-save t)
-    (rustic-lsp-server 'rust-analyzer)
-    (lsp-rust-analyzer-cargo-load-out-dirs-from-check t)
-    (lsp-rust-analyzer-cargo-watch-enable t)
-    (lsp-rust-analyzer-cargo-watch-command "clippy")
-    (lsp-rust-analyzer-display-chaining-hints t)
-    (lsp-rust-analyzer-display-closure-return-type-hints t)
-    (lsp-rust-analyzer-display-lifetime-elision-hints-use-parameter-names nil)
-    (lsp-rust-analyzer-display-parameter-hints t)
-    (lsp-rust-analyzer-display-reborrow-hints t)
-    (lsp-rust-analyzer-inlay-hints-mode t)
-    (lsp-rust-analyzer-proc-macro-enable t)
-    (lsp-rust-analyzer-server-display-inlay-hints t)
-    :hook ((rustic-mode . rustic-mode-auto-save-hook)
-           (rustic-mode . lsp-lens-mode)
-           (rustic-mode . lsp-rust-analyzer-inlay-hints-mode)
-           (rustic-mode . (lambda () (set-fill-column 100)))
-           (rustic-mode . subword-mode)
-           (rustic-mode . (lambda () (lsp-lens-show)))))
+    :config
+    (message "config rustic")
+    (setq rustic-babel-format-src-block t)
+    (setq rustic-babel-auto-wrap-main t)
+    (setq rustic-format-on-save t)
+    (setq rustic-format-trigger 'on-save)
+    (setq rustic-lsp-server 'rust-analyzer)
+    (setq lsp-rust-analyzer-cargo-load-out-dirs-from-check t)
+    (setq lsp-rust-analyzer-cargo-watch-enable t)
+    (setq lsp-rust-analyzer-cargo-watch-command "clippy")
+    (setq lsp-rust-analyzer-display-chaining-hints t)
+    (setq lsp-rust-analyzer-display-parameter-hints t)
+    (setq lsp-rust-analyzer-proc-macro-enable t)
+    (setq lsp-rust-analyzer-server-display-inlay-hints t))
 
-  (use-package cargo-mode
-    :after rustic
-    :hook (rustic-mode . cargo-minor-mode))
-
-  (use-package rust-auto-use
-    :after rustic)
-
-  (use-package rust-playground
-    :after rustic))
+  (add-hook 'rustic-mode-hook 'rustic-mode-minor-modes)
+  (add-hook 'rustic-mode-hook 'rustic-mode-auto-save-hook))
 #+END_SRC
 
-Flycheck for Rust.
 
 #+BEGIN_SRC emacs-lisp
-(use-package flycheck-rust
-  :if (skj/current-feature-required-p)
-  :ensure-system-package (cargo-clippy . "cargo install cargo-clippy")
-  :after (rustic cargo-mode)
-  :commands rustic-clippy
-  :custom
-  (flycheck-rustic-clippy-executable "cargo-clippy")
-  :init
-  (add-to-list 'flycheck-checkers #'rustic-clippy)
-  :hook (flycheck-mode . flycheck-rust-setup))
+(use-package cargo-mode
+  :after rustic
+  :hook (rustic-mode . cargo-minor-mode))
 #+END_SRC
+
+This package will attempt to add a =use= statement for the symbol at point; =M-x rust-auto-use=.
+
+#+BEGIN_SRC emacs-lisp
+(use-package rust-auto-use
+  :if (skj/current-feature-required-p)
+  :after rustic)
+#+END_SRC
+
+This sets up the ability to switch between code and tests for the code.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
@@ -7346,4 +7384,6 @@ Pretty self-explanatory, if we aren’t already running as a client, start the s
     (init-message "Starting Emacs server")
     (server-start)))
 #+END_SRC
+
+And, Done!
 

@@ -21,7 +21,8 @@ path, the result is relative to the current buffer path."
 
 (org-babel-load-file (concat-path skj/org-init "init.org"))
 
+;; (put 'upcase-region 'disabled nil) <-- why?
+
 (provide 'init)
 
 ;;; init.el ends here
-(put 'upcase-region 'disabled nil)
