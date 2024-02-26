@@ -4070,6 +4070,22 @@ This package extends `org-edit-special' so it can be used to edit (almost) any t
   :hook (org-mode . org-edit-indirect-mode))
 #+END_SRC
 
+skj-org
+#+BEGIN_SRC emacs-lisp
+(when (skj/current-feature-required-p)
+  (defcustom skj/babel-safe-languages '(dot plantuml sdml)
+    "A list of language safe for Babel evaluation."
+    :tag "Babel safe languages"
+    :type '(repeat symbol)
+    :group 'skj-org)
+
+(defun skj/org-confirm-babel-evaluate (lang body)
+  "Return t if LANG not in `skj/babel-safe-languages'."
+  (not (member lang skj/babel-safe-languages)))
+
+(setq org-confirm-babel-evaluate #'skj/org-confirm-babel-evaluate))
+#+END_SRC
+
 *** ditaa
 
 #+BEGIN_SRC emacs-lisp :exports none
