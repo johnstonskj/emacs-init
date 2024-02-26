@@ -508,6 +508,12 @@ Calendar]].
 This section sets up the package management used in the rest of the file. I prefer =use-package= over calling
 =install-package= as it groups a lot of configuration in a sane and readable manner.
 
+Before we download anything, we will disable TLS v1.2, v1.1, and v1.0. Note, this is done regardless of feature flags.
+
+#+BEGIN_SRC emacs-lisp
+(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.2:-VERS-TLS1.1:-VERS-TLS1.0")
+#+END_SRC
+
 *** Add Package Repositories
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -1481,7 +1487,9 @@ When you have an active region that spans multiple lines, the following will add
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
-  (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines))
+  (global-set-key (kbd "M-n e l") 'mc/edit-lines)
+  (global-set-key (kbd "M-n e a") 'mc/edit-beginnings-of-lines)
+  (global-set-key (kbd "M-n e e") 'mc/edit-ends-of-lines))
 #+END_SRC
 
 When you want to add multiple cursors not based on continuous lines, but based on keywords in the buffer, use:
@@ -1489,11 +1497,36 @@ When you want to add multiple cursors not based on continuous lines, but based o
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
-  (global-set-key (kbd "C-c m c") 'mc/edit-lines)
-  (global-set-key (kbd "C-c m >") 'mc/mark-next-like-this)
-  (global-set-key (kbd "C-c m <") 'mc/mark-previous-like-this)
-  (global-set-key (kbd "C-c m *") 'mc/mark-more-like-this)
-  (global-set-key (kbd "C-c m !") 'mc/mark-all-like-this))
+  (global-set-key (kbd "C-M-<mouse-1>") 'mc/toggle-cursor-on-click)
+
+  (global-set-key (kbd "M-n SPC") 'set-rectangular-region-anchor)
+  (global-set-key (kbd "M-n m n") 'mc/mark-next-like-this)
+  (global-set-key (kbd "M-n m p") 'mc/mark-previous-like-this)
+  (global-set-key (kbd "M-n m m") 'mc/mark-more-like-this)
+  (global-set-key (kbd "M-n m a") 'mc/mark-all-like-this))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(when (skj/current-feature-required-p)
+
+  (pretty-hydra-define hydra-mc
+    (:color blue :quit-key "q" :title " Multiple Cursors")
+    ("Edit"
+     (("e"   mc/edit-lines                 "Edit Lines")
+      ("a"   mc/edit-beginnings-of-lines   "Edit at Start of Lines")
+      ("e"   mc/edit-ends-of-lines         "Edit at End of Lines"))
+      "Mark"
+      (("n"   mc/mark-next-like-this        "Next Like This")
+       ("p"   mc/mark-previous-like-this    "Previous Like This")
+       ("m"   mc/mark-more-like-this        "More Like This")
+       ("a"   mc/mark-all-like-this         "All like this"))
+      "Special"
+      (("SPC" set-rectangular-region-anchor "Set Rectangular Anchor")
+       ("s"   mc/sort-regions               "Sort Regions")
+       ("r"   mc/reverse-regions            "Reverse Regions")
+       ("v"   mc/vertical-align             "Vertical Align"))))
+
+  (bind-key "M-n m h" 'hydra-mc/body))
 #+END_SRC
 
 This package contains [[https://github.com/knu/mc-extras.el][extra functions]] for multiple-cursors mode.
@@ -1507,6 +1540,7 @@ This package contains [[https://github.com/knu/mc-extras.el][extra functions]] f
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'multiple-cursors)
 #+END_SRC
+
 *** Notifications
 :PROPERTIES:
 :CUSTOM_ID: core-ui-notifications
@@ -1524,7 +1558,7 @@ use is fully customizable by the user.
   :if (skj/current-feature-required-p)
   :custom
   (alert-fade-time 10) ;; seconds
-  ( alert-default-style (if (system-mac-p)
+  (alert-default-style (if (system-mac-p)
                             'osx-notifier
                           'notifications)))
 #+END_SRC
@@ -2220,14 +2254,34 @@ care of automatically refreshing this output when it becomes outdated.
 #+END_SRC
 
 This package displays keyword entries from source code comments and Org files in the Magit status buffer. Activating an
-item jumps to it in its file. By default, it uses keywords from =hl-todo=, minus a few (like "NOTE").
+item jumps to it in its file. By default, it uses keywords from =hl-todo= ([[https://github.com/tarsius/hl-todo][highlights TODO]]), minus a few (like "NOTE").
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
+  (use-package hl-todo
+    :if (skj/current-feature-required-p)
+    :diminish hl-todo-mode
+    :hook (prog-mode . hl-todo-mode))
+
+  ;; This causes an error "user-error: Flycheck mode disabled"
+  ;; which then causes `set-auto-mode' and `normal-mode' to fail,
+  ;; chaos then ensues.
+  ;;
+  ;; (use-package flycheck-hl-todo
+  ;;   :after (flycheck hl-todo)
+  ;;   :defer 5 ; Need to be initialized after the rest of checkers
+  ;;   :config
+  ;;   (flycheck-hl-todo-setup)
+  ;;   (add-hook 'hl-todo-mode-hook
+  ;;             (lambda ()
+  ;;               (setq flycheck-hl-todo-enabled hl-todo-mode)
+  ;;               ;; Force flycheck update
+  ;;               (flycheck-buffer))))
+
   (use-package magit-todos
-    :after magit
-    :config (magit-todos-mode)))
+    :after (hl-todo magit)
+    :hook (magit-mode . magit-todos-mode)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -2642,7 +2696,7 @@ Put together a Hydra as there are so many Org Mode commands to try and remember!
     (interactive)
     (if (equal major-mode 'org-mode)
         (hydra-org-mode/body)
-      (message "Hydra not relevant in org-mode")))
+      (message "Hydra only relevant in org-mode")))
   
   (bind-key "<f9> o" 'hydra-org-mode/guard))
 #+END_SRC
@@ -4155,8 +4209,11 @@ plantuml executable.
 
   (use-package plantuml-mode
     :ensure-system-package plantuml
-    :custom
-    (plantuml-default-exec-mode 'executable))
+    :init
+    (setq plantuml-jar-path (concat-path
+                             (homebrew-prefix/package-prefix)
+                             "plantuml/libexec/plantuml.jar"))
+    (setq plantuml-default-exec-mode 'jar))
 
   (use-package flycheck-plantuml
     :after plantuml-mode
@@ -4167,12 +4224,9 @@ plantuml executable.
     :ensure nil
     :demand t
     :after (ob plantuml-mode)
-    :custom
-    (plantuml-jar-path (concat-path (homebrew-prefix/package-prefix)
-                                    "plantuml/libexec/plantuml.jar"))
-    (org-plantuml-jar-path (concat-path (homebrew-prefix/package-prefix)
-                                        "plantuml/libexec/plantuml.jar"))
-    :init(skj/org-babel-add-languages 'plantuml)))
+    :init
+    (setq org-plantuml-jar-path plantuml-jar-path)
+    (skj/org-babel-add-languages 'plantuml)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -4264,7 +4318,8 @@ PDF.
 (use-package ox-texinfo
   :ensure nil
   :if (skj/current-feature-required-p)
-  :ensure-system-package texinfo
+  :ensure-system-package
+  (texi2pdf . "brew install texinfo")
   :defer 3
   :after ox)
 #+END_SRC
@@ -5655,16 +5710,12 @@ function call you are currently writing.
 
 These are editing enhancements for Lisp editing.
 
-; [[https://github.com/xiongtx/eros][eros]]
-: Evaluation Result OverlayS for Emacs Lisp.
-; [[https://github.com/jwiegley/eval-expr/blob/master/eval-expr.el][eval-expr]]
-: Enhanced eval-expression command
-; highlight-defined
-: Minor mode providing syntax highlighting of known Emacs Lisp symbols.
-; highlight-quoted
-: Highlight Lisp quotes and quoted symbols
-; ipretty
-: Provides interactive functions to /pretty-print/ the result of an expression and a global mode ~ipretty-mode~ that advices ~eval-print-last-sexp~ to pretty print.
+- [[https://github.com/xiongtx/eros][eros]] :: Evaluation Result OverlayS for Emacs Lisp.
+- [[https://github.com/jwiegley/eval-expr/blob/master/eval-expr.el][eval-expr]] :: Enhanced eval-expression command
+- highlight-defined :: Minor mode providing syntax highlighting of known Emacs Lisp symbols.
+- highlight-quoted :: Highlight Lisp quotes and quoted symbols
+- ipretty :: Provides interactive functions to /pretty-print/ the result of an expression and a global mode ~ipretty-mode~
+  that advices ~eval-print-last-sexp~ to pretty print.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
@@ -5682,13 +5733,6 @@ These are editing enhancements for Lisp editing.
   (use-package highlight-quoted
     :hook
     (emacs-lisp-mode . highlight-quoted-mode))
-
-  ;; (use-package highlight-sexp
-  ;;   :quelpa
-  ;;   (highlight-sexp :repo "daimrod/highlight-sexp" :fetcher github :version original)
-  ;;   :hook
-  ;;   (emacs-lisp-mode . highlight-sexp-mode)
-  ;;   (lisp-mode . highlight-sexp-mode))
 
   (use-package ipretty
     :config (ipretty-mode 1)))
@@ -6187,12 +6231,10 @@ The key to Rust development in Emacs is the [[https://github.com/brotzeit/rustic
 
   (defun rustic-mode-auto-save-hook ()
     "Enable auto-saving in rustic-mode buffers."
-    (init-message "rustic-mode-auto-save-hook")
     (when buffer-file-name
       (setq-local compilation-ask-about-save nil)))
 
   (defun rustic-mode-minor-modes ()
-    (init-message "rustic-mode-minor-modes")
     ;; Mode for displaying inlay hints.
     (lsp-rust-analyzer-inlay-hints-mode)
     ;; Mode for displaying code-lens overlays.
@@ -6203,23 +6245,32 @@ The key to Rust development in Emacs is the [[https://github.com/brotzeit/rustic
     (set-fill-column 100))
   
   (use-package rustic
+    :hook
+    ((rustic-mode . rustic-mode-minor-modes)
+     (rustic-mode . rustic-mode-auto-save-hook))
     :config
-    (message "config rustic")
+    ;; org-mode Babel formatting
     (setq rustic-babel-format-src-block t)
     (setq rustic-babel-auto-wrap-main t)
+    ;; ------------------------------------------------------
+    ;; run cargo fmt on all file saves!
     (setq rustic-format-on-save t)
     (setq rustic-format-trigger 'on-save)
-    (setq rustic-lsp-server 'rust-analyzer)
-    (setq lsp-rust-analyzer-cargo-load-out-dirs-from-check t)
+    ;; Enable clippy using cargo watch
     (setq lsp-rust-analyzer-cargo-watch-enable t)
     (setq lsp-rust-analyzer-cargo-watch-command "clippy")
+    ;; set the lsp server to use
+    (setq rustic-lsp-server 'rust-analyzer)
+    ;; ?
+    (setq lsp-rust-analyzer-cargo-load-out-dirs-from-check t)
+    ;; lsp feature switches
     (setq lsp-rust-analyzer-display-chaining-hints t)
     (setq lsp-rust-analyzer-display-parameter-hints t)
     (setq lsp-rust-analyzer-proc-macro-enable t)
-    (setq lsp-rust-analyzer-server-display-inlay-hints t))
+    (setq lsp-rust-analyzer-server-display-inlay-hints t)))
 
-  (add-hook 'rustic-mode-hook 'rustic-mode-minor-modes)
-  (add-hook 'rustic-mode-hook 'rustic-mode-auto-save-hook))
+  ;(add-hook 'rustic-mode-hook 'rustic-mode-minor-modes)
+  ;(add-hook 'rustic-mode-hook 'rustic-mode-auto-save-hook))
 #+END_SRC
 
 
