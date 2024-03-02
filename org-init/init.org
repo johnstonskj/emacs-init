@@ -14,7 +14,7 @@ The following function gates logging in the rest of the file. It's first so I ca
 this file. Note that this depends on the value of =debug-on-error= but can easily be overridden and set/unset explicitly.
 
 #+BEGIN_SRC emacs-lisp
-(defvar skj/debug-init (and (boundp debug-on-error) debug-on-error)
+(defvar skj/debug-init t ;(and (boundp debug-on-error) debug-on-error)
   "Do I want to debug the init process?")
 
 (defun init-message (message &rest args)
@@ -78,9 +78,20 @@ The expands a list of features that should not be installed. it adds names from 
     "dev/lang/dart"
     "dev/lang/lua"
     "dev/lang/ocaml"
-    "dev/lang/rdf"
     "dev/lang/provers"
+    "dev/lang/python"
+    "dev/lang/racket"
+    "dev/lang/rdf"
+    "dev/lang/sdml"
+    "dev/lang/smithy"
+    "dev/lang/sql"
+    "dev/lang/swift"
+    "dev/lang/typescript"
     "fun"
+    "llm"
+    "org/babel/ditaa"
+    "org/babel/gnuplot"
+    "org/babel/mermaid"
     "social"
     "writing/rfc"))
 
@@ -356,6 +367,206 @@ development.
 (skj/feature-end 'load-path)
 #+END_SRC
 
+** Package Management Setup
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'package-manager "Package Management Setup")
+#+END_SRC
+
+This section sets up the package management used in the rest of the file. I prefer =use-package= over calling
+=install-package= as it groups a lot of configuration in a sane and readable manner.
+
+Before we download anything, we will disable TLS v1.2, v1.1, and v1.0. Note, this is done regardless of feature flags.
+
+#+BEGIN_SRC emacs-lisp
+(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.2:-VERS-TLS1.1:-VERS-TLS1.0")
+#+END_SRC
+
+*** Add Package Repositories
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'repositories "Package Repositories")
+#+END_SRC
+
+Add the most common package archives and set priorities. Note that this feature cannot be disabled.
+
+#+BEGIN_SRC emacs-lisp
+(require 'package) ;; builtin and pre use-package
+
+(add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
+(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
+(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/"))
+
+(setq package-archive-priorities '(("gnu" . 30)
+                                   ("melpa-stable" . 20)
+                                   ("melpa" . 10)))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-end 'repositories)
+#+END_SRC
+
+*** Package Manager Configuration
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'config "Package Manager Configuration")
+#+END_SRC
+
+Ensure =use-package= is always installed/available first. Note that this feature cannot be disabled.
+
+#+BEGIN_SRC emacs-lisp
+(when (not (package-installed-p 'use-package))
+
+  (package-refresh-contents)
+
+  (package-install 'use-package))
+#+END_SRC
+
+The use-package-always-ensure variable indicates that use-package should always try to install missing packages. For
+some libraries this is not appropriate, and in those cases you see the :ensure nil declaration as part of the
+use-package statement. This applies mainly to libraries which are installed as part of some other package (happens
+mostly with some libraries that come with org-mode).
+
+#+BEGIN_SRC emacs-lisp
+(setq use-package-always-ensure t)
+#+END_SRC
+
+The ~use-package-always-defer~ sets =:defer= true as the default for all package declarations. This makes Emacs startup much
+faster by preventing packages from being loaded when Emacs starts, and only doing so when they are needed. Some packages
+don’t work well with this, so you’ll see some declarations when I explicitly set =:defer nil= to force the package to be
+loaded at startup, or =:defer n= to load the package, but only =n= seconds after startup.
+
+#+BEGIN_SRC emacs-lisp
+(setq use-package-always-defer t)
+#+END_SRC
+
+The main advantage to the `use-package-expand-minimally' variable is that, if you know your configuration works, it will
+make the byte-compiled file as minimal as possible. It can also help with reading macro-expanded definitions, to
+understand the main intent of what’s happening.
+
+#+BEGIN_SRC emacs-lisp
+(setq use-package-expand-minimally nil)
+#+END_SRC
+
+Minor modes each put a word on the mode line to signify that they're active. This can cause other displays, such as % of
+file that point is at, to run off the right side of the screen. For some minor modes, such as mouse-avoidance-mode, the
+display is a waste of space, since users typically set the mode in their .emacs & never change it. For other modes, such
+as my jiggle-mode, it's a waste because there's already a visual indication of whether the mode is in effect.
+
+A diminished mode is a minor mode that has had its mode line display diminished, usually to nothing, although
+diminishing to a shorter word or a single letter is also supported. This package implements diminished modes -- it will
+be removed in favor of =use-package=.
+
+#+BEGIN_SRC emacs-lisp
+(use-package diminish)
+#+END_SRC
+
+The ~use-package-verbose~ variable enables verbose loading of packages, useful for debugging. I set/unset this according
+to need.
+
+#+BEGIN_SRC emacs-lisp
+(setq use-package-verbose (if skj/debug-init 'debug 'nil))
+#+END_SRC
+
+If we are debugging, let's go ahead and get a =use-package= statistics report at the end of the startup process.
+
+#+BEGIN_SRC emacs-lisp
+(when skj/debug-init
+  (setq use-package-compute-statistics t)
+  (add-hook 'emacs-startup-hook (lambda () (use-package-report))))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-end 'config)
+#+END_SRC
+
+*** System Package Manager
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'system "System Package Manager")
+#+END_SRC
+
+The [[https://gitlab.com/jabranham/system-packages][system-packages]] package is a collection of functions to make handling installed system packages more convenient
+through Emacs. Specifically this is set up to use the Homebrew package manager for installing commands that may then be
+called by Emacs code.
+
+#+BEGIN_SRC emacs-lisp
+(use-package system-packages
+  :if (skj/current-feature-required-p)
+  :custom
+  (system-packages-package-manager 'brew)
+  (system-packages-use-sudo nil))
+#+END_SRC
+
+This extension adds a ~:ensure-system-package~ keyword to the ~use-package~ function which allows you to ensure system
+binaries exist alongside your package declarations.
+
+#+BEGIN_SRC emacs-lisp
+(use-package use-package-ensure-system-package
+  :ensure t
+  :if (skj/current-feature-required-p)
+  :after (use-package system-packages))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-end 'system)
+#+END_SRC
+
+*** Auto-Compile
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'auto-compile "Auto-Compile Packages")
+#+END_SRC
+
+Always compile packages, and use the newest version available, this speeds up startup considerably.
+
+#+BEGIN_SRC emacs-lisp
+(use-package auto-compile
+  :if (skj/current-feature-required-p)
+  :defer nil
+  :custom
+  (auto-compile-display-buffer nil)
+  (auto-compile-mode-line-counter t)
+  (load-prefer-newer t)
+  :config
+  (auto-compile-on-load-mode))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-end 'auto-compile)
+#+END_SRC
+
+*** Auto-Update Packages
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'auto-update "Auto-Update Packages")
+#+END_SRC
+
+[[https://github.com/rranelli/auto-package-update.el][This package]] provides functionality for automatically updating your Emacs packages periodically. It is specially useful
+for people that work in multiple machines and tend to forget to manually update packages from time to time.
+
+Configure the update to happen every 7 days, at 3:00am, deleting any old/obsolete packages after updating.
+
+#+BEGIN_SRC emacs-lisp
+(use-package auto-package-update
+  :if (skj/current-feature-required-p)
+  :defer 1
+  :custom
+  (auto-package-update-interval 7)
+  (auto-package-update-delete-old-versions t)
+  (auto-package-update-hide-results t)
+  :config 
+  (auto-package-update-at-time "03:00")
+  (auto-package-update-maybe))
+#+END_SRC
+
+=auto-package-update-maybe= will update your installed packages, if there is an update pending.
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-end 'auto-update)
+(skj/feature-end 'package-manager)
+#+END_SRC
+
 ** Personal Customization Group
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -367,7 +578,7 @@ you to /=M-x customize-group=/ and select =skj=.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
-  
+
   (defgroup skj nil
     "Simon's personal environment settings."
     :tag "skj"
@@ -499,210 +710,6 @@ Calendar]].
 (skj/feature-end 'user-information)
 #+END_SRC
 
-** Package Management Setup
-
-#+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-start 'package-manager "Package Management Setup")
-#+END_SRC
-
-This section sets up the package management used in the rest of the file. I prefer =use-package= over calling
-=install-package= as it groups a lot of configuration in a sane and readable manner.
-
-Before we download anything, we will disable TLS v1.2, v1.1, and v1.0. Note, this is done regardless of feature flags.
-
-#+BEGIN_SRC emacs-lisp
-(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.2:-VERS-TLS1.1:-VERS-TLS1.0")
-#+END_SRC
-
-*** Add Package Repositories
-
-#+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-start 'repositories "Package Repositories")
-#+END_SRC
-
-Add the most common package archives and set priorities. Note that this feature cannot be disabled.
-
-#+BEGIN_SRC emacs-lisp
-(require 'package) ;; builtin and pre use-package
-
-(add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
-(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
-(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/"))
-
-(setq package-archive-priorities '(("gnu" . 30)
-                                   ("melpa-stable" . 20)
-                                   ("melpa" . 10)))
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-end 'repositories)
-#+END_SRC
-
-*** Package Manager Configuration
-
-#+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-start 'config "Package Manager Configuration")
-#+END_SRC
-
-Ensure =use-package= is always installed/available first. Note that this feature cannot be disabled.
-
-#+BEGIN_SRC emacs-lisp
-(when (not (package-installed-p 'use-package))
-
-  (package-refresh-contents)
-
-  (package-install 'use-package))
-#+END_SRC
-
-The use-package-always-ensure variable indicates that use-package should always try to install missing packages. For
-some libraries this is not appropriate, and in those cases you see the :ensure nil declaration as part of the
-use-package statement. This applies mainly to libraries which are installed as part of some other package (happens
-mostly with some libraries that come with org-mode).
-
-#+BEGIN_SRC emacs-lisp
-(eval-and-compile
-  (setq use-package-always-ensure t))
-#+END_SRC
-
-The ~use-package-always-defer~ sets =:defer= true as the default for all package declarations. This makes Emacs startup much
-faster by preventing packages from being loaded when Emacs starts, and only doing so when they are needed. Some packages
-don’t work well with this, so you’ll see some declarations when I explicitly set =:defer nil= to force the package to be
-loaded at startup, or =:defer n= to load the package, but only =n= seconds after startup.
-
-#+BEGIN_SRC emacs-lisp
-(eval-and-compile
-  (setq use-package-always-defer t))
-#+END_SRC
-
-The main advantage to the `use-package-expand-minimally' variable is that, if you know your configuration works, it will
-make the byte-compiled file as minimal as possible. It can also help with reading macro-expanded definitions, to
-understand the main intent of what’s happening.
-
-#+BEGIN_SRC emacs-lisp
-(eval-and-compile
-  (setq use-package-expand-minimally nil))
-#+END_SRC
-
-Minor modes each put a word on the mode line to signify that they're active. This can cause other displays, such as % of
-file that point is at, to run off the right side of the screen. For some minor modes, such as mouse-avoidance-mode, the
-display is a waste of space, since users typically set the mode in their .emacs & never change it. For other modes, such
-as my jiggle-mode, it's a waste because there's already a visual indication of whether the mode is in effect.
-
-A diminished mode is a minor mode that has had its mode line display diminished, usually to nothing, although
-diminishing to a shorter word or a single letter is also supported. This package implements diminished modes -- it will
-be removed in favor of =use-package=.
-
-#+BEGIN_SRC emacs-lisp
-(use-package diminish)
-#+END_SRC
-
-The ~use-package-verbose~ variable enables verbose loading of packages, useful for debugging. I set/unset this according
-to need.
-
-#+BEGIN_SRC emacs-lisp
-(eval-and-compile
-  (setq use-package-verbose (if skj/debug-init 'debug 'nil)))
-#+END_SRC
-
-If we are debugging, let's go ahead and get a =use-package= statistics report at the end of the startup process.
-
-#+BEGIN_SRC emacs-lisp
-(when skj/debug-init
-  (eval-and-compile (setq use-package-compute-statistics t))
-  (add-hook 'emacs-startup-hook (lambda () (use-package-report))))
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-end 'config)
-#+END_SRC
-
-*** System Package Manager
-
-#+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-start 'system "System Package Manager")
-#+END_SRC
-
-The [[https://gitlab.com/jabranham/system-packages][system-packages]] package is a collection of functions to make handling installed system packages more convenient
-through Emacs. Specifically this is set up to use the Homebrew package manager for installing commands that may then be
-called by Emacs code.
-
-#+BEGIN_SRC emacs-lisp
-(use-package system-packages
-  :if (skj/current-feature-required-p)
-  :custom
-  (system-packages-package-manager 'brew)
-  (system-packages-use-sudo nil))
-#+END_SRC
-
-This extension adds a ~:ensure-system-package~ keyword to the ~use-package~ function which allows you to ensure system
-binaries exist alongside your package declarations.
-
-#+BEGIN_SRC emacs-lisp
-(use-package use-package-ensure-system-package
-  :ensure t
-  :if (skj/current-feature-required-p)
-  :after (use-package system-packages))
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-end 'system)
-#+END_SRC
-
-*** Auto-Compile
-
-#+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-start 'auto-compile "Auto-Compile Packages")
-#+END_SRC
-
-Always compile packages, and use the newest version available, this speeds up startup considerably.
-
-#+BEGIN_SRC emacs-lisp
-(use-package auto-compile
-  :if (skj/current-feature-required-p)
-  :defer nil
-  :custom
-  (auto-compile-display-buffer nil)
-  (auto-compile-mode-line-counter t)
-  (load-prefer-newer t)
-  :config
-  (auto-compile-on-load-mode))
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-end 'auto-compile)
-#+END_SRC
-
-*** Auto-Update Packages
-
-#+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-start 'auto-update "Auto-Update Packages")
-#+END_SRC
-
-[[https://github.com/rranelli/auto-package-update.el][This package]] provides functionality for automatically updating your Emacs packages periodically. It is specially useful
-for people that work in multiple machines and tend to forget to manually update packages from time to time.
-
-Configure the update to happen every 7 days, at 3:00am, deleting any old/obsolete packages after updating.
-
-#+BEGIN_SRC emacs-lisp
-(use-package auto-package-update
-  :if (skj/current-feature-required-p)
-  :defer 1
-  :custom
-  (auto-package-update-interval 7)
-  (auto-package-update-delete-old-versions t)
-  (auto-package-update-hide-results t)
-  :config 
-  (auto-package-update-at-time "03:00")
-  (auto-package-update-maybe))
-#+END_SRC
-
-=auto-package-update-maybe= will update your installed packages, if there is an update pending.
-
-#+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-end 'auto-update)
-(skj/feature-end 'package-manager)
-#+END_SRC
-
 ** More Paths
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -732,7 +739,10 @@ I should move all these into =~/.local/bin=
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
-  (exec-path-prepend (expand-file-name "~/bin")))
+  (defconst skj/local-bin-dir (expand-file-name "~/bin")
+    "Path to local (small) binaries and scripts directory.")
+
+  (exec-path-prepend skj/local-bin-dir))
 #+END_SRC
 
 This is the XDG local binary path.
@@ -808,11 +818,7 @@ Support for the command-line [[https://www.passwordstore.org/][pass]] tool, boun
 
   (use-package pass
     :after password-store
-    :bind ("M-p p" . pass))
-
-  (use-package ivy-pass
-    :after (password-store ivy)
-    :bind ("M-p i" . ivy-pass)))
+    :bind ("M-p p" . pass)))
 #+END_SRC
 
 First, load the built-in EasyPG support. By calling (~epa-file-enable~), Emacs automatically encrypts/decrypts files with
@@ -865,6 +871,14 @@ Packages I tried, but ultimately decided against:
 
 - ~expand-region~ :: A pretty simple package, takes your cursor and semantically expands the region, so words, sentences,
   maybe the contents of some parentheses, it’s awesome, try it out.
+
+The following is not feature gated, it is a builtin package used by a bunch of others, worth adding for ~use-package~'s
+~:after~ keyword.
+
+#+BEGIN_SRC emacs-lisp
+(use-package ansi-color
+  :ensure nil)
+#+END_SRC
 
 *** Theme Support
 
@@ -1280,6 +1294,59 @@ Requires the following fonts from [[https://www.nerdfonts.com/font-downloads][Ne
     :after (all-the-icons nerd-icons)))
 #+END_SRC
 
+Return code point of =glyph-name=. This function is interactive function, so you can call it by =M-x fontawesome=. However,
+=M-x counsel-fontawesome= inserts fontawesome glyph with ivy interface. The issue is that the two front-end read
+frameworks supported, helm and ivy, are mixed in the same file and I don't want to install helm just for this.
+
+#+BEGIN_SRC emacs-lisp
+(when nil ;(skj/current-feature-required-p)
+  (use-package fontawesome)
+
+  (require 'cl-lib)
+  (require 'fontawesome-data)
+
+  (defsubst fontawesome--font-names ()
+    (cl-loop for (name . _code) in fontawesome-alist
+             collect name))
+
+  (defun fontawesome--completing-read ()
+    (let ((comp-func (if ido-mode 'ido-completing-read 'completing-read)))
+      (funcall comp-func "Font name: " (fontawesome--font-names) nil t)))
+
+  (defun fontawesome (font-name)
+    "Return fontawesome code point"
+    (interactive
+     (list (fontawesome--completing-read)))
+    (assoc-default font-name fontawesome-alist))
+
+  (defun fontawesome--propertize (glyph)
+    (propertize glyph
+                'face '(:family "FontAwesome" :height 1.5)))
+
+  (defun fontawesome--construct-candidates ()
+    (mapcar (lambda (fontawesome)
+              (cons (concat (car fontawesome)
+                            " -> "
+                            (fontawesome--propertize
+                             (cdr fontawesome)))
+                    (cdr fontawesome)))
+            fontawesome-alist))
+
+  (defun fontawesome---source (fontawesome-alist)
+    (helm-build-sync-source "Select FontAwesome Icon: "
+                            :candidates (fontawesome--construct-candidates)
+                            :action (lambda (candidate)
+                                      (insert (fontawesome--propertize candidate)))
+                            :candidate-number-limit 9999))
+
+  (defun counsel-fontawesome ()
+    (interactive)
+    (require 'ivy)
+    (ivy-read "Font awesome> " (fontawesome--construct-candidates)
+              :action (lambda (font)
+                        (insert (cdr font))))))
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'icons)
 #+END_SRC
@@ -1352,23 +1419,26 @@ For battery mode, simplify the usual and use Unicode characters as icons, it mak
 Just started with [[https://github.com/abo-abo/hydra][Hydra]], so there are hydra defined in sections below.
 
 #+BEGIN_SRC emacs-lisp
-(when (skj/current-feature-required-p)
-
-  (use-package hydra
-    :defer 3)
-
-  ;; https://github.com/jerrypnz/major-mode-hydra.el
-  (use-package major-mode-hydra
-    :defer 3
-    :after hydra
-    :bind
-    ("M-SPC" . major-mode-hydra))
-
-    (use-package pretty-hydra
-    :defer 3
-    :after major-mode-hydra))
+(use-package hydra
+  :if (skj/current-feature-required-p)
+  :defer 3)
 #+END_SRC
 
+#+BEGIN_SRC emacs-lisp
+(when (skj/current-feature-required-p)
+
+  (use-package pretty-hydra
+    :after hydra
+    :defer 3)
+
+  (use-package major-mode-hydra
+    :after pretty-hydra
+    :defer 3
+    :bind
+    ("M-SPC" . major-mode-hydra)))
+#+END_SRC
+
+While the idea of =use-package-hydra= is nice, defining a Hydra as a part of the =use-package= is very clunky.
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'hydra)
@@ -1465,7 +1535,6 @@ This enables left-hand line numbers, the types are ~'relative~, ~'visual~, and ~
   (display-line-numbers-mode 1))
 #+END_SRC
 
-
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'buffers)
 #+END_SRC
@@ -1515,16 +1584,16 @@ When you want to add multiple cursors not based on continuous lines, but based o
      (("e"   mc/edit-lines                 "Edit Lines")
       ("a"   mc/edit-beginnings-of-lines   "Edit at Start of Lines")
       ("e"   mc/edit-ends-of-lines         "Edit at End of Lines"))
-      "Mark"
-      (("n"   mc/mark-next-like-this        "Next Like This")
-       ("p"   mc/mark-previous-like-this    "Previous Like This")
-       ("m"   mc/mark-more-like-this        "More Like This")
-       ("a"   mc/mark-all-like-this         "All like this"))
-      "Special"
-      (("SPC" set-rectangular-region-anchor "Set Rectangular Anchor")
-       ("s"   mc/sort-regions               "Sort Regions")
-       ("r"   mc/reverse-regions            "Reverse Regions")
-       ("v"   mc/vertical-align             "Vertical Align"))))
+     "Mark"
+     (("n"   mc/mark-next-like-this        "Next Like This")
+      ("p"   mc/mark-previous-like-this    "Previous Like This")
+      ("m"   mc/mark-more-like-this        "More Like This")
+      ("a"   mc/mark-all-like-this         "All like this"))
+     "Special"
+     (("SPC" set-rectangular-region-anchor "Set Rectangular Anchor")
+      ("s"   mc/sort-regions               "Sort Regions")
+      ("r"   mc/reverse-regions            "Reverse Regions")
+      ("v"   mc/vertical-align             "Vertical Align"))))
 
   (bind-key "M-n m h" 'hydra-mc/body))
 #+END_SRC
@@ -1661,12 +1730,15 @@ Historian stores the results of completing-read and similar functions persistent
 completion candidates that are more frequently or more recently used a better position in the candidates list.
 
 #+BEGIN_SRC emacs-lisp
-(when (and (skj/current-feature-required-p) window-system)
+(when (skj/current-feature-required-p)
 
   (use-package historian)
 
   (use-package ivy-historian))
 #+END_SRC
+
+Note that ~historian~ saves files in ~historian-save-file~, be default ="~/.emacs.d/.historian"=, which if it is ever
+horked (and contains only =nil=) nothing works properly. A call to ~historian-clear~ should reset.
 
 Here's Ivy itself.
 
@@ -1711,7 +1783,15 @@ Do these *after* Ivy. Note that the Hydra can is invoked in any Ivy minibuffer w
     :pin melpa
     :init
     (ivy-rich-mode 1)))
-    #+END_SRC
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(when (skj/current-feature-required-p)
+
+  (use-package ivy-pass
+    :after (password-store ivy)
+    :bind ("M-p i" . ivy-pass)))
+#+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'ivy)
@@ -1835,10 +1915,33 @@ front-ends to retrieve and display completion candidate.
   (use-package company-quickhelp
     :if window-system
     :after company))
-    #+END_SRC
+#+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'company)
+#+END_SRC
+
+*** Quick Help
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'quickhelp)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(when nil ;(skj/current-feature-required-p)
+
+  (use-package company-quickhelp
+    :after company
+    :config (company-quickhelp-mode))
+
+  (use-package company-quickhelp-terminal
+    :after company-quickhelp-
+    :custom
+    (company-quickhelp-terminal-mode 1)))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-end 'quickhelp)
 #+END_SRC
 
 *** Prescient
@@ -1920,13 +2023,18 @@ filesystem.
 (when (and (skj/current-feature-required-p)
            (< emacs-version-number 29))
 
+  (let ((git-url "https://github.com/emacs-tree-sitter/ts-fold.git")
+        (local-dir "/Users/simonjo/Projects/ts-fold"))
+    (when (not (file-directory-p local-dir))
+      (call-process (format "git clone %s %s" git-url local-dir))))
+
   (use-package ts-fold
     :after tree-sitter
     :diminish ts-fold-mode
     :load-path "/Users/simonjo/Projects/ts-fold")
 
   (use-package fringe-helper)
-  
+
   (use-package ts-fold-indicators
     :after (ts-fold fringe-helper)
     :diminish ts-fold-indicator-mode
@@ -2095,6 +2203,21 @@ outputs.
   (vterm-max-scrollback 10000))
 #+END_SRC
 
+Company mode completion backends for your shell scripting. Package =company-shell= offers 3 backends for 3 different sources:
+
+- =company-shell= :: providing completions for binaries that are found on your $PATH
+- =company-shell-env= :: providing completions for environment variables based on the env command
+- =company-fish-shell= :: providing completions for fish-shell’s functions, both builtin as well as user-defined
+
+#+BEGIN_SRC emacs-lisp
+(use-package company-shell
+  :if (skj/current-feature-required-p)
+  :after company
+  :config
+  (add-to-list 'company-shell-modes 'zsh-mode)
+  (add-to-list 'company-backends '(company-shell company-shell-env) t))
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'shell)
 #+END_SRC
@@ -2162,7 +2285,14 @@ Version control is a basic human right, and hopefully this gets things pretty da
 (skj/feature-start 'git)
 #+END_SRC
 
-Git support is entirely built into Emacs, so this section only adds additional tools.
+Git support is built into Emacs as =vc-git=, so this section only adds additional tools.
+
+#+BEGIN_SRC emacs-lisp
+(use-package vc-git
+  :ensure nil
+  :if (skj/current-feature-required-p)
+  :ensure-system-package git)
+#+END_SRC
 
 #+BEGIN_SRC emacs-lisp
 (use-package git
@@ -2408,28 +2538,47 @@ jump between the hunks and revert them selectively.
 (skj/feature-end 'generic)
 #+END_SRC
 
-** Snippet Support
+** Abbrev and Snippet Support
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-start 'snippets "Snippet Support")
 #+END_SRC
 
-I *always* setup =abbrev-mode= as it's builtin and this way have a backup if no full snippet support is enabled.
+*** Abbrevs
 
 #+BEGIN_SRC emacs-lisp
 (use-package abbrev
   :ensure nil
   :diminish abbrev-mode
   :hook text-mode
+  :bind
+  (("C-x a l" . list-abbrevs)
+   ("C-x a e" . edit-abbrevs)
+   ("C-x a r" . expand-region-abbrevs)
+   ("C-x a u" . unexpand-abbrevs)
+   ("C-x a !" . abbrev-suggest-show-report))
   :custom
-  ;; tell emacs where to read abbrev definitions from
-  (abbrev-file-name  (concat-path user-emacs-directory "abbrev_defs"))
-  ;; save abbrevs when files are saved
-  (save-abbrevs 'silently)
+  (abbrev-file-name  (concat-path user-emacs-directory "abbrev_defs")
+                     "tell emacs where to read abbrev definitions from")
+  (save-abbrevs 'silently "save abbrevs when files are saved")
+  (abbrev-suggest t "Enable abbrev suggestions")
+  ;; abbrev-suggest-hint-threshold
+  ;; abbrev-suggest-show-report
   :config
   (if (file-exists-p abbrev-file-name)
       (quietly-read-abbrev-file)))
 #+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package dabbrev
+  :ensure nil
+  :custom
+  ;; dabbrev-ignored-buffer-names
+  ;; dabbrev-ignored-buffer-regexps
+  (dabbrev-check-all-buffers t))
+#+END_SRC
+
+*** Snippet UI
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
@@ -2471,7 +2620,7 @@ First of all, the primary snippet tool is =yasnippet=, there are others but this
 Remember to execute =M-x yas-reload-all<RET>= when /any/ snippets change.
 
 Basic snippets, pretty useful.
-
+up
 #+BEGIN_SRC emacs-lisp
 (use-package yasnippet-snippets
   :defer 4
@@ -2480,6 +2629,43 @@ Basic snippets, pretty useful.
   :config
   (yasnippet-snippets-initialize))
 #+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(when nil; (skj/current-feature-required-p)
+
+  (pretty-hydra-define hydra-abbrev
+    (:color blue :quit-key "q" :title " Abbrevs/Snippets")
+    ("Abbrev (C-x)"
+     (("'"     expand-abbrev                 "Expand the abbrev before point")
+      ("M-'"   abbrev-prefix-marks           "Separate a prefix from a following abbrev")
+      ("a r"   expand-region-abbrevs         "Expand some or all abbrevs found in the region") 
+      ("a l"   list-abbrevs                  "Edit at End of Lines")
+      ("a e"   edit-abbrevs                  "Edit at End of Lines")
+      ("a u"   unexpand-abbrev               "Undo the last expanded abbrev")
+      ;; define-global-abbrev
+      ;; add-global-abbrev
+      ;; inverse-add-global-abbrev
+      ;; define-mode-abbrev
+      ;; add-mode-abbrev
+      ;; inverse-add-mode-abbrev
+      ("a !"   abbrev-suggest-show-report    "Display all suggestions in current editing session")
+      ("a ?"   (customize-group 'abbrev)     "Customize")
+      )
+     "DAbbrev"
+     (("/"     dabbrev-expand                "Expand the word before point")
+      ("c /"   dabbrev-completion            "Complete the word before point")
+      ("- /"   (dabbrev-expand -1)           "Expand the word looking forward")
+      ("?"     (customize-group 'dabbrev)    "Customize"))
+     "YASnippet"
+     (("SPC" set-rectangular-region-anchor "Set Rectangular Anchor")
+      ("s"   mc/sort-regions               "Sort Regions")
+      ("r"   mc/reverse-regions            "Reverse Regions")
+      ("v"   mc/vertical-align             "Vertical Align"))))
+
+  (bind-key "C-x a h" 'hydra-abbrev/body))
+#+END_SRC
+
+*** Snippet Content
 
 These are super useful, create a new =.gitignore= file and type =emacs<RET>= followed by language such as =rust<TAB>= and
 maybe =macos<TAB>= for good measure.
@@ -2505,6 +2691,8 @@ These are common license files, easy to add to a new project.
   :config
   (license-snippets-init))
 #+END_SRC
+
+*** Extensions
 
 Package =ivy-yasnippet= lets you preview yasnippet snippets with ivy. To use it, call ~ivy-yasnippet~, or use =C-c i= in
 =yas-minor-mode=.
@@ -4073,14 +4261,15 @@ This package extends `org-edit-special' so it can be used to edit (almost) any t
 skj-org
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
-  (defcustom skj/babel-safe-languages '(dot plantuml sdml)
+  (defcustom skj/babel-safe-languages '("dot" "plantuml" "sdml")
     "A list of language safe for Babel evaluation."
     :tag "Babel safe languages"
-    :type '(repeat symbol)
+    :type '(repeat string)
     :group 'skj-org)
 
 (defun skj/org-confirm-babel-evaluate (lang body)
   "Return t if LANG not in `skj/babel-safe-languages'."
+  (message "confirm eval of %s %s" lang (member lang skj/babel-safe-languages))
   (not (member lang skj/babel-safe-languages)))
 
 (setq org-confirm-babel-evaluate #'skj/org-confirm-babel-evaluate))
@@ -4470,7 +4659,7 @@ globally use the command =global-emojify-mode=.
   :after (company)
   :if window-system
   :config
-  (add-to-list 'company-backends 'company-emoji)
+  (add-to-list 'company-backends 'company-emoji t)
 
   (defun --set-emoji-font (frame)
     "Adjust the font settings of FRAME so Emacs can display emoji properly."
@@ -4725,11 +4914,11 @@ This add-on defines three =company-mode= backends.
 #+BEGIN_SRC emacs-lisp
 (use-package company-math
   :if (skj/current-feature-required-p)
+  :commands company-math-symbols-unicode
   :custom
   (company-tooltip-align-annotations t)
-  :init
-  ;; global activation of the unicode symbol completion
-  (add-to-list 'company-backends 'company-math-symbols-unicode))
+  :config
+  (add-to-list 'company-backends 'company-math-symbols-unicode t))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -4757,7 +4946,7 @@ Completion, using [[https://github.com/gbgar/company-bibtex][company-bibtex]] an
   
   (use-package company-bibtex
     :config (setq company-bibtex-bibliography skj/bibtex-files)
-    (add-to-list 'company-backends 'company-bibtex))
+    (add-to-list 'company-backends 'company-bibtex t))
 
   (use-package ivy-bibtex
     :config (setq bibtex-completion-bibliography skj/bibtex-files)))
@@ -5002,6 +5191,20 @@ fira-code-mode-install-fonts<RET>=.
   :config (fira-code-mode-set-font))
 #+END_SRC
 
+This enables left-hand line numbers, the types are ~'relative~, ~'visual~, and ~t~ for absolute.
+
+#+BEGIN_SRC emacs-lisp
+(use-package display-line-numbers
+  :if (skj/current-feature-required-p)
+  :ensure nil
+  :custom
+  (display-line-numbers-type t)
+  :hook (prog-mode . display-line-numbers-mode)
+  :config
+  (set-face-attribute 'line-number nil :foreground "#eee8d5")
+  (set-face-attribute 'line-number-current-line nil :weight 'normal :foreground "#93a1a1"))
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'pretty)
 #+END_SRC
@@ -5070,6 +5273,64 @@ Visual cues for indentation can also be helpful for lining up in languages like 
 (skj/feature-end 'structure)
 #+END_SRC
 
+*** Compilation
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'compile "Compilation")
+#+END_SRC
+
+Major mode for compilation log buffers. To visit the source for a line-numbered error, move point to the error message
+line and type =RET=. To kill the compilation, type =C-c C-k=.
+
+#+BEGIN_SRC emacs-lisp
+(use-package compile
+  :ensure t ;; builtin
+  :if (skj/current-feature-required-p))
+#+END_SRC
+
+This is a minimalist package that enhances ~compilation-mode~ in the following ways.
+
+- Support color output.
+- Support progress updates on a single line (as used by ninja, sphinx and many other build systems).
+- Use scrolling behavior similar to most terminals.
+- Optionally use foreground & background independent of theme colors.
+
+#+BEGIN_SRC emacs-lisp
+(use-package fancy-compilation
+  :if (skj/current-feature-required-p)
+  :after (ansi-color compile)
+  :commands (fancy-compilation-mode)
+  :hook (compile-mode . fancy-compilation-mode)
+  :custom
+  (fancy-compilation-override-colors t)
+  (fancy-compilation-quiet-prelude t)
+  (fancy-compilation-quiet-prolog t))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-end 'compile)
+#+END_SRC
+
+*** Generic Completion
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'complete "Completion")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(when (skj/current-feature-required-p)
+
+  (use-package company-ctags
+    :after company
+    :config
+    (company-ctags-auto-setup))
+)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-end 'complete)
+#+END_SRC
+
 *** Odds & Ends
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -5086,6 +5347,14 @@ This package [[https://github.com/tarsius/hl-todo][highlights TODO]]-like tags i
 #+END_SRC
 
 Optional minor mode to enable /sub-word/ [[https://www.gnu.org/software/emacs/manual/html_node/ccmode/Subword-Movement.html][movement and editing]].
+
+#+BEGIN_SRC emacs-lisp
+(when (skj/current-feature-required-p)
+
+  (use-package syntax-subword
+    :diminish syntax-subword-mode
+    :hook (subword-mode . syntax-subword-mode)))
+#+END_SRC
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
@@ -5345,16 +5614,26 @@ is a very useful tool to have when you are TDDing.
   (global-set-key (kbd "C-c t") 'tgt-toggle))
 #+END_SRC
 
-=cov= shows code coverage data for your program in emacs. Currently, it supports
-=gcov==, =lcov=, =coverage.py=, and =clover= output, as well as the Coveralls format
-produced by =undercover.el=.
+*** Coverage
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'coverage)
+#+END_SRC
+
+=cov= shows code coverage data for your program in emacs. Currently, it supports =gcov=, =lcov=, =coverage.py=, and =clover=
+output, as well as the Coveralls format produced by =undercover.el=.
 
 #+BEGIN_SRC emacs-lisp
 (use-package cov)
 #+END_SRC
 
-Need to customize either ~cov-coverage-file-paths~ or
-~cov-coverage-file-paths~ for different coverage tools/languages.
+Need to customize either ~cov-coverage-file-paths~ or ~cov-coverage-file-paths~ for different coverage tools/languages.
+
+Alternatively, consider [[https://github.com/twada/coverlay.el][coverlay.el]] or [[https://github.com/undercover-el/undercover.el][undercover.el]].
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-end 'coverage)
+#+END_SRC
 
 *** Regex Tools
 
@@ -5436,7 +5715,7 @@ The ~[[https://github.com/pashky/restclient.el][restclient-mode]]~ REST client s
     :after restclient
     :commands company-restclient
     :init
-    (add-to-list 'company-backends #'company-restclient))
+    (add-to-list 'company-backends 'company-restclient t))
 
   (use-package restclient-test
     :after restclient)
@@ -5649,7 +5928,7 @@ binaries, so installation is easy.
   :after company
   :commands company-tabnine
   :init
-  (add-to-list 'company-backends #'company-tabnine)
+  (add-to-list 'company-backends 'company-tabnine t)
   :config
   (unless (file-directory-p
            (or company-tabnine-binaries-folder
@@ -5664,8 +5943,12 @@ commands for a variety of languages, including elisp itself!
 (use-package emr
   :if (skj/current-feature-required-p)
   :after projectile
-  :config
-  (define-key prog-mode-map (kbd "M-RET") 'emr-show-refactor-menu))
+  :commands
+  emr-show-refactor-menu
+  :bind
+  (:map prog-mode-map
+   ("M-RET" . emr-show-refactor-menu)))
+
 #+END_SRC
 
 *** BNF-like
@@ -5853,7 +6136,7 @@ Some useful libraries for Emacs lisp development:
 
 - [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Edebug.html][edebug]] :: Builtin source-level debugger for Emacs Lisp programs
 - [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Profiling.html][elp]] :: The elp library offers an alternative approach, which is useful when you know in advance which Lisp
-: function(s) you want to profile.
+  function(s) you want to profile.
 - [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Profiling.html][profiler]] :: Builtin package -- to begin profiling, type =M-x profiler-start=. You can choose to sample CPU usage
   periodically (=cpu=), when memory is allocated (=memory=), or both. Then run the code you’d like to speed up.
 - [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Test-Coverage.html][testcover]] :: Builtin coverage testing for a file of Lisp code by loading the testcover library and using the command
@@ -5907,27 +6190,61 @@ Cask. Unlike Cask, Eldev itself is fully written in Elisp and its configuration 
 are familiar with Java world, Cask can be seen as a parallel to Maven — it uses project description, while Eldev is sort
 of a parallel to Gradle — its configuration is a program on its own.
 
+Run the following id the =eldev= command is not found.
+
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
   (unless (executable-find  "eldev")
 
-    (use-package f
+    (defun skj/run-string-as-script (content)
+      (let* ((script-file (make-temp-file "emacs-eldev-")))
+        (write-region content nil script-file)
+        (call-process "sh" nil "eldev" nil script-file)))
+
+    (use-package request
       :defer nil
       :config
-      (defun skj/run-string-as-script (content)
-        (let* ((script-file (make-temp-file "emacs-eldev-")))
-          (f-write-text content 'utf-8 script-file)
-          (call-process "sh" nil "eldev" nil script-file)))
+      (request "https://raw.github.com/doublep/eldev/master/bin/eldev"
+        :success (lambda (&rest arg-plist)
+                   (skj/run-string-as-script
+                    (plist-get arg-plist :data)))))
 
-      (use-package request
-        :defer nil
-        :after f
-        :config
-        (request "https://raw.github.com/doublep/eldev/master/bin/eldev"
-          :success (lambda (&rest arg-plist)
-                     (skj/run-string-as-script
-                      (plist-get arg-plist :data)))))))
+    (let ((file-path (concat-path skj/local-bin-dir "eldev-initx")))
+      (write-region
+       "#!/usr/bin/env bash
+
+if [[ ! -f Eldev ]]; then
+    eldev init --non-interactive
+fi
+
+if [[ -d githooks ]]; then
+    eldev githooks
+fi
+"
+       nil
+       file-path)
+      (set-file-modes file-path #o700))
+
+    (let* ((config-dir (concat-path (xdg-config-home) "eldev"))
+           (config-file (concat-path config-dir "config")))
+      (make-directory config-dir)
+      (write-region
+       "; -*- mode: emacs-lisp; lexical-binding: t; -*-
+
+; This file is for eldev startup configuration.
+
+(setf eldev-coloring-mode t)
+"
+       nil
+       config-file)
+      (set-file-modes config-file #o600))))
+#+END_SRC
+
+Run the following when the =eldev= command is found, which may have been installed in the previous block.
+
+#+BEGIN_SRC emacs-lisp
+(when (skj/current-feature-required-p)
 
   (when (executable-find  "eldev")
 
@@ -5935,6 +6252,8 @@ of a parallel to Gradle — its configuration is a program on its own.
 
     (use-package flycheck-eldev
       :after (flycheck eldev))))
+
+;; (call-process (format "%s %s" (executable-find "eldev") "upgrade-self"))
 #+END_SRC
 
 More documentation [[https://doublep.github.io/eldev/][here]].
@@ -5966,30 +6285,55 @@ Get an implementation:
 - SBCL :: [[http://www.sbcl.org/][Steel Bank Common Lisp]] is a high performance Common Lisp compiler. It is open source / free software, with a
   permissive license. In addition to the compiler and runtime system for ANSI Common Lisp, it provides an interactive
   environment including a debugger, a statistical profiler, a code coverage tool, and many other extensions.
+  - install: brew install sbcl
 - CLISP :: [[https://clisp.sourceforge.io/][GNU Common Lisp]]
+  - install: brew install clisp
+- Clozure CL :: Clozure Common Lisp (Clozure CL, or CCL) is a free Common Lisp implementation with a long history. Some
+  distinguishing features of the implementation include fast compilation speed, native threads, a precise, generational,
+  compacting garbage collector, and a convenient foreign-function interface.
+  - install: brew install clozure-cl
 - Allegro CL :: is the most powerful dynamic object-oriented development system available today, and is especially
   suited to enterprise-wide, complex application development. Complex applications with billions of objects are now made
   easy with [[https://franz.com/products/allegro-common-lisp/][Allegro CL 10]]. The command-line tool is =alisp=.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
+
+  (defconst skj-dev/common-lisp-executable-alist
+    '((allegro . "alist")
+      (allegro-express . "allegro-express")
+      (ccl . "dx86cl64")
+      (clisp . "clisp")
+      (sbcl . "sbcl")))
   
   (defcustom skj-dev/common-lisp-packages '(clisp sbcl)
     "Name of Common Lisp implementations to enable."
     :tag "Enabled Common Lisps"
-    :type '(set (const :tag "Allegro CL" allegro)
-                (const :tag "GNU Common Lisp" clisp)
-                (const :tag "Steel Bank Common Lisp" sbcl))
+    :type '(repeat
+            (choice
+             (const :tag "Allegro CL" allegro)
+             (const :tag "Allegro Express" allegro-express)
+             (const :tag "Clozure CL" ccl)
+             (const :tag "GNU Common Lisp" clisp)
+             (const :tag "Steel Bank Common Lisp" sbcl)))
     :group 'skj-dev)
   
-  (defcustom skj-dev/common-lisp-program "sbcl"
+  (defcustom skj-dev/common-lisp-interpreter 'sbcl
     "Name of the default Common Lisp interpreter to connect to."
     :tag "Common Lisp interpreter"
-    :type '(set (const :tag "Allegro CL (ANSI))" "alisp")
-                (const :tag "Allegro Express" "allegro-express")
-                (const :tag "GNU Common Lisp" "clisp")
-                (const :tag "Steel Bank Common Lisp" "sbcl"))
-    :group 'skj-dev))
+    :type '(radio
+            (const :tag "Allegro CL" allegro)
+            (const :tag "Allegro Express" allegro-express)
+            (const :tag "Clozure CL" ccl)
+            (const :tag "GNU Common Lisp" clisp)
+            (const :tag "Steel Bank Common Lisp" sbcl))
+    :group 'skj-dev)
+
+  (defun skj-dev/common-lisp-executable ()
+    (let* ((name skj-dev/common-lisp-interpreter)
+           (executable (assoc name skj-dev/common-lisp-executable-alist)))
+      (unless (null executable)
+        (executable-find (cdr executable))))))
 #+END_SRC
 
 Quicklisp – [[https://www.quicklisp.org/beta/][Quicklisp]] is a library manager for Common Lisp. It works with your existing Common Lisp implementation to
@@ -5998,38 +6342,53 @@ download, install, and load any of over 1,200 libraries with a few simple comman
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
-  (defvar quicklisp-directory
-    (expand-file-name "~/quicklisp"))
+  (defun skj-dev/common-lisp-run-script (file &optional expr destination)
+    (let* ((interpreter skj-dev/common-lisp-interpreter)
+           (args (cond
+                  ((eq interpreter 'ccl) '("--load" "--eval" ""))
+                  ((eq interpreter 'clisp) '("-i" "-x" ""))
+                  ((eq interpreter 'sbcl) '("--load" "--eval" "--quit"))
+                  (t nil)))
+           (load-arg (string-join (list (car args) file) " "))
+           (eval-arg (if (null expr)
+                         ""
+                       (string-join (list (cadr args) (shell-quote-argument expr)) " ")))
+           (quit-arg (caddr args)))
+      (if (null args)
+          (init-message "Could not load quicklisp for %s" skj-dev/common-lisp-interpreter)
+        (call-process (string-join (list
+                                    (skj-dev/common-lisp-executable)
+                                    load-arg
+                                    eval-arg
+                                    quit-arg) " ")
+                      nil
+                      destination))))
 
-  (unless (file-directory-p quicklisp-directory)
-    (make-directory quicklisp-directory)
+  (skj-dev/common-lisp-run-script "file.lisp" "(quicklisp-quickstart:install)")
 
-    (let ((quicklisp-source (expand-file-name
-                             (concat-path quicklisp-directory
-                                          "tmp-quicklisp.lisp")))
-          (quicklisp-sig (expand-file-name
-                          (concat-path quicklisp-directory
-                                       "tmp-quicklisp.lisp.sig"))))
-      (require 'url) ; built-in
-      (url-copy-file "https://beta.quicklisp.org/quicklisp.lisp"
-                     quicklisp-source)
-      (url-copy-file "https://beta.quicklisp.org/quicklisp.lisp.sig"
-                     quicklisp-sig)
-      
-      (require 'epa) ; built-in
-      (epa-verify-file quicklisp-sig)
+  (let ((quicklisp-directory (expand-file-name "~/quicklisp")))
 
-      (cond
-       ((eq skj-dev/common-lisp-program "clisp")
-        (call-process
-         (format "clisp -i %s -x '(quicklisp-quickstart:install)'"
-                 quicklisp-source)))
-       ((eq skj-dev/common-lisp-program "sbcl")
-        (call-process
-         (format "sbcl --load %s --eval '(quicklisp-quickstart:install)' --quit"
-                 quicklisp-source)))
-       (t
-        (init-message "Could not load quicklisp for %s" skj-dev/common-lisp-program))))))
+    (unless (file-directory-p quicklisp-directory)
+      (make-directory quicklisp-directory)
+
+      (let ((quicklisp-source (expand-file-name
+                               (concat-path quicklisp-directory
+                                            "tmp-quicklisp.lisp")))
+            (quicklisp-sig (expand-file-name
+                            (concat-path quicklisp-directory
+                                         "tmp-quicklisp.lisp.sig"))))
+        (require 'url) ; built-in
+        (url-copy-file "https://beta.quicklisp.org/quicklisp.lisp"
+                       quicklisp-source)
+        (url-copy-file "https://beta.quicklisp.org/quicklisp.lisp.sig"
+                       quicklisp-sig)
+
+        (require 'epa) ; built-in
+        (epa-verify-file quicklisp-sig)
+
+        (skj-dev/common-lisp-run-script quicklisp-source
+                                        "'(quicklisp-quickstart:install)"
+                                        "*Quicklisp Install*")))))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -6037,18 +6396,19 @@ download, install, and load any of over 1,200 libraries with a few simple comman
 
   (use-package slime
     :custom
-    (inferior-lisp-program (executable-find skj-dev/common-lisp-program))
+    (inferior-lisp-program (skj-dev/common-lisp-executable))
     (slime-complete-symbol*-fancy t)
     (slime-complete-symbol-function 'slime-fuzzy-complete-symbol)
     (slime-contribs '(slime-fancy slime-fancy-inspector slime-fancy-inspector slime-quicklisp)))
 
   (use-package slime-company
     :after (slime company)
+    :commands slime-setup
+    :custom
+    (slime-company-completion 'fuzzy)
+    (slime-company-after-completion 'slime-company-just-one-space)
     :init
-    (slime-setup '(slime-company))
-    :config
-    (setq slime-company-completion 'fuzzy
-          slime-company-after-completion 'slime-company-just-one-space))
+    (slime-setup '(slime-fancy slime-company)))
 
   (use-package slime-repl-ansi-color
     :after slime
@@ -6059,6 +6419,28 @@ download, install, and load any of over 1,200 libraries with a few simple comman
     :after slime
     :hook
     ((emacs-lisp-mode ielm-mode) . elisp-slime-nav-mode)))
+#+END_SRC
+
+Browse the Common Lisp HyperSpec documentation for the symbol at point.
+
+#+BEGIN_SRC emacs-lisp
+(use-package clhs
+  :if  (skj/current-feature-required-p)
+  :after etags
+  :commands clhs-doc
+  :bind
+  (:map help-ap ("\C-l" . clhs-doc))
+  :config
+  (custom-set-variables
+   '(tags-apropos-additional-actions
+     '(("Common Lisp" clhs-doc clhs-symbols)))))
+#+END_SRC
+
+This is a collection of Yasnippets for Common Lisp. It includes snippets for top-level forms.
+
+#+BEGIN_SRC emacs-lisp
+(use-package common-lisp-snippets
+  :if  (skj/current-feature-required-p))
 #+END_SRC
 
 Here would be a good place for Clojure too.
@@ -6073,58 +6455,19 @@ Here would be a good place for Clojure too.
 (skj/feature-start 'scheme)
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp
-(when (skj/current-feature-required-p)
+Homebrew knows about =chezscheme=, =chibi-scheme=, =gambit-scheme=, =gerbil-scheme=, =mit-scheme=, =racket=, =sagittarius-scheme=,
+=scheme48=, and =sisc-scheme=. However, chez does not currently work on Apple Silicon and MIT scheme has stopped building
+and been removed by brew.
 
-  (defcustom skj-dev/scheme-packages '(guile racket)
-    "Name of Scheme implementations to enable."
-    :tag "Enabled Schemes"
-    :type '(set (const :tag "Chez Scheme" chez)
-                (const :tag "chibi-scheme" chibi)
-                (const :tag "CHICKEN Scheme" chicken)
-                (const :tag "Gambit Scheme" gambit)
-                (const :tag "Gauche" gauche)
-                (const :tag "Guile" guile)
-                (const :tag "MIT/GNU Scheme" mit)
-                (const :tag "Racket" racket))
-    :group 'skj-dev)
-
-  (defcustom skj-dev/scheme-program "racket"
-    "Name of Scheme program to run as default intepreter."
-    :tag "Scheme intepreter"
-    :type '(radio (const :tag "Chez Scheme" "scheme")
-                  (const :tag "Chez Scheme (Petite)" "petite")
-                  (const :tag "chibi-scheme" "chibi-scheme")
-                  (const :tag "CHICKEN Scheme" "csi")
-                  (const :tag "Gambit Scheme" "gsi")
-                  (const :tag "Gauche" "gosh")
-                  (const :tag "Guile" "guile")
-                  (const :tag "MIT/GNU Scheme" "mit-scheme")
-                  (const :tag "Racket" "racket"))
-    :group 'skj-dev))
-#+END_SRC
+Client for the Scheme LSP server. Currently this client only supports CHICKEN 5, Gambit 4.9.4+ and Guile 3.
 
 #+BEGIN_SRC emacs-lisp
-(when (skj/current-feature-required-p)
-
-  (use-package scheme
-    :ensure nil
-    :custom
-    (scheme-program-name  skj-dev/scheme-program))
-
-  (use-package quack
-    :after scheme
-    :defer 4)
-
-  (use-package scheme-complete
-    :after scheme
-    :defer 4)
-
-  (use-package lsp-scheme
-    :after scheme
-    :defer 4
-    :hook
-    (scheme-mode . lsp-gambit-scheme)))
+(use-package lsp-scheme
+  :if (skj/current-feature-required-p)
+  :after lsp-mode
+  :defer 4
+  :hook
+  (scheme-mode . lsp-scheme-guile))
 #+END_SRC
 
 Geiser ([[https://www.nongnu.org/geiser/][home]]) is a generic Emacs/Scheme interaction mode, featuring an enhanced REPL and a set of minor modes improving
@@ -6133,66 +6476,116 @@ Emacs' basic scheme major mode.
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
-  (use-package geiser
-    :hook (geiser-mode . smartparens-strict))
+  (setq geiser-active-implementations '(guile racket))
+  
+  (use-package geiser)
 
   (use-package geiser-repl
     :ensure nil ;; included in geiser
-    :after geiser
-    :hook (geiser-repl-mode . smartparens-strict))
+    :after geiser)
 
   (use-package macrostep-geiser
     :after (geiser geiser-repl)
     :hook
     ((geiser-mode . macrostep-geiser-setup)
-     (geiser-repl-mode . macrostep-geiser-setup)))
-
-  ;; Backends!
-  
-  (when (and (member 'chez skj-dev/scheme-packages)
-             (not (system-mac-p)))
-    (use-package geiser-chez
-      :ensure-system-package chezscheme
-      :after geiser))
-
-  (when (member 'chibi skj-dev/scheme-packages)
-    (use-package geiser-chibi
-      :ensure-system-package chibi-scheme
-      :after geiser))
-
-  (when (member 'chicken skj-dev/scheme-packages)
-    (use-package geiser-chicken
-      :ensure-system-package chicken
-      :after geiser))
-
-  (when (member 'gambit skj-dev/scheme-packages)
-    (use-package geiser-gambit
-      :ensure-system-package gambit-scheme
-      :after geiser))
-
-  (when (member 'gauche skj-dev/scheme-packages)
-    (use-package geiser-gauche
-      :ensure-system-package gauche
-      :after geiser))
-
-  (when (member 'guile skj-dev/scheme-packages)
-    (use-package geiser-guile
-      :ensure-system-package guile
-      :after geiser))
-
-  (when (member 'mit skj-dev/scheme-packages)
-    (use-package geiser-mit
-      :ensure-system-package mit-scheme
-      :after geiser))
-  
-  (when (member 'racket skj-dev/scheme-packages)
-    (use-package geiser-racket
-      :after (geiser racket-mode))))
+     (geiser-repl-mode . macrostep-geiser-setup))))
 #+END_SRC
 
+Geiser implementations.
+
+See [[https://cisco.github.io/ChezScheme/]].
+  
 #+BEGIN_SRC emacs-lisp
-(when (member 'guile skj-dev/scheme-packages)
+(when (and (skj/current-feature-required-p)
+           (member 'chez geiser-active-implementations)
+           (not (system-mac-p)))
+  (use-package geiser-chez
+    :after geiser
+    :ensure-system-package chezscheme))
+#+END_SRC
+
+See [[https://github.com/ashinn/chibi-scheme]].
+
+#+BEGIN_SRC emacs-lisp
+(when (and (skj/current-feature-required-p)
+           (member 'chibi geiser-active-implementations))
+  (use-package geiser-chibi
+    :after geiser
+    :ensure-system-package chibi-scheme))
+#+END_SRC
+
+See [[https://call-cc.org/]].
+
+#+BEGIN_SRC emacs-lisp
+(when (and (skj/current-feature-required-p)
+           (member 'chicken geiser-active-implementations))
+  (use-package geiser-chicken
+    :after geiser
+    :ensure-system-package chicken))
+#+END_SRC
+
+See [[https://gambitscheme.org/]].
+
+#+BEGIN_SRC emacs-lisp
+(when (and (skj/current-feature-required-p)
+           (member 'gambit geiser-active-implementations))
+  (use-package geiser-gambit
+    :after geiser
+    :ensure-system-package gambit-scheme))
+#+END_SRC
+
+See [[https://practical-scheme.net/gauche/]].
+
+#+BEGIN_SRC emacs-lisp
+(when (and (skj/current-feature-required-p)
+           (member 'gauche geiser-active-implementations))
+  (use-package geiser-gauche
+    :after geiser
+    :ensure-system-package gauche))
+#+END_SRC
+
+See [[https://www.gnu.org/software/guile/]].
+
+#+BEGIN_SRC emacs-lisp
+(when (and (skj/current-feature-required-p)
+           (member 'guile geiser-active-implementations))
+
+  (use-package geiser-guile
+    :after geiser
+    :ensure-system-package guile
+    :init
+    (add-to-list 'geiser-implementations-alist '((regexp "\\.scm\\'") guile))
+    :custom
+    (geiser-guile-binary (executable-find "guile")))
+
   (use-package flycheck-guile))
+#+END_SRC
+
+See [[https://www.gnu.org/software/mit-scheme/]].
+
+#+BEGIN_SRC emacs-lisp
+(when (and (skj/current-feature-required-p)
+           (member 'mit geiser-active-implementations)
+           (not (system-mac-p)))
+  (use-package geiser-mit
+    :after geiser
+    :ensure-system-package mit-scheme
+    :custom
+    (geiser-mit-binary (executable-find "scheme"))))
+#+END_SRC
+
+See [[http://racket-lang.org/]].
+
+#+BEGIN_SRC emacs-lisp
+(when (and (skj/current-feature-required-p)
+           (member 'racket geiser-active-implementations))
+  (use-package geiser-racket
+    :after geiser
+    :ensure-system-package racket
+    :init
+    (add-to-list 'geiser-implementations-alist '((regexp "\\.rkt\\'") racket))
+    :custom
+    (geiser-racket-binary (executable-find "racket"))))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -6228,6 +6621,8 @@ Not currently using this, but have used the following:
 - =ada-mode=
 - =ada-ref-man=
 - =ob-ada-spark=
+- =gpr-yasnippets=
+
 
 It is important to note that you not only need a compiler (again, AdaCore) but also the [[https://alire.ada.dev/][Alire]] package manager. Download
 =alr= and run =alr toolchain --select= to get an Ada environment installed.
@@ -6460,6 +6855,21 @@ Org-Babel Integration
 (skj/feature-end 'pest)
 #+END_SRC
 
+*** Python Mode
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'python "Python")
+#+END_SRC
+
+
+- yasnippet-django
+- py-snippets
+
+  
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-end 'python)
+#+END_SRC
+
 *** SDML Mode
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -6469,15 +6879,32 @@ Org-Babel Integration
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
+  (let ((git-url "https://github.com/sdm-lang/emacs-sdml-mode.git")
+        (local-dir "/Users/simonjo/Projects/sdml-lang/emacs-sdml-mode"))
+    (when (not (file-directory-p local-dir))
+      (call-process (format "git clone %s %s" git-url local-dir)))))
+#+END_SRC
+
+This is the core mode package.
+
+#+BEGIN_SRC emacs-lisp
+(when nil ;(skj/current-feature-required-p)
+
   (use-package sdml-mode
     :defer nil
     :after (tree-sitter tree-sitter-indent ts-fold)
     :commands sdml-mode-setup
     :mode "\\.sdml?\\'"
-    :load-path "/Users/simonjo/Projects/sdm-lang/emacs-sdml-mode")
+    :load-path "/Users/simonjo/Projects/sdm-lang/emacs-sdml-mode/sdml-mode")
 
   (require 'sdml-mode)
-  (sdml-mode-setup)
+  (sdml-mode-setup))
+#+END_SRC
+
+This enables spell-checking of defined nodes in the tree.
+
+#+BEGIN_SRC emacs-lisp
+(when nil ;(skj/current-feature-required-p)
 
   (use-package tree-sitter-ispell)
   
@@ -6485,20 +6912,42 @@ Org-Babel Integration
     :defer nil
     :after (sdml-mode tree-sitter-ispell)
     :commands sdml-ispell-setup
-    :load-path "/Users/simonjo/Projects/sdm-lang/emacs-sdml-mode"
+    :load-path "/Users/simonjo/Projects/sdm-lang/emacs-sdml-mode/sdml-ispell"
     :config (sdml-ispell-setup))
-  (require 'sdml-ispell)
   
+  (require 'sdml-ispell))
+#+END_SRC
+
+This enables flycheck for SDML buffers.
+
+#+BEGIN_SRC emacs-lisp
+(when nil ;(skj/current-feature-required-p)
+
   (use-package tsc)
 
   (use-package flycheck-sdml
     :defer nil
     :after (flycheck tsc sdml-mode)
     :commands flycheck-sdml-setup
-    :load-path "/Users/simonjo/Projects/sdm-lang/emacs-sdml-mode"
+    :load-path "/Users/simonjo/Projects/sdm-lang/emacs-sdml-mode/flycheck-sdml"
     :hook (sdml-mode . flycheck-mode)
     :config (flycheck-sdml-setup))
+  
   (require 'flycheck-sdml))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(when nil ;(skj/current-feature-required-p)
+
+  (require 'ts-fold)
+  (require 'ts-fold-indicators)
+
+  (use-package sdml-fold
+    :defer nil
+    :after (ts-fold ts-fold-indicators sdml-mode)
+    :load-path "/Users/simonjo/Projects/sdm-lang/emacs-sdml-mode/sdml-fold")
+  
+  (require 'sdml-fold))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -6515,6 +6964,8 @@ Org-Babel Integration
 - =opam-switch-mode=
 - =tuareg=
 - =utop=
+- =merlin=
+- =ocp-index=
 
 *** Smithy
 
@@ -6722,8 +7173,7 @@ Completion
     :after company
     :hook (web-mode . company-mode)
     :config
-    (add-to-list 'company-backends 'company-css)
-    (add-to-list 'company-backends 'company-web-html))
+    (add-to-list 'company-backends '(company-css company-web-html) t))
 
   (use-package counsel-css))
 #+END_SRC
@@ -6797,6 +7247,12 @@ Note that =js2-refactor= is a dependency for the general =emr= above.
 
   (use-package js2hl)
 
+  (use-package ac-js2
+    :after js2-mode
+    :commands ac-js2-company
+    :config
+    (add-to-list 'company-backends 'ac-js2-company t))
+
   (use-package xref-js2))
 #+END_SRC
 
@@ -6823,6 +7279,25 @@ Enable the builtin Babel JavaScript support.
 
   (skj/org-babel-add-languages 'js))
 #+END_SRC
+
+Package =jquery-doc= provides:
+
+- source for auto-complete and company-mode
+- a command jquery-doc to lookup the documentation for a method in jquery
+
+If you'd like to update the API data to the latest version available you can use the =jquery-doc-fetch-and-generate-data=
+command. Warning: it may take a few seconds to parse all the data.
+
+#+BEGIN_SRC emacs-lisp
+(use-package jquery-doc
+ :if (skj/current-feature-required-p)
+ :after js2-mode
+ :commands jquery-doc-setup
+ :hook
+ (js2-mode . jquery-doc-setup))
+#+END_SRC
+
+Configure projectile to detect JavaScript packages based on the =package.json= file.
 
 #+BEGIN_SRC emacs-lisp
 (require 'projectile)
@@ -7008,6 +7483,10 @@ Finally, enable Dart code blocks in Babel.
 (skj/feature-end 'dart)
 #+END_SRC
 
+*** Swift
+
+- =company-sourcekit=
+
 *** Lua
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -7023,7 +7502,7 @@ Finally, enable Dart code blocks in Babel.
     :after (company lua-mode)
     :commands company-lua
     :init
-    (add-to-list 'company-backends #'company-lua))
+    (add-to-list 'company-backends 'company-lua t))
   
   (use-package ob-lua
     :ensure nil
@@ -7339,6 +7818,16 @@ Don't forget to =M-x asm-blox=!
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'fun)
 #+END_SRC
+
+** Ledger
+
+- =ledger-mode= 
+- =flycheck-ledger=
+- =company-ledger=
+
+The =ledger-mode= Emacs library provides a major mode for editing files in the format used by the ledger command-line
+accounting system. It also provides automated support for some ledger workflows, such as reconciling transactions, or
+running certain reports.
 
 ** LLM Integration
 
