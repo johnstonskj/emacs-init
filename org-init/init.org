@@ -14,7 +14,7 @@ The following function gates logging in the rest of the file. It's first so I ca
 this file. Note that this depends on the value of =debug-on-error= but can easily be overridden and set/unset explicitly.
 
 #+BEGIN_SRC emacs-lisp
-(defvar skj/debug-init t ;(and (boundp debug-on-error) debug-on-error)
+(defvar skj/debug-init (and (boundp debug-on-error) debug-on-error)
   "Do I want to debug the init process?")
 
 (defun init-message (message &rest args)
@@ -74,7 +74,6 @@ The expands a list of features that should not be installed. it adds names from 
 (defconst skj/feature--not-required
   '("dev/aws"
     "dev/lang/ada"
-    "dev/lang/common-lisp"
     "dev/lang/dart"
     "dev/lang/lua"
     "dev/lang/ocaml"
@@ -82,13 +81,11 @@ The expands a list of features that should not be installed. it adds names from 
     "dev/lang/python"
     "dev/lang/racket"
     "dev/lang/rdf"
-    "dev/lang/sdml"
     "dev/lang/smithy"
     "dev/lang/sql"
     "dev/lang/swift"
     "dev/lang/typescript"
     "fun"
-    "llm"
     "org/babel/ditaa"
     "org/babel/gnuplot"
     "org/babel/mermaid"
@@ -1977,74 +1974,6 @@ the mode functions are simply called after the ~use-package~ calls below.
 (skj/feature-end 'completion)
 #+END_SRC
 
-** Tree-Sitter (Generic)
-
-#+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-start 'tree-sitter "Tree-Sitter (Generic)")
-#+END_SRC
-
-The following is a necessary [[https://emacs-tree-sitter.github.io/installation/][package]] until tree-sitter is added to the Emacs core in version 29, in =treesit.el=. The
-minor mode =tree-sitter-mode= provides a buffer-local syntax tree, which is kept up-to-date with changes to the buffer’s
-text. In this case I only enable support for specific languages and modes in their own configuration below via hooks.
-Alternatively support can be enabled for all languages with =:config (global-tree-sitter-mode)=.
-
-#+BEGIN_SRC emacs-lisp
-(when (and (skj/current-feature-required-p)
-           (< emacs-version-number 29))
-
-  (use-package tree-sitter)
-
-  (use-package tree-sitter-langs
-    :after tree-sitter))
-#+END_SRC
-
-- Run =M-x tree-sitter-hl-mode= to replace the regex-based highlighting provided by =font-lock-mode= with tree-based syntax
-  highlighting.
-- Run =M-x tree-sitter-debug-mode= to show the current buffer’s syntax tree in a separate buffer.
-- Run =M-x tree-sitter-query-builder= to open the query playground, where you can write tree queries and see matches
-  highlighted in the source buffer.
-
-  
-#+BEGIN_SRC emacs-lisp
-(when (and (skj/current-feature-required-p)
-           (< emacs-version-number 29))
-
-  (use-package tree-sitter-indent
-    :after tree-sitter)
-
-  (use-package tree-sitter-ispell
-    :after tree-sitter))
-#+END_SRC
-
-Code folding is a great feature, unfortunately at this point the ~ts-fold~ packages need to be loaded directly from the
-filesystem.
-  
-#+BEGIN_SRC emacs-lisp
-(when (and (skj/current-feature-required-p)
-           (< emacs-version-number 29))
-
-  (let ((git-url "https://github.com/emacs-tree-sitter/ts-fold.git")
-        (local-dir "/Users/simonjo/Projects/ts-fold"))
-    (when (not (file-directory-p local-dir))
-      (call-process (format "git clone %s %s" git-url local-dir))))
-
-  (use-package ts-fold
-    :after tree-sitter
-    :diminish ts-fold-mode
-    :load-path "/Users/simonjo/Projects/ts-fold")
-
-  (use-package fringe-helper)
-
-  (use-package ts-fold-indicators
-    :after (ts-fold fringe-helper)
-    :diminish ts-fold-indicator-mode
-    :load-path "/Users/simonjo/Projects/ts-fold"))
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp :exports none
-(skj/feature-end 'tree-sitter)
-#+END_SRC
-
 ** Visual Regex
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -2285,20 +2214,27 @@ Version control is a basic human right, and hopefully this gets things pretty da
 (skj/feature-start 'git)
 #+END_SRC
 
-Git support is built into Emacs as =vc-git=, so this section only adds additional tools.
+Git support is built into Emacs as =vc-git=, so this section is *only* to run the =ensure-system-package=.
 
 #+BEGIN_SRC emacs-lisp
 (use-package vc-git
   :ensure nil
-  :if (skj/current-feature-required-p)
   :ensure-system-package git)
-#+END_SRC
 
-#+BEGIN_SRC emacs-lisp
-(use-package git
-  :ensure nil
-  :if (skj/current-feature-required-p)
-  :ensure-system-package git)
+(use-package subr-x
+  :ensure nil)
+
+(defun skj/git-command (command &optional in-directory args)
+  (if (or (not (stringp command)) (string-empty-p command))
+      (init-message "Error: command not a valid string %S" command)
+    (let ((git-binary (executable-find "git"))
+          (default-directory (or in-directory skj/project-root-dir)))
+      (call-process (string-join (append (list git-binary command) args))))))
+
+(defun skj/git-clone (remote-url &optional directory args)
+  (if (and (not (null directory)) (file-directory-p directory))
+      (init-message "git-clone directory exists %S, skipping" directory)
+    (skj/git-command "clone" directory args)))
 #+END_SRC
 
 Package =mo-git-blame= -- An interactive, interative /git blame/ mode for Emacs.
@@ -2654,7 +2590,7 @@ up
      "DAbbrev"
      (("/"     dabbrev-expand                "Expand the word before point")
       ("c /"   dabbrev-completion            "Complete the word before point")
-      ("- /"   (dabbrev-expand -1)           "Expand the word looking forward")
+      ("\\"   (dabbrev-expand -1)           "Expand the word looking forward")
       ("?"     (customize-group 'dabbrev)    "Customize"))
      "YASnippet"
      (("SPC" set-rectangular-region-anchor "Set Rectangular Anchor")
@@ -5523,6 +5459,72 @@ After adding/removing projects, run =M-x projectile-discover-projects-in-search-
 (skj/feature-end 'project)
 #+END_SRC
 
+** Tree-Sitter (Generic)
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'tree-sitter "Tree-Sitter (Generic)")
+#+END_SRC
+
+The following is a necessary [[https://emacs-tree-sitter.github.io/installation/][package]] until tree-sitter is added to the Emacs core in version 29, in =treesit.el=. The
+minor mode =tree-sitter-mode= provides a buffer-local syntax tree, which is kept up-to-date with changes to the buffer’s
+text. In this case I only enable support for specific languages and modes in their own configuration below via hooks.
+Alternatively support can be enabled for all languages with =:config (global-tree-sitter-mode)=.
+
+#+BEGIN_SRC emacs-lisp
+(when (and (skj/current-feature-required-p)
+           (< emacs-version-number 29))
+
+  (use-package tree-sitter)
+
+  (use-package tree-sitter-langs
+    :after tree-sitter))
+#+END_SRC
+
+- Run =M-x tree-sitter-hl-mode= to replace the regex-based highlighting provided by =font-lock-mode= with tree-based syntax
+  highlighting.
+- Run =M-x tree-sitter-debug-mode= to show the current buffer’s syntax tree in a separate buffer.
+- Run =M-x tree-sitter-query-builder= to open the query playground, where you can write tree queries and see matches
+  highlighted in the source buffer.
+
+  
+#+BEGIN_SRC emacs-lisp
+(when (and (skj/current-feature-required-p)
+           (< emacs-version-number 29))
+
+  (use-package tree-sitter-indent
+    :after tree-sitter)
+
+  (use-package tree-sitter-ispell
+    :after tree-sitter))
+#+END_SRC
+
+Code folding is a great feature, unfortunately at this point the ~ts-fold~ packages need to be loaded directly from the
+filesystem.
+  
+#+BEGIN_SRC emacs-lisp
+(when (and (skj/current-feature-required-p)
+           (< emacs-version-number 29))
+
+  (skj/git-clone "https://github.com/emacs-tree-sitter/ts-fold.git"
+                 "/Users/simonjo/Projects/ts-fold")
+
+  (use-package ts-fold
+    :after tree-sitter
+    :diminish ts-fold-mode
+    :load-path "/Users/simonjo/Projects/ts-fold")
+
+  (use-package fringe-helper)
+
+  (use-package ts-fold-indicators
+    :after (ts-fold fringe-helper)
+    :diminish ts-fold-indicator-mode
+    :load-path "/Users/simonjo/Projects/ts-fold"))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-end 'tree-sitter)
+#+END_SRC
+
 ** Language Server (Generic)
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -6333,11 +6335,14 @@ Get an implementation:
     (let* ((name skj-dev/common-lisp-interpreter)
            (executable (assoc name skj-dev/common-lisp-executable-alist)))
       (unless (null executable)
-        (executable-find (cdr executable))))))
+        (file-truename (executable-find (cdr executable)))))))
 #+END_SRC
 
 Quicklisp – [[https://www.quicklisp.org/beta/][Quicklisp]] is a library manager for Common Lisp. It works with your existing Common Lisp implementation to
 download, install, and load any of over 1,200 libraries with a few simple commands.
+
+Note that the installation procedure creates a new file =setup.lisp= in the =quicklisp=, load this once setup, not the
+original file.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
@@ -6360,35 +6365,37 @@ download, install, and load any of over 1,200 libraries with a few simple comman
                                     (skj-dev/common-lisp-executable)
                                     load-arg
                                     eval-arg
-                                    quit-arg) " ")
+                                    quit-arg)
+                                   " ")
                       nil
                       destination))))
 
-  (skj-dev/common-lisp-run-script "file.lisp" "(quicklisp-quickstart:install)")
-
-  (let ((quicklisp-directory (expand-file-name "~/quicklisp")))
+  (let ((quicklisp-file "quicklisp.lisp")
+        (quicklisp-directory (expand-file-name "~/quicklisp"))
+        (quicklisp-url "https://beta.quicklisp.org/"))
 
     (unless (file-directory-p quicklisp-directory)
       (make-directory quicklisp-directory)
 
       (let ((quicklisp-source (expand-file-name
                                (concat-path quicklisp-directory
-                                            "tmp-quicklisp.lisp")))
+                                            quicklisp-file)))
             (quicklisp-sig (expand-file-name
                             (concat-path quicklisp-directory
-                                         "tmp-quicklisp.lisp.sig"))))
+                                         (concat quicklisp-file ".asc"))))
         (require 'url) ; built-in
-        (url-copy-file "https://beta.quicklisp.org/quicklisp.lisp"
+        (url-copy-file (concat quicklisp-url quicklisp-file)
                        quicklisp-source)
-        (url-copy-file "https://beta.quicklisp.org/quicklisp.lisp.sig"
+        (url-copy-file (concat quicklisp-url quicklisp-file ".asc")
                        quicklisp-sig)
 
         (require 'epa) ; built-in
         (epa-verify-file quicklisp-sig)
 
+        ;; Install with current runtime.
         (skj-dev/common-lisp-run-script quicklisp-source
-                                        "'(quicklisp-quickstart:install)"
-                                        "*Quicklisp Install*")))))
+                                        "(quicklisp-quickstart:install)"
+                                        "*Quicklisp Install*"))))))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -6879,20 +6886,18 @@ Org-Babel Integration
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
-  (let ((git-url "https://github.com/sdm-lang/emacs-sdml-mode.git")
-        (local-dir "/Users/simonjo/Projects/sdml-lang/emacs-sdml-mode"))
-    (when (not (file-directory-p local-dir))
-      (call-process (format "git clone %s %s" git-url local-dir)))))
+  (skj/git-clone "https://github.com/sdm-lang/emacs-sdml-mode.git"
+                 "/Users/simonjo/Projects/sdm-lang/emacs-sdml-mode"))
 #+END_SRC
 
 This is the core mode package.
 
 #+BEGIN_SRC emacs-lisp
-(when nil ;(skj/current-feature-required-p)
+(when (skj/current-feature-required-p)
 
   (use-package sdml-mode
     :defer nil
-    :after (tree-sitter tree-sitter-indent ts-fold)
+    :after (tree-sitter tree-sitter-indent)
     :commands sdml-mode-setup
     :mode "\\.sdml?\\'"
     :load-path "/Users/simonjo/Projects/sdm-lang/emacs-sdml-mode/sdml-mode")
@@ -6904,7 +6909,7 @@ This is the core mode package.
 This enables spell-checking of defined nodes in the tree.
 
 #+BEGIN_SRC emacs-lisp
-(when nil ;(skj/current-feature-required-p)
+(when (skj/current-feature-required-p)
 
   (use-package tree-sitter-ispell)
   
@@ -6921,7 +6926,7 @@ This enables spell-checking of defined nodes in the tree.
 This enables flycheck for SDML buffers.
 
 #+BEGIN_SRC emacs-lisp
-(when nil ;(skj/current-feature-required-p)
+(when (skj/current-feature-required-p)
 
   (use-package tsc)
 
@@ -6937,7 +6942,7 @@ This enables flycheck for SDML buffers.
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-(when nil ;(skj/current-feature-required-p)
+(when (skj/current-feature-required-p)
 
   (require 'ts-fold)
   (require 'ts-fold-indicators)
