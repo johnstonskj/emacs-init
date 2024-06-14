@@ -4928,9 +4928,9 @@ data, and LaTeX, markdown, and org-cite editing support. See [[https://kristoffe
     :commands (zotero-browser)
     :custom
     (zotero-auth-token
-     (zotero-auth-token-create :token (auth-source-pass-get 'secret "Zoteron/api-key")
-                               :token-secret (auth-source-pass-get 'secret "Zoteron/api-key")
-                               :userid (auth-source-pass-get 'secret "Zoteron/userid")
+     (zotero-auth-token-create :token (auth-source-pass-get 'secret "Zotero/api-key")
+                               :token-secret (auth-source-pass-get 'secret "Zotero/api-key")
+                               :userid (auth-source-pass-get 'secret "Zotero/userid")
                                :username skj/default-user-name))))
 #+END_SRC
 
