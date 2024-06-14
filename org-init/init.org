@@ -79,8 +79,6 @@ The expands a list of features that should not be installed. it adds names from 
     "dev/lang/ocaml"
     "dev/lang/provers"
     "dev/lang/python"
-    "dev/lang/racket"
-    "dev/lang/rdf"
     "dev/lang/smithy"
     "dev/lang/sql"
     "dev/lang/swift"
@@ -378,6 +376,15 @@ Before we download anything, we will disable TLS v1.2, v1.1, and v1.0. Note, thi
 #+BEGIN_SRC emacs-lisp
 (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.2:-VERS-TLS1.1:-VERS-TLS1.0")
 #+END_SRC
+
+Also, note that errors may pop-up when GNU elpa changes their signing key. There is a description of this on
+[[https://emacs.stackexchange.com/questions/233/how-to-proceed-on-package-el-signature-check-failure][emacs.stackexchange]], however the following worked:
+
+1. Set ~package-check-signature~ to ~nil~, e.g., ~M-: (setq package-check-signature nil) RET~.
+2. Go to [[https://elpa.gnu.org/packages/gnu-elpa-keyring-update.html]] and download the latest archive.
+3. Install with ~M-x package-install-file RET~ and enter the file name you downloaded.
+4. Reset ~package-check-signature~ to the default value ~allow-unsigned~, e.g., ~M-: (setq package-check-signature 'allow-unsigned) RET~.
+5. Restart Emacs, this allows you to check the message log for any remaining errors.
 
 *** Add Package Repositories
 
@@ -837,20 +844,18 @@ And configure a simple /authinfo/ source in Emacs as well as using the local pas
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
+  (use-package auth-source)
+  (use-package auth-source-pass)
+
+  (use-package password-menu
+    :after auth-source)
+
   (auth-source-pass-enable)
   
   (setq auth-sources
         (cons (concat-path user-emacs-directory "authinfo.gpg")
               auth-sources)))
 #+END_SRC
-
-Alternatively, the following packages exist that may be useful in setting up auth stores.
-
-#+BEGIN_EXAMPLE emacs-lisp
-(use-package auth-source)
-(use-package auth-source-pass)
-(auth-source-pass-enable)
-#+END_EXAMPLE
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'auth)
@@ -4914,6 +4919,21 @@ data, and LaTeX, markdown, and org-cite editing support. See [[https://kristoffe
 ;;                org-cite-activate-processor 'citar))
 #+END_SRC
 
+
+
+#+BEGIN_SRC emacs-lisp
+(when (skj/current-feature-required-p)
+
+  (use-package zotero
+    :commands (zotero-browser)
+    :custom
+    (zotero-auth-token
+     (zotero-auth-token-create :token (auth-source-pass-get 'secret "Zoteron/api-key")
+                               :token-secret (auth-source-pass-get 'secret "Zoteron/api-key")
+                               :userid (auth-source-pass-get 'secret "Zoteron/userid")
+                               :username skj/default-user-name))))
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'bibliographies)
 #+END_SRC
@@ -5848,6 +5868,10 @@ Support for JQ-uery.
 (when (skj/current-feature-required-p)
 
   (use-package jq-mode
+    :ensure-system-package jq
+    :after json-mode)
+
+  (use-package counsel-jq
     :after json-mode)
 
   (use-package restclient-jq
@@ -5903,6 +5927,7 @@ Support for JQ-uery.
     :after yaml)
 
   (use-package flycheck-yamllint
+    :ensure-system-package yamllint
     :defer t
     :after flycheck
     :hook
@@ -6180,9 +6205,11 @@ For unit testing, start with the builtin ERT (Emacs Lisp Regression Testing) lib
 
   (use-package ert-expectations :after ert)
 
-  (use-package ert-modeline
-    :after ert
-    :hook emacs-lisp-mode))
+  ;; This seems to create an error: ertml--run-tests: Invalid function: (message (&rest _))
+  ;;(use-package ert-modeline
+  ;;  :after ert
+  ;;  :hook emacs-lisp-mode)
+  )
 #+END_SRC
 
 *Build Tooling*
@@ -6483,7 +6510,7 @@ Emacs' basic scheme major mode.
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
-  (setq geiser-active-implementations '(guile racket))
+  (setq geiser-active-implementations '(guile))
   
   (use-package geiser)
 
@@ -6611,9 +6638,12 @@ See [[http://racket-lang.org/]].
   (use-package dr-racket-like-unicode)
 
   (use-package racket-mode
-    :ensure-system-package racket)
+    :ensure-system-package racket
+    :hook (racket-mode . racket-xp-mode))
 
-  (use-package scribble-mode :after racket-mode))
+  (use-package scribble-mode
+    :after racket-mode
+    :hook (scribble-mode . display-line-numbers-mode)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -6653,8 +6683,6 @@ The key to Rust development in Emacs is the [[https://github.com/brotzeit/rustic
       (setq-local compilation-ask-about-save nil)))
 
   (defun rustic-mode-minor-modes ()
-    ;; Mode for displaying inlay hints.
-    (lsp-rust-analyzer-inlay-hints-mode)
     ;; Mode for displaying code-lens overlays.
     (lsp-lens-mode 1)
     ;; Enable subword movement and editing (Subword mode).
@@ -6902,8 +6930,7 @@ This is the core mode package.
     :mode "\\.sdml?\\'"
     :load-path "/Users/simonjo/Projects/sdm-lang/emacs-sdml-mode/sdml-mode")
 
-  (require 'sdml-mode)
-  (sdml-mode-setup))
+  (require 'sdml-mode))
 #+END_SRC
 
 This enables spell-checking of defined nodes in the tree.
@@ -7217,10 +7244,8 @@ is a PNG export, see [[https://github.com/nikclayton/ob-html-chrome][ob-html-chr
   :if (skj/current-feature-required-p)
   :after (ob)
   :custom
-  (org-confirm-babel-evaluate
-   (lambda (lang body)
-        (not (string= lang "html-chrome"))))
   (org-babel-html-chrome-chrome-executable
+   ;; TODO: This works for macOS only
    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"))
 #+END_SRC
 
@@ -7881,6 +7906,23 @@ the Babel cases for /reproducible sessions/ and /allows for notebook style promp
 (use-package org-assistant
   :if (skj/current-feature-required-p))
 #+END_SRC
+
+For interactive Q&A, run [[https://github.com/xenodium/chatgpt-shell][chatgpt-shell]] in a side-by-side buffer. This has four /modes/:
+
+- ~chatgpt-shell~
+- ~dall-e-shell~
+- ~ob-chatgpt-shell~
+- ~ob-dall-e-shell~
+
+#+BEGIN_SRC emacs-lisp :noeval
+(use-package chatgpt-shell ;; ob-chatgpt-shell
+  :if (skj/current-feature-required-p)
+  :custom
+  (chatgpt-shell-openai-key
+   (auth-source-pass-get 'secret "OpenAI/api-key")))
+#+END_SRC
+
+https://github.com/karthink/gptel
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'llm)
