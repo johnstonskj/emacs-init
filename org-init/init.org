@@ -10,6 +10,10 @@ This is the org-mode version of my Emacs configuration. It is pretty long, but a
 actually found having a hyperlinked output is super useful. Also, I do like literate programming in general although
 it's hard to find a good implementation.
 
+Thanks to the following for inspiration:
+
+- [[https://github.com/jwiegley/dot-emacs/blob/master/init.org]]
+
 The following function gates logging in the rest of the file. It's first so I can wrap it around /anything/ in the rest of
 this file. Note that this depends on the value of =debug-on-error= but can easily be overridden and set/unset explicitly.
 
@@ -21,7 +25,11 @@ this file. Note that this depends on the value of =debug-on-error= but can easil
   (when skj/debug-init
     (message (concat "INIT: " message) args)))
 
-(init-message "init file: " user-init-file)
+(init-message "Emacs version : %s" emacs-version)
+(init-message "window-system : %s" window-system)
+(init-message "init file     : %s" user-init-file)
+(init-message "running on    : %s" system-name)
+(init-message "system type   : %s" system-type)
 #+END_SRC
 
 Set the garbage collection threshold to a high value during initialization to speed things along.
@@ -251,9 +259,16 @@ The following are either console settings or affect both console and graphical c
   (setq inhibit-startup-message t)
   (setq inhibit-startup-echo-area-message t)
 
+  (setq inhibit-default-init t)
+
   ;; initial buffer
   (setq initial-buffer-choice nil)
 
+  (setq initial-scratch-message nil)
+
+  ;; start easy with little dependencies to load
+  (setq initial-major-mode 'fundamental-mode)
+  
   ;; no frame title
   (setq frame-title-format nil)
 
@@ -269,17 +284,11 @@ The following are either console settings or affect both console and graphical c
   ;; no cursor in inactive windows
   (setq cursor-in-non-selected-windows nil)
 
-  (setq initial-scratch-message nil)
-  (setq inhibit-default-init t)
-
   (setq echo-keystrokes 0.5)
 
   ;; no beeping and no blinking please
   (setq ring-bell-function #'ignore)
-  (setq visible-bell nil)
-
-  ;; start easy with little dependencies to load
-  (setq initial-major-mode 'fundamental-mode))
+  (setq visible-bell nil))
 #+END_SRC
 
 The following are for graphical clients only.
@@ -803,6 +812,7 @@ Set the root for all my projects, home and work.
 By generic I mean not /specifically/ for the major uses in [[*Org-Mode]], [[*Other Writing Modes]], or [[*Developer Configuration]].
 Some of these are not necessarily "generic" unless you do all your work on Git for example.
 
+
 ** Authentication/Authorization Stores
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -1223,38 +1233,49 @@ Good to know...
 
 Note that these should *all* be guarded to install *only* for windowed systems.
 
+*Nerd Icons*
+
+All fonts are available via Homebrew Cask on macOS (OS X)
+
+  : brew install font-hack-nerd-font
+
+#+BEGIN_SRC emacs-lisp
+(when (and (skj/current-feature-required-p) window-system)
+
+  (use-package nerd-icons
+    :ensure-system-package
+    (font-hack-nerd-font
+     font-fira-code-nerd-font)
+    :demand t
+    :custom
+    ;; Note that this overrides the default "Symbols Nerd Font Mono"
+    (nerd-icons-font-family "FiraCode Nerd Font Mono"))
+  
+  (use-package nerd-icons-completion
+    :after nerd-icons
+    :demand t
+    :config (nerd-icons-completion-mode)))
+#+END_SRC
+
+For those things that don't know about nerd fonts, and continue to use the all-the-icons package, here is a bridge. Note
+the need to install the resource fonts;
+
+  : M-x all-the-icons-install-fonts
+
 #+BEGIN_SRC emacs-lisp
 (when (and (skj/current-feature-required-p) window-system)
 
   (use-package all-the-icons
+    :demand t)
+  
+  (use-package all-the-icons-nerd-fonts
+    :after (all-the-icons nerd-icons)
     :demand t
-    :config (all-the-icons-completion-mode))
-
-  (use-package all-the-icons-completion :after all-the-icons)
-
-  (use-package all-the-icons-dired :after all-the-icons)
-
-  (use-package all-the-icons-gnus :after all-the-icons)
-
-  (use-package all-the-icons-ibuffer :after all-the-icons)
-
-  (use-package all-the-icons-ivy :after all-the-icons)
-
-  (use-package all-the-icons-ivy-rich :after all-the-icons)
-
-  (use-package all-the-icons-nerd-fonts :after all-the-icons))
+    :config
+    (all-the-icons-nerd-fonts-prefer)))
 #+END_SRC
 
-To ensure supporting fonts are installed on your system, execute: /=M-x all-the-icons-install-fonts<RET>=/
-
-The VSCode common icons.
-
-#+BEGIN_SRC emacs-lisp
-(when (and (skj/current-feature-required-p) window-system)
-
-  (use-package vscode-icon
-    :commands (vscode-icon-for-file)))
-#+END_SRC
+*Mode Icons*
 
 Now enable modes using the icons above.
 
@@ -1268,33 +1289,16 @@ Now enable modes using the icons above.
     :config (major-mode-icons-mode 1)))
 #+END_SRC
 
-Nerd Icons -- An alternative to /all-the-icons/.
+*VSCode common icons*
 
-Requires the following fonts from [[https://www.nerdfonts.com/font-downloads][Nerd Font Downloads]]:
-
-- =FiraCode= - family: "FiraCode Nerd Font Mono"
-- =NerdFontsSymbolsOnly= - family: "Symbols Nerd Font Mono"
-
-#+BEGIN_SRC emacs-lisp :noeval
+#+BEGIN_SRC emacs-lisp
 (when (and (skj/current-feature-required-p) window-system)
 
-  (use-package nerd-icons
-    :custom
-    ;; This should be a safe back-up font
-    ;; (nerd-icons-font-family "Symbols Nerd Font Mono")
-    (nerd-icons-font-family "FiraCode Nerd Font Mono"))
-
-  (use-package nerd-icons-completion :after nerd-icons)
-
-  (use-package nerd-icons-dired :after nerd-icons)
-
-  (use-package nerd-icons-ibuffer :after nerd-icons)
-
-  (use-package nerd-icons-ivy-rich :after nerd-icons)
-
-  (use-package all-the-icons-nerd-fonts
-    :after (all-the-icons nerd-icons)))
+  (use-package vscode-icon
+    :commands (vscode-icon-for-file)))
 #+END_SRC
+
+*Fontawesome Tools*
 
 Return code point of =glyph-name=. This function is interactive function, so you can call it by =M-x fontawesome=. However,
 =M-x counsel-fontawesome= inserts fontawesome glyph with ivy interface. The issue is that the two front-end read
@@ -1452,6 +1456,8 @@ While the idea of =use-package-hydra= is nice, defining a Hydra as a part of the
 (skj/feature-start 'buffers "Files and Buffers")
 #+END_SRC
 
+*Recent Files*
+
 [[https://www.emacswiki.org/emacs/RecentFiles][Recentf]] is a minor mode that builds a list of recently opened files. This list is automatically saved across sessions on
 exiting Emacs - you can then access this list through a command or the menu.
 
@@ -1467,6 +1473,22 @@ exiting Emacs - you can then access this list through a command or the menu.
   (recentf-mode))
 #+END_SRC
 
+*Dired*
+
+#+BEGIN_SRC emacs-lisp :noeval
+(when (and (skj/current-feature-required-p) window-system)
+
+  (use-package dired
+    :ensure nil)
+  
+  (use-package nerd-icons-dired
+    :after (dired nerd-icons)
+    :demand t
+    :hook (dired-mode . nerd-icons-dired-mode)))
+#+END_SRC
+
+*iBuffer*
+
 [[https://www.emacswiki.org/emacs/IbufferMode][Ibuffer]] is an advanced replacement for BufferMenu, which lets you operate on buffers much in the same manner as Dired.
 The most important Ibuffer features are highlighting and various alternate layouts. Ibuffer is part of Emacs since
 version 22.
@@ -1480,12 +1502,18 @@ version 22.
     :after ibuffer
     :bind ("C-x C-b" . ibuffer-sidebar-toggle-sidebar))
 
-  (use-package all-the-icons-ibuffer
+  (use-package nerd-icons-ibuffer
     :if window-system
-    :after ibuffer
-    :hook
-    (ibuffer-mode . all-the-icons-ibuffer-mode)))
+    :after (nerd-icons ibuffer)
+    :demand t
+    :custom
+    (nerd-icons-ibuffer-icon t)
+    (nerd-icons-ibuffer-color-icon t)
+    (nerd-icons-ibuffer-human-readable-size t)
+    :hook (ibuffer-mode . nerd-icons-ibuffer-mode)))
 #+END_SRC
+
+*More...*
 
 This [[https://github.com/lukhas/buffer-move][package]] is for lazy people wanting to swap buffers without typing /=C-x b=/ on each window. Wind-move allows for
 navigating with shift arrow keys.
@@ -1550,31 +1578,51 @@ This enables left-hand line numbers, the types are ~'relative~, ~'visual~, and ~
 [[https://github.com/magnars/multiple-cursors.el][Multiple cursors]] for Emacs.
 
 #+BEGIN_SRC emacs-lisp
-(use-package multiple-cursors :if (skj/current-feature-required-p))
+(use-package multiple-cursors
+  :if (skj/current-feature-required-p)
+  :bind (;; When you have an active region that spans multiple lines,
+         ;; the following will add a cursor to each line:
+         ("M-n e l"       . mc/edit-lines)
+         ("M-n e a"       . mc/edit-beginnings-of-lines)
+         ("M-n e e"       . mc/edit-ends-of-lines)
+         ;; When you want to add multiple cursors not based on continuous
+         ;; lines, but based on keywords in the buffer, use:
+         ("C-M-<mouse-1>" . mc/toggle-cursor-on-click)
+
+         ("M-n m <down>"  . mc/mark-next-lines)
+         ("M-n m n"       . mc/mark-next-like-this)
+         ("M-n m f"       . mc/mark-next-word-like-this)
+
+         ("M-n m <up>"    . mc/mark-previous-lines)
+         ("M-n m p"       . mc/mark-previous-like-this)
+         ("M-n m b"       . mc/mark-previous-word-like-this)
+         
+         ("M-n m m"       . mc/mark-more-like-this)
+         ("M-n m a"       . mc/mark-all-like-this)
+         ("M-n m w"       . mc/mark-all-words-like-this)
+         ("M-n m r"       . mc/mark-all-in-region)
+
+         ("M-n SPC"       . set-rectangular-region-anchor)))
 #+END_SRC
 
-When you have an active region that spans multiple lines, the following will add a cursor to each line:
+This package contains [[https://github.com/knu/mc-extras.el][extra functions]] for multiple-cursors mode.
 
 #+BEGIN_SRC emacs-lisp
-(when (skj/current-feature-required-p)
-
-  (global-set-key (kbd "M-n e l") 'mc/edit-lines)
-  (global-set-key (kbd "M-n e a") 'mc/edit-beginnings-of-lines)
-  (global-set-key (kbd "M-n e e") 'mc/edit-ends-of-lines))
-#+END_SRC
-
-When you want to add multiple cursors not based on continuous lines, but based on keywords in the buffer, use:
-
-#+BEGIN_SRC emacs-lisp
-(when (skj/current-feature-required-p)
-
-  (global-set-key (kbd "C-M-<mouse-1>") 'mc/toggle-cursor-on-click)
-
-  (global-set-key (kbd "M-n SPC") 'set-rectangular-region-anchor)
-  (global-set-key (kbd "M-n m n") 'mc/mark-next-like-this)
-  (global-set-key (kbd "M-n m p") 'mc/mark-previous-like-this)
-  (global-set-key (kbd "M-n m m") 'mc/mark-more-like-this)
-  (global-set-key (kbd "M-n m a") 'mc/mark-all-like-this))
+(use-package mc-extras
+  :if (skj/current-feature-required-p)
+  :after multiple-cursors
+  :bind (("M-n m s n" . mc/mark-next-sexps)
+         ("M-n m s p" . mc/mark-previous-sexps)
+         ("M-n m <"   . mc/mark-all-above)
+         ("M-n m >"   . mc/mark-all-below)
+         ("M-n r m"   . mc/remove-current-cursor)
+         ("M-n r e"   . mc/remove-cursors-at-eol)
+         ("M-n r d"   . mc/remove-duplicated-cursors)
+         ("M-n |"     . mc/move-to-column)
+         ("M-n ~"     . mc/compare-chars)
+         ("M-n f f"   . mc/freeze-fake-cursors)
+         ("M-n f u"   . mc/unfreeze-fake-cursors)
+         ("M-n f d"   . mc/freeze-fake-cursors-dwim)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -1583,29 +1631,44 @@ When you want to add multiple cursors not based on continuous lines, but based o
   (pretty-hydra-define hydra-mc
     (:color blue :quit-key "q" :title " Multiple Cursors")
     ("Edit"
-     (("e"   mc/edit-lines                 "Edit Lines")
-      ("a"   mc/edit-beginnings-of-lines   "Edit at Start of Lines")
-      ("e"   mc/edit-ends-of-lines         "Edit at End of Lines"))
+     (("e l"   mc/edit-lines                 "Edit lines")
+      ("e a"   mc/edit-beginnings-of-lines   "Edit at start of lines")
+      ("e e"   mc/edit-ends-of-lines         "Edit at end of lines"))
      "Mark"
-     (("n"   mc/mark-next-like-this        "Next Like This")
-      ("p"   mc/mark-previous-like-this    "Previous Like This")
-      ("m"   mc/mark-more-like-this        "More Like This")
-      ("a"   mc/mark-all-like-this         "All like this"))
+     (("m <down>"
+               mc/mark-next-lines            "Next lines")
+      ("m n"   mc/mark-next-like-this        "Next like this")
+      ("m f"   mc/mark-next-word-like-this   "Next word like this")
+      ("m s n" mc/mark-next-sexps            "Next s-expressions")
+      ("m >"   mc/mark-all-below             "All below")
+
+      ("m <up>"
+               mc/mark-previous-lines        "Previous lines")
+      ("m p"   mc/mark-previous-like-this    "Previous like this")
+      ("m b"   mc/mark-previous-word-like-this "Previous word like this")
+      ("m s p" mc/mark-previous-sexps        "Previous s-expressions")
+      ("m <"   mc/mark-all-above             "All above")
+      
+      ("m m"   mc/mark-more-like-this        "More like this")
+      ("m a"   mc/mark-all-like-this         "All like this")
+      ("m w"   mc/mark-all-words-like-this   "All words like this"))
+     "Remove"
+     (("r m"   mc/remove-current-cursor      "Remove current cursor")
+      ("r a"   mc/remove-cursors-at-bol      "Remove cursors at SOL")
+      ("r e"   mc/remove-cursors-at-eol      "Remove cursors at EOL")
+      ("r d"   mc/remove-duplicated-cursors  "Remove duplicate cursors")
+      ("r b"   mc/remove-cursors-on-blank-lines  "Remove cursors on blank lines"))
      "Special"
-     (("SPC" set-rectangular-region-anchor "Set Rectangular Anchor")
-      ("s"   mc/sort-regions               "Sort Regions")
-      ("r"   mc/reverse-regions            "Reverse Regions")
-      ("v"   mc/vertical-align             "Vertical Align"))))
+     (("SPC"   set-rectangular-region-anchor "Set rectangular anchor")
+      ("s"     mc/sort-regions               "Sort regions")
+      ("r"     mc/reverse-regions            "Reverse regions")
+      ("v"     mc/vertical-align             "Vertical align")
+      ("|"     mc/move-to-column             "Move to column")
+      ("f f"   mc/freeze-fake-cursors        "Freeze cursors")
+      ("f u"   mc/unfreeze-fake-cursors      "Unfreeze cursors")
+      ("f d"   mc/freeze-fake-cursors-dwim   "Toggle frozen state"))))
 
-  (bind-key "M-n m h" 'hydra-mc/body))
-#+END_SRC
-
-This package contains [[https://github.com/knu/mc-extras.el][extra functions]] for multiple-cursors mode.
-
-#+BEGIN_SRC emacs-lisp
-(use-package mc-extras
-  :if (skj/current-feature-required-p)
-  :after multiple-cursors)
+  (bind-key "<f9> m" 'hydra-mc/body))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -1716,18 +1779,6 @@ some public elisp library functions to generate QR Codes for use in other elisp 
 (skj/feature-start 'ivy)
 #+END_SRC
 
-The guidance is to do all this /before/ installing the [[https://github.com/abo-abo/swiper][ivy]] packages themselves.
-
-#+BEGIN_SRC emacs-lisp
-(when (and (skj/current-feature-required-p) window-system)
-
-  (use-package all-the-icons-ivy
-    :config (all-the-icons-ivy-setup))
-
-  (use-package all-the-icons-ivy-rich
-    :init (all-the-icons-ivy-rich-mode 1)))
-#+END_SRC
-
 Historian stores the results of completing-read and similar functions persistently. This provides a way to give
 completion candidates that are more frequently or more recently used a better position in the candidates list.
 
@@ -1778,12 +1829,25 @@ Do these *after* Ivy. Note that the Hydra can is invoked in any Ivy minibuffer w
 
   (use-package ivy-hydra
     :commands (hydra-ivy/body ivy-hydra-read-action)
-    :after (ivy hydra))
+    :after (ivy hydra)))
+#+END_SRC
+
+This package comes with rich transformers for commands from ivy and counsel. It should be easy enough to define your own
+transformers too.
+
+#+BEGIN_SRC emacs-lisp
+(when (skj/current-feature-required-p)
 
   (use-package ivy-rich
     :after ivy
     :pin melpa
+    :custom (ivy-rich-path-style 'abbrev))
+  
+  (use-package nerd-icons-ivy-rich
+    :if window-system
+    :after (nerd-icons ivy-rich)
     :init
+    (nerd-icons-ivy-rich-mode 1)
     (ivy-rich-mode 1)))
 #+END_SRC
 
@@ -2125,18 +2189,6 @@ Install the base [[https://www.flycheck.org/en/latest/][Flycheck]] package, and 
     (term-prompt-regexp "^[^#$%>\n]*[#$%>] *")))
 #+END_SRC
 
-Emacs-libvterm, =vterm=, is fully-fledged terminal emulator inside GNU Emacs based on libvterm, a C library. As a result
-of using compiled code (instead of elisp), emacs-libvterm is fully capable, fast, and it can seamlessly handle large
-outputs.
-
-#+BEGIN_SRC emacs-lisp
-(use-package vterm
-  :if (skj/current-feature-required-p)
-  :custom
-  (vterm-shell "zsh")
-  (vterm-max-scrollback 10000))
-#+END_SRC
-
 Company mode completion backends for your shell scripting. Package =company-shell= offers 3 backends for 3 different sources:
 
 - =company-shell= :: providing completions for binaries that are found on your $PATH
@@ -2152,7 +2204,121 @@ Company mode completion backends for your shell scripting. Package =company-shel
   (add-to-list 'company-backends '(company-shell company-shell-env) t))
 #+END_SRC
 
+*** VTerm
+
 #+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'vterm)
+#+END_SRC
+
+Emacs-libvterm, =vterm=, is fully-fledged terminal emulator inside GNU Emacs based on libvterm, a C library. As a result
+of using compiled code (instead of elisp), emacs-libvterm is fully capable, fast, and it can seamlessly handle large
+outputs.
+
+#+BEGIN_SRC emacs-lisp
+(use-package vterm
+  :if (skj/current-feature-required-p)
+  :custom
+  (vterm-shell "zsh")
+  (vterm-max-scrollback 10000))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-end 'vterm)
+#+END_SRC
+
+*** The Emacs Shell
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'eshell)
+#+END_SRC
+
+The Emacs shell ([[https://www.gnu.org/software/emacs/manual/html_node/eshell/][eshell]]) is an integrated shell, not always terminal compatible but more Emacs integrated.
+
+Also consider:
+ 
+- [[https://github.com/4da/eshell-toggle][eshell-toggle]]
+- [[https://github.com/peterwvj/eshell-up][eshell-up]]
+- [[https://github.com/iostapyshyn/eshell-vterm][eshell-vterm]]
+
+#+BEGIN_SRC emacs-lisp
+(use-package eshell
+  :if (skj/current-feature-required-p)
+  :ensure nil)
+#+END_SRC
+
+This [[https://github.com/tom-tan/esh-buf-stack][library]] adds a buffer stack feature to Eshell. It is inspired by the buffer stack in Zsh. You can push the current
+command to the buffer stack by using ~M-q~, and after executing another command, you can see the top of the stack popped.
+
+#+BEGIN_SRC emacs-lisp
+(use-package esh-buf-stack
+  :if (skj/current-feature-required-p)
+  :after eshell-mode
+  :hook
+  (eshell-mode . (lambda ()
+                   (local-set-key
+                    (kbd "M-q") 'eshell-push-command)))
+  :config
+  (setup-eshell-buf-stack))
+#+END_SRC
+
+This library adds the following help functions and support for Eshell; the =run-help= function inspired by Zsh, and eldoc
+support. By using ~M-x eldoc-mode~ in Eshell, you can see help strings for the pointed command in minibuffer. And by using
+~M-x esh-help-run-help~, you can see full help string for the command.
+
+#+BEGIN_SRC emacs-lisp
+(use-package esh-help
+  :if (skj/current-feature-required-p)
+  :after eshell-mode
+  :hook
+  (shell-mode . eldoc-mode)
+  :config
+  (setup-esh-help-eldoc))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package eshell-did-you-mean
+  :if (skj/current-feature-required-p)
+  :config (eshell-did-you-mean-setup))
+#+END_SRC
+
+This [[https://github.com/xuchunyang/eshell-git-prompt][package]] provides some themes of Emacs Shell (Eshell) prompt.
+
+To recover the Eshell default prompt, type
+  : $ use-theme default
+  
+or ~M-x eshell-git-prompt-use-theme RET default RET~.
+
+You can customize Eshell’s prompt via something like the following
+
+  : (setq eshell-prompt-function (lambda () "A simple prompt." "$ ")
+  :      eshell-prompt-regexp    "^$ ")
+
+#+BEGIN_SRC emacs-lisp
+(use-package eshell-git-prompt
+  :if (skj/current-feature-required-p)
+  :after eshell-mode
+  :config
+  (eshell-git-prompt-use-theme 'powerline))
+#+END_SRC
+
+This [[https://github.com/akreisher/eshell-syntax-highlighting][package]] adds syntax highlighting to the Emacs Eshell. It highlights user commands at the interactive prompt to
+provide feedback on the validity of commands and syntax. This package is inspired by zsh-syntax-highlighting and the native highlighting of fish.
+
+#+BEGIN_SRC emacs-lisp
+(use-package eshell-syntax-highlighting
+  :after eshell-mode
+  :config
+  (eshell-syntax-highlighting-global-mode +1))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-end 'eshell)
 (skj/feature-end 'shell)
 #+END_SRC
 
@@ -2189,16 +2355,6 @@ server is zsh it is recommended to connect with bash.
   ("C-c s" . counsel-tramp)
   :config
   (setenv "SHELL" (executable-find "bash")))
-#+END_SRC
-
-=docker-tramp= offers a TRAMP method for Docker containers; it adds the TRAMP method docker to access running containers.
-
-=C-x C-f /docker:user@container:/path/to/file=
-
-#+BEGIN_SRC emacs-lisp
-(use-package docker-tramp
-  :if (skj/current-feature-required-p)
-  :after tramp)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -2598,10 +2754,7 @@ up
       ("\\"   (dabbrev-expand -1)           "Expand the word looking forward")
       ("?"     (customize-group 'dabbrev)    "Customize"))
      "YASnippet"
-     (("SPC" set-rectangular-region-anchor "Set Rectangular Anchor")
-      ("s"   mc/sort-regions               "Sort Regions")
-      ("r"   mc/reverse-regions            "Reverse Regions")
-      ("v"   mc/vertical-align             "Vertical Align"))))
+     ()))
 
   (bind-key "C-x a h" 'hydra-abbrev/body))
 #+END_SRC
@@ -3511,7 +3664,7 @@ simplest way to get a correctly numbered tree.
 (use-package org-outline-numbering
   :ensure nil
   :if (skj/current-feature-required-p)
-  :after ox)
+  :after org)
 #+END_SRC
 
 *** References
@@ -4202,18 +4355,22 @@ This package extends `org-edit-special' so it can be used to edit (almost) any t
 skj-org
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
-  (defcustom skj/babel-safe-languages '("dot" "plantuml" "sdml")
+  
+  (defcustom skj/babel-safe-languages '()
     "A list of language safe for Babel evaluation."
     :tag "Babel safe languages"
     :type '(repeat string)
     :group 'skj-org)
 
-(defun skj/org-confirm-babel-evaluate (lang body)
-  "Return t if LANG not in `skj/babel-safe-languages'."
-  (message "confirm eval of %s %s" lang (member lang skj/babel-safe-languages))
-  (not (member lang skj/babel-safe-languages)))
+  (defun skj/org-babel-add-safe-language (lang)
+    (add-to-list 'skj/babel-safe-languages lang))
 
-(setq org-confirm-babel-evaluate #'skj/org-confirm-babel-evaluate))
+  (defun skj/org-confirm-babel-evaluate (lang body)
+    "Return t if LANG not in `skj/babel-safe-languages'."
+    (message "Babel confirm eval of %s; is it in %s?" lang (member lang skj/babel-safe-languages))
+    (not (member lang skj/babel-safe-languages)))
+
+  (setq org-confirm-babel-evaluate #'skj/org-confirm-babel-evaluate))
 #+END_SRC
 
 *** ditaa
@@ -4261,7 +4418,8 @@ Enable the builtin [[https://orgmode.org/worg/org-contrib/babel/languages/ob-doc
     :ensure nil
     :after (ob gnuplot)
     :init
-    (skj/org-babel-add-languages 'gnuplot)))
+    (skj/org-babel-add-languages 'gnuplot)
+    (skj/org-babel-add-safe-language 'gnuplot)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -4289,7 +4447,8 @@ Enable the builtin [[https://orgmode.org/worg/org-contrib/babel/languages/ob-doc
     :ensure nil
     :after (ob graphviz-dot-mode)
     :init
-    (skj/org-babel-add-languages 'dot)))
+    (skj/org-babel-add-languages 'dot)
+    (skj/org-babel-add-safe-language 'dot)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -4372,7 +4531,8 @@ plantuml executable.
     :after (ob plantuml-mode)
     :init
     (setq org-plantuml-jar-path plantuml-jar-path)
-    (skj/org-babel-add-languages 'plantuml)))
+    (skj/org-babel-add-languages 'plantuml)
+    (skj/org-babel-add-safe-language 'plantuml)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -4841,6 +5001,8 @@ XWiki mode is an offline editing mode only.
     :hook (LaTeX-mode . latex-extra-mode)))
 #+END_SRC
 
+*Completion*
+
 This is a group of backends for =company-mode= providing auto-completion for
 AUCTeX.
 
@@ -4910,13 +5072,18 @@ data, and LaTeX, markdown, and org-cite editing support. See [[https://kristoffe
 (when (skj/current-feature-required-p)
   
   (use-package citar
-    :config (setq citar-bibliography skj/bibtex-files)))
+    :custom
+    (citar-bibliography skj/bibtex-files)
+    :hook
+    (LaTeX-mode . citar-capf-setup)
+    (org-mode . citar-capf-setup))
 
-;;(use-package citar-org
-;;  :after oc
-;;  :config (setq org-cite-insert-processor 'citar
-;;                org-cite-follow-processor 'citar
-;;                org-cite-activate-processor 'citar))
+  (use-package citar-org
+    :after citar
+    :ensure nil
+    :config (setq org-cite-insert-processor 'citar
+                  org-cite-follow-processor 'citar
+                  org-cite-activate-processor 'citar)))
 #+END_SRC
 
 
@@ -5143,7 +5310,7 @@ fira-code-mode-install-fonts<RET>=.
 #+BEGIN_SRC emacs-lisp
 (use-package fira-code-mode
   :if (and (skj/current-feature-required-p) window-system)
-  :hook (prog-mode . fira-code)
+  :hook (prog-mode . fira-code-mode)
   :config (fira-code-mode-set-font))
 #+END_SRC
 
@@ -5273,14 +5440,17 @@ This is a minimalist package that enhances ~compilation-mode~ in the following w
 (skj/feature-start 'complete "Completion")
 #+END_SRC
 
+This is nice for languages still using tagging. by default on macos the ctag command is next to useless so always
+install the Universal Ctags package for a way more up-to-date and configurable option.
+
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
   (use-package company-ctags
     :after company
+    :ensure-system-package universal-ctags
     :config
-    (company-ctags-auto-setup))
-)
+    (company-ctags-auto-setup)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -6069,6 +6239,13 @@ Package [[https://github.com/mhayashi1120/Emacs-erefactor][erefactor]] -- simple
 #+BEGIN_SRC emacs-lisp
 (use-package erefactor
   :if (skj/current-feature-required-p))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package elisp-autofmt
+  :if (skj/current-feature-required-p)
+  :custom (elisp-autofmt-python-bin . (executable-find "python3"))
+  :hook (emacs-lisp-mode . elisp-autofmt-mode))
 #+END_SRC
 
 *Code Quality*
@@ -6897,8 +7074,10 @@ Org-Babel Integration
 #+END_SRC
 
 
-- yasnippet-django
-- py-snippets
+- =yasnippet-django=
+- =py-snippets=
+- =company-anaconda=
+- =company-jedi=
 
   
 #+BEGIN_SRC emacs-lisp :exports none
@@ -6914,8 +7093,11 @@ Org-Babel Integration
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
 
-  (skj/git-clone "https://github.com/sdm-lang/emacs-sdml-mode.git"
-                 "/Users/simonjo/Projects/sdm-lang/emacs-sdml-mode"))
+  (let ((local-sdml-mode-repo (concat-path skj/project-root-dir "sdm-lang/emacs-sdml-mode")))
+        (unless (file-directory-p local-sdml-mode-repo)
+          (init-message "Cloning emacs-sdml-mode to local repo")
+          (skj/git-clone "https://github.com/sdm-lang/emacs-sdml-mode.git"
+                         local-sdml-mode-repo))))
 #+END_SRC
 
 This is the core mode package.
@@ -6926,9 +7108,8 @@ This is the core mode package.
   (use-package sdml-mode
     :defer nil
     :after (tree-sitter tree-sitter-indent)
-    :commands sdml-mode-setup
     :mode "\\.sdml?\\'"
-    :load-path "/Users/simonjo/Projects/sdm-lang/emacs-sdml-mode/sdml-mode")
+    :load-path "/Users/simonjo/Projects/sdm-lang/emacs-sdml-mode")
 
   (require 'sdml-mode))
 #+END_SRC
@@ -6943,9 +7124,7 @@ This enables spell-checking of defined nodes in the tree.
   (use-package sdml-ispell
     :defer nil
     :after (sdml-mode tree-sitter-ispell)
-    :commands sdml-ispell-setup
-    :load-path "/Users/simonjo/Projects/sdm-lang/emacs-sdml-mode/sdml-ispell"
-    :config (sdml-ispell-setup))
+    :load-path "/Users/simonjo/Projects/sdm-lang/emacs-sdml-ispell")
   
   (require 'sdml-ispell))
 #+END_SRC
@@ -6961,12 +7140,14 @@ This enables flycheck for SDML buffers.
     :defer nil
     :after (flycheck tsc sdml-mode)
     :commands flycheck-sdml-setup
-    :load-path "/Users/simonjo/Projects/sdm-lang/emacs-sdml-mode/flycheck-sdml"
+    :load-path "/Users/simonjo/Projects/sdm-lang/emacs-flycheck-sdml"
     :hook (sdml-mode . flycheck-mode)
     :config (flycheck-sdml-setup))
   
   (require 'flycheck-sdml))
 #+END_SRC
+
+Code folding is a nice feature as well.
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
@@ -6977,9 +7158,25 @@ This enables flycheck for SDML buffers.
   (use-package sdml-fold
     :defer nil
     :after (ts-fold ts-fold-indicators sdml-mode)
-    :load-path "/Users/simonjo/Projects/sdm-lang/emacs-sdml-mode/sdml-fold")
+    :load-path "/Users/simonjo/Projects/sdm-lang/emacs-sdml-fold")
   
   (require 'sdml-fold))
+#+END_SRC
+
+This enables SDML in org-mode Babel blocks.
+
+#+BEGIN_SRC emacs-lisp
+(when (skj/current-feature-required-p)
+
+  (use-package ob-sdml
+    :defer nil
+    :after (org ob sdml-mode)
+    :load-path "/Users/simonjo/Projects/sdm-lang/emacs-ob-sdml"
+    :init
+    (skj/org-babel-add-languages 'sdml)
+    (skj/org-babel-add-safe-language 'sdml))
+  
+  (require 'ob-sdml))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -6993,6 +7190,7 @@ This enables flycheck for SDML buffers.
 - =learn-ocaml=
 - =merlin=
 - =ocamlformat=
+- =ocp-index=
 - =opam-switch-mode=
 - =tuareg=
 - =utop=
@@ -7622,6 +7820,7 @@ to Proof-General.
 #+BEGIN_SRC emacs-lisp
 (use-package company-coq
   :if (skj/current-feature-required-p)
+  :after (company coq)
   :hook (coq-mode))
 #+END_SRC
 
@@ -7784,20 +7983,17 @@ Basic [[https://www.gnu.org/software/emacs/manual/html_node/gnus/][Gnus Newsread
   (use-package nnhackernews
     :after gnus
     :custom
-    (add-to-list 'gnus-secondary-select-methods '(nnhackernews ""))))
+    (add-to-list 'gnus-secondary-select-methods '(nnhackernews "")))
+
+  ;; The package below seems very flaky
+  ;;(use-package all-the-icons-gnus
+  ;;  :if window-system
+  ;;  :after (all-the-icons gnus)
+  ;;  :hook (gnus-mode . all-the-icons-gnus-setup))
+  )
 #+END_SRC
 
 Enter the =nnhackernews:news= newsgroup with /=RET=/.
-
-And of course, more icons!
-
-#+BEGIN_SRC emacs-lisp
-(use-package all-the-icons-gnus
-  :if (and window-system (skj/current-feature-required-p))
-  :after gnus
-  :config
-  (all-the-icons-gnus-setup))
-#+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'gnus)
@@ -7990,3 +8186,6 @@ Pretty self-explanatory, if we aren’t already running as a client, start the s
 
 And, Done!
 
+#+BEGIN_SRC emacs-lisp
+(message "Emacs is now ready!")
+#+END_SRC
