@@ -82,7 +82,9 @@ The expands a list of features that should not be installed. it adds names from 
 (defconst skj/feature--not-required
   '("dev/aws"
     "dev/lang/ada"
+    "dev/lang/cpp"
     "dev/lang/dart"
+    "dev/lang/dot-net"
     "dev/lang/lua"
     "dev/lang/ocaml"
     "dev/lang/provers"
@@ -417,6 +419,24 @@ Add the most common package archives and set priorities. Note that this feature 
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'repositories)
+#+END_SRC
+
+*** Compatibility Package
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'compat)
+#+END_SRC
+
+This is required by a number of packages and so it's worth getting it installed here. Also, this should not
+use =use-package= for some reason.
+
+#+BEGIN_SRC emacs-lisp
+(unless (package-installed-p 'compat)
+  (package-install 'compat))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-end 'compat)
 #+END_SRC
 
 *** Package Manager Configuration
@@ -811,7 +831,6 @@ Set the root for all my projects, home and work.
 
 By generic I mean not /specifically/ for the major uses in [[*Org-Mode]], [[*Other Writing Modes]], or [[*Developer Configuration]].
 Some of these are not necessarily "generic" unless you do all your work on Git for example.
-
 
 ** Authentication/Authorization Stores
 
@@ -1480,12 +1499,46 @@ exiting Emacs - you can then access this list through a command or the menu.
 
   (use-package dired
     :ensure nil)
+
+  (use-package dired-auto-readme
+    :after dired)
+
+  (use-package dired-collapse
+    :after dired)
+
+  (use-package dired-duplicates
+    :after dired)
+
+  (use-package dired-efap
+    :after dired)
+
+  (use-package dired-git
+    :after dired
+    :hook (dired-mode . dired-git-mode))
+
+  (use-package dired-quick-sort
+    :after dired
+    :config (dired-quick-sort-setup))
   
-  (use-package nerd-icons-dired
-    :after (dired nerd-icons)
-    :demand t
-    :hook (dired-mode . nerd-icons-dired-mode)))
+  (when window-system
+
+    (use-package dired-icon
+      :after dired
+      :hook (dired-mode . dired-icon-mode))
+    
+    (use-package nerd-icons-dired
+      :after (dired nerd-icons)
+      :demand t
+      :hook (dired-mode . nerd-icons-dired-mode))))
 #+END_SRC
+
+Also/maybe:
+
+- dired-filter
+- dired-gitignore
+- dired-imenu
+- dired-rsync
+- dired-sidebar / dired-toggle
 
 *iBuffer*
 
@@ -1790,7 +1843,7 @@ completion candidates that are more frequently or more recently used a better po
   (use-package ivy-historian))
 #+END_SRC
 
-Note that ~historian~ saves files in ~historian-save-file~, be default ="~/.emacs.d/.historian"=, which if it is ever
+Note that ~historian~ saves files in ~historian-save-file~, be default =/.emacs.d/.historian=, which if it is ever
 horked (and contains only =nil=) nothing works properly. A call to ~historian-clear~ should reset.
 
 Here's Ivy itself.
@@ -1803,6 +1856,7 @@ Here's Ivy itself.
     :custom
     (enable-recursive-minibuffers t)
     (ivy-count-format "(%d/%d) ")
+    (ivy-use-selectable-prompt t)
     (ivy-use-virtual-buffers t)
     (ivy-wrap t)
     :init
@@ -1810,16 +1864,17 @@ Here's Ivy itself.
     (historian-mode +1)
     :config
     (ivy-historian-mode +1)
-    (global-set-key (kbd "C-c v") 'ivy-push-view)
-    (global-set-key (kbd "C-c V") 'ivy-pop-view)
-    (global-set-key (kbd "C-c C-r") 'ivy-resume)
-    (global-set-key (kbd "C-x b") 'ivy-switch-buffer))
+    :bind
+    (("C-c v" . ivy-push-view)
+     ("C-c V" . ivy-pop-view)
+     ("C-c C-r" . ivy-resume)
+     ("C-x b" . ivy-switch-buffer)))
 
   (use-package swiper
     :ensure nil
     :after ivy
-    :config
-    (global-set-key (kbd "C-s") 'swiper-isearch)))
+    :bind
+    ("C-s" . swiper)))
 #+END_SRC
 
 Do these *after* Ivy. Note that the Hydra can is invoked in any Ivy minibuffer with the keys =C-o=.
@@ -1879,32 +1934,32 @@ it.
   :diminish counsel-mode
   :custom
   (counsel-find-file-ignore-regexp "\\(?:\\`\\|[/\\]\\)\\(?:[#.]\\)")
-  :config
+  :bind
   ;; Ivy-based interface to standard commands
-  (global-set-key (kbd "M-x") 'counsel-M-x)
-  (global-set-key (kbd "C-x C-f") 'counsel-find-file)
-  (global-set-key (kbd "M-y") 'counsel-yank-pop)
-  (global-set-key (kbd "<f1> f") 'counsel-describe-function)
-  (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
-  (global-set-key (kbd "<f1> l") 'counsel-find-library)
-  (global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
-  (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
-  (global-set-key (kbd "<f2> j") 'counsel-set-variable)
-  ;; Ivy-based interface to shell and system tools
-  (global-set-key (kbd "C-c c") 'counsel-compile)
-  (global-set-key (kbd "C-c g") 'counsel-git)
-  (global-set-key (kbd "C-c j") 'counsel-git-grep)
-  (global-set-key (kbd "C-c L") 'counsel-git-log)
-  (global-set-key (kbd "C-c k") 'counsel-rg)
-  (global-set-key (kbd "C-c n") 'counsel-fzf)
-  (global-set-key (kbd "C-x l") 'counsel-locate)
-  (global-set-key (kbd "C-c J") 'counsel-file-jump)
-  ;;
-  (global-set-key (kbd "C-c b") 'counsel-bookmark)
-  (global-set-key (kbd "C-c d") 'counsel-descbinds)
-  (global-set-key (kbd "C-c o") 'counsel-outline)
-  (global-set-key (kbd "C-c F") 'counsel-org-file)
-
+  (("M-x" . counsel-M-x)
+   ("C-x C-f" . counsel-find-file)
+   ("M-y" . counsel-yank-pop)
+   ("<f1> f" . counsel-describe-function)
+   ("<f1> v" . counsel-describe-variable)
+   ("<f1> l" . counsel-find-library)
+   ("<f2> i" . counsel-info-lookup-symbol)
+   ("<f2> u" . counsel-unicode-char)
+   ("<f2> j" . counsel-set-variable)
+   ;; Ivy-based interface to shell and system tools
+   ("C-c c" . counsel-compile)
+   ("C-c g" . counsel-git)
+   ("C-c j" . counsel-git-grep)
+   ("C-c L" . counsel-git-log)
+   ("C-c k" . counsel-rg)
+   ("C-c n" . counsel-fzf)
+   ("C-x l" . counsel-locate)
+   ("C-c J" . counsel-file-jump)
+   ;;
+   ("C-c b" . counsel-bookmark)
+   ("C-c d" . counsel-descbinds)
+   ("C-c o" . counsel-outline)
+   ("C-c F" . counsel-org-file))
+  :config
   (counsel-mode 1))
 #+END_SRC
 
@@ -2079,6 +2134,45 @@ Also see the following interesting regex packages:
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'visual-regex)
+#+END_SRC
+
+** Calc
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'calc)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp 
+(use-package calc
+  :if (skj/current-feature-required-p)
+  :ensure nil
+  :defer t)
+#+END_SRC
+
+This [[https://github.com/kickingvegas/casual-calc][package]] provides an opinionated Transient-based user interface to support the casual usage of Emacs Calc.
+
+#+BEGIN_SRC emacs-lisp
+(use-package casual-calc
+  :if (skj/current-feature-required-p)
+  :after calc
+  :bind (:map
+         calc-mode-map
+         ("C-o" . casual-calc-tmenu)
+         :map
+         calc-alg-map
+         ("C-o" . casual-calc-tmenu)))
+#+END_SRC
+
+This [[https://github.com/sulami/literate-calc-mode.el][package]] enables in-line display of math results in markup buffers.
+
+#+BEGIN_SRC emacs-lisp
+(use-package literate-calc-mode
+  :if (skj/current-feature-required-p)
+  :after calc)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-end 'calc)
 #+END_SRC
 
 ** O/S Specific UI Settings
@@ -2561,6 +2655,12 @@ Automatically set ~bug-reference-url-format~ and enable ~bug-reference-prog-mode
   :hook (prog-mode . bug-reference-github-set-url-format))
 #+END_SRC
 
+#+BEGIN_SRC emacs-lisp
+(use-package magit-file-icons
+  :if (skj/current-feature-required-p)
+  :after magit)
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'forge)
 #+END_SRC
@@ -2709,7 +2809,8 @@ First of all, the primary snippet tool is =yasnippet=, there are others but this
   :diminish yas-minor-mode
   :custom
   (yas-snippet-dirs (list skj/snippet-repo-dir skj/snippet-default-dir))
-  :hook (prog-mode . yas-minor-mode)
+  :hook ((prog-mode . yas-minor-mode)
+         (org-mode . yas-minor-mode))
   :config
   (skj/snippets-initialize))
 #+END_SRC
@@ -4357,18 +4458,26 @@ skj-org
 (when (skj/current-feature-required-p)
   
   (defcustom skj/babel-safe-languages '()
-    "A list of language safe for Babel evaluation."
+    "A list of languages safe for Babel evaluation."
     :tag "Babel safe languages"
     :type '(repeat string)
     :group 'skj-org)
 
+  (defun skj/check-ob-lang (lang)
+    (cond ((stringp lang) lang)
+          ((symbolp lang) (symbol-name lang))
+          (error "provided lang not a string or symbol (given a %s)" (type-of lang))))
+  
   (defun skj/org-babel-add-safe-language (lang)
-    (add-to-list 'skj/babel-safe-languages lang))
+    (add-to-list 'skj/babel-safe-languages (skj/check-ob-lang lang)))
 
   (defun skj/org-confirm-babel-evaluate (lang body)
     "Return t if LANG not in `skj/babel-safe-languages'."
-    (message "Babel confirm eval of %s; is it in %s?" lang (member lang skj/babel-safe-languages))
-    (not (member lang skj/babel-safe-languages)))
+    (let ((lang (skj/check-ob-lang lang)))
+      (message "Babel confirm eval of %s; is it in %s? -- %s"
+               lang skj/babel-safe-languages
+               (member lang skj/babel-safe-languages))
+      (not (member lang skj/babel-safe-languages))))
 
   (setq org-confirm-babel-evaluate #'skj/org-confirm-babel-evaluate))
 #+END_SRC
@@ -4952,6 +5061,42 @@ XWiki mode is an offline editing mode only.
 (skj/feature-end 'wikis)
 #+END_SRC
 
+** Typst
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'typst)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(when nil ; (skj/current-feature-required-p)
+
+  (use-package typst-ts-mode
+    :ensure-system-package typst)
+
+  ; (use-package outline-indent-mode
+  ;   :after typst-ts-mode)
+
+  (unless (executable-find "typstyle")
+    (call-process "cargo install typstyle --locked"))
+  
+  (unless (executable-find "tinymist")
+    (call-process "cargo install --git https://github.com/Myriad-Dreamin/tinymist --locked tinymist"))
+
+  (with-eval-after-load 'eglot
+    (with-eval-after-load 'typst-ts-mode
+      (add-to-list 'eglot-server-programs
+                   `((typst-ts-mode) .
+                     ,(eglot-alternatives `(,typst-ts-lsp-download-path
+                                            "tinymist"
+                                            "typst-lsp")))))
+    (setq-default eglot-workspace-configuration
+                  '(:exportPdf "onSave"))))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-end 'typst)
+#+END_SRC
+
 ** LaTeX
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -5048,11 +5193,17 @@ Completion, using [[https://github.com/gbgar/company-bibtex][company-bibtex]] an
 (when (skj/current-feature-required-p)
   
   (use-package company-bibtex
+    :after company
     :config (setq company-bibtex-bibliography skj/bibtex-files)
     (add-to-list 'company-backends 'company-bibtex t))
 
   (use-package ivy-bibtex
-    :config (setq bibtex-completion-bibliography skj/bibtex-files)))
+    :after ivy
+    :config (setq bibtex-completion-bibliography skj/bibtex-files))
+
+  (use-package org-ref-ivy
+    :ensure nil ;; included in org-ref, uses ivy-bibtex
+    :after (org-ref ivy-bibtex)))
 #+END_SRC
 
 Tools to retrieve content.
@@ -5080,13 +5231,12 @@ data, and LaTeX, markdown, and org-cite editing support. See [[https://kristoffe
 
   (use-package citar-org
     :after citar
-    :ensure nil
-    :config (setq org-cite-insert-processor 'citar
-                  org-cite-follow-processor 'citar
-                  org-cite-activate-processor 'citar)))
+    :ensure nil ;; included in 'citar
+    :custom
+    (org-cite-insert-processor 'citar)
+    (org-cite-follow-processor 'citar)
+    (org-cite-activate-processor 'citar)))
 #+END_SRC
-
-
 
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
@@ -5453,6 +5603,8 @@ install the Universal Ctags package for a way more up-to-date and configurable o
     (company-ctags-auto-setup)))
 #+END_SRC
 
+Might also consider [[https://www.virgilsbbq.com/locations/times-square][ctags-update]].
+
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'complete)
 #+END_SRC
@@ -5662,7 +5814,8 @@ Alternatively support can be enabled for all languages with =:config (global-tre
 
 #+BEGIN_SRC emacs-lisp
 (when (and (skj/current-feature-required-p)
-           (< emacs-version-number 29))
+           (fboundp 'treesit-available-p)
+           (treesit-available-p))
 
   (use-package tree-sitter)
 
@@ -5676,6 +5829,11 @@ Alternatively support can be enabled for all languages with =:config (global-tre
 - Run =M-x tree-sitter-query-builder= to open the query playground, where you can write tree queries and see matches
   highlighted in the source buffer.
 
+https://www.masteringemacs.org/article/how-to-get-started-tree-sitter
+
+https://github.com/Ziqi-Yang/.emacs.d/blob/main/languages/l-treesit.el
+
+https://github.com/Ziqi-Yang/.emacs.d/blob/main/languages/l-languages.el
   
 #+BEGIN_SRC emacs-lisp
 (when (and (skj/current-feature-required-p)
@@ -6039,7 +6197,11 @@ Support for JQ-uery.
 
   (use-package jq-mode
     :ensure-system-package jq
-    :after json-mode)
+    :after json-mode
+    :config
+    (with-eval-after-load "json-mode"
+      (define-key json-mode-map (kbd "C-c C-j") #'jq-interactively))
+    (skj/org-babel-add-languages 'jq))
 
   (use-package counsel-jq
     :after json-mode)
@@ -6172,6 +6334,31 @@ commands for a variety of languages, including elisp itself!
 (skj/feature-end 'bnf)
 #+END_SRC
 
+*** C/C++
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'cpp "C & C++")
+#+END_SRC
+
+See [[https://emacs-lsp.github.io/lsp-mode/tutorials/CPP-guide/]].
+
+#+BEGIN_SRC emacs-lisp
+(when (skj/current-feature-required-p)
+
+  (use-package cc-mode
+    :ensure nil))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(when (skj/current-feature-required-p)
+
+  (use-package cuda-mode))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-end 'cpp)
+#+END_SRC
+
 *** Emacs Lisp
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -6242,10 +6429,10 @@ Package [[https://github.com/mhayashi1120/Emacs-erefactor][erefactor]] -- simple
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-(use-package elisp-autofmt
-  :if (skj/current-feature-required-p)
-  :custom (elisp-autofmt-python-bin . (executable-find "python3"))
-  :hook (emacs-lisp-mode . elisp-autofmt-mode))
+;;(use-package elisp-autofmt
+;;  :if (skj/current-feature-required-p)
+;;  :custom (elisp-autofmt-python-bin (executable-find "python3"))
+;;  :hook (emacs-lisp-mode . elisp-autofmt-mode))
 #+END_SRC
 
 *Code Quality*
@@ -6512,7 +6699,7 @@ Get an implementation:
       (clisp . "clisp")
       (sbcl . "sbcl")))
   
-  (defcustom skj-dev/common-lisp-packages '(clisp sbcl)
+  (defcustom skj-dev/common-lisp-packages '(allegro-express clisp sbcl)
     "Name of Common Lisp implementations to enable."
     :tag "Enabled Common Lisps"
     :type '(repeat
@@ -6539,7 +6726,11 @@ Get an implementation:
     (let* ((name skj-dev/common-lisp-interpreter)
            (executable (assoc name skj-dev/common-lisp-executable-alist)))
       (unless (null executable)
-        (file-truename (executable-find (cdr executable)))))))
+        (file-truename (executable-find (cdr executable))))))
+
+  (message "Slime current interpreter %s, executable %s"
+           skj-dev/common-lisp-interpreter
+           (skj-dev/common-lisp-executable)))
 #+END_SRC
 
 Quicklisp – [[https://www.quicklisp.org/beta/][Quicklisp]] is a library manager for Common Lisp. It works with your existing Common Lisp implementation to
@@ -6606,15 +6797,17 @@ original file.
 (when (skj/current-feature-required-p)
 
   (use-package slime
+    :commands slime-setup
     :custom
     (inferior-lisp-program (skj-dev/common-lisp-executable))
     (slime-complete-symbol*-fancy t)
     (slime-complete-symbol-function 'slime-fuzzy-complete-symbol)
-    (slime-contribs '(slime-fancy slime-fancy-inspector slime-fancy-inspector slime-quicklisp)))
+    (slime-contribs '(slime-fancy slime-fancy-inspector slime-fancy-inspector slime-quicklisp))
+    :config
+    (slime-setup))
 
   (use-package slime-company
     :after (slime company)
-    :commands slime-setup
     :custom
     (slime-company-completion 'fuzzy)
     (slime-company-after-completion 'slime-company-just-one-space)
@@ -7073,12 +7266,48 @@ Org-Babel Integration
 (skj/feature-start 'python "Python")
 #+END_SRC
 
-
+- elpy
+- auto-virtualenv
+- django-commands
+- django-manage
+- django-model
+- django-snippets
+- djangonaut
 - =yasnippet-django=
-- =py-snippets=
 - =company-anaconda=
 - =company-jedi=
-
+- counsel-pydoc
+- flycheck-mypy
+- flycheck-pycheckers
+- flycheck-pyflakes
+- flycheck-pyre
+- importmagic
+- jedi
+- jedi-direx
+- jupyter
+- lazy-ruff
+- live-py-mode
+- lsp-jedi
+- ldp-pyre
+- ob-ipython
+- pdb-capf
+- pet
+- pippel
+- pungi
+- py-autopep8
+- py-gnitset
+- py-import-checkpy-isort
+- =py-snippets=
+- py-test
+- pyconf
+- pycoverage
+- pydoc
+- pyinspect
+- pylint
+- python-coverage
+- python-djangopython-docstring
+- python-environment
+- python-mode
   
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'python)
@@ -7088,6 +7317,17 @@ Org-Babel Integration
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-start 'sdml)
+#+END_SRC
+
+
+#+BEGIN_SRC emacs-lisp
+(when nil ; experimental
+
+  (setq treesit-language-source-alist
+        '((sdml "https://github.com/sdm-lang/tree-sitter-sdml")))
+
+  (mapc #'treesit-install-language-grammar
+        (mapcar #'car treesit-language-source-alist)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -7138,11 +7378,8 @@ This enables flycheck for SDML buffers.
 
   (use-package flycheck-sdml
     :defer nil
-    :after (flycheck tsc sdml-mode)
-    :commands flycheck-sdml-setup
-    :load-path "/Users/simonjo/Projects/sdm-lang/emacs-flycheck-sdml"
-    :hook (sdml-mode . flycheck-mode)
-    :config (flycheck-sdml-setup))
+    :after (flycheck sdml-mode)
+    :load-path "/Users/simonjo/Projects/sdm-lang/emacs-flycheck-sdml")
   
   (require 'flycheck-sdml))
 #+END_SRC
@@ -7183,7 +7420,43 @@ This enables SDML in org-mode Babel blocks.
 (skj/feature-end 'sdml)
 #+END_SRC
 
+*** Standard ML
+
+*Homebrew*
+
+- [[https://elsman.com/mlkit/][mlkit]] -- The Standard ML Compiler and Toolkit
+- [[http://mlton.org][mlton]] -- Whole-program, optimizing compiler for Standard ML
+- [https://www.polyml.org/][Poly/ML] -- The Poly/ML implementation of Standard ML
+- [[https://mosml.org/][Moscow ML]] -- Light-weight implementation of Standard ML
+- [[https://www.smlnj.org/][Standard ML of New Jersey]] -- Compiler for the Standard ML '97 programming language
+
+Plus
+
+- [[https://github.com/shwestrick/smlfmt][smlfmt]] -- Custom parser and code formatter for Standard ML
+- [[https://github.com/diku-dk/smlpkg][smlpkg]] -- Package manager for Standard ML libraries and programs
+
+*Emacs*
+
+ob-sml
+sml-basis
+sml-mode
+smlfmt
+
 *** Ocaml
+
+Not currently using OCaml, although had to make some small changes to existing code at one point. If needed, the
+following is a starting point.
+
+*Homebrew*
+
+- camlp5
+- camlp-streams
+- ocaml
+- ocaml-findlib
+- ocaml-zarith (replaces ocalm-num)
+- ocamlbuild
+
+*Emacs*
 
 - =dune-format=
 - =flycheck-ocaml=
@@ -7747,6 +8020,54 @@ Finally, enable Dart code blocks in Babel.
 (skj/feature-end 'lua)
 #+END_SRC
 
+*** .net, CLR, C#, F#, ...
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-start 'dot-net ".net, CLR, C#, F#")
+#+END_SRC
+
+A wrapper around the .NET command-line interface.
+
+#+BEGIN_SRC emacs-lisp
+(use-package sharper
+  :if (skj/current-feature-required-p))
+#+END_SRC
+
+Support for .NET project files (csproj, vbproj).
+
+#+BEGIN_SRC emacs-lisp
+(use-package csproj-mode
+  :if (skj/current-feature-required-p))
+#+END_SRC
+
+C# language mode
+
+#+BEGIN_SRC emacs-lisp
+(when (skj/current-feature-required-p)
+
+  (if (>= emacs-version-number 19)
+      (use-package csharp-mode
+        :ensure nil)
+    (use-package csharp-mode))
+
+  (use-package omnisharp
+    :after csharp-mode))
+#+END_SRC
+
+F# language mode
+
+#+BEGIN_SRC emacs-lisp
+(when (skj/current-feature-required-p)
+
+  (use-package fsharp-mode)
+
+  (use-package ob-fsharp))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+(skj/feature-end 'dot-net)
+#+END_SRC
+
 *** Semantic Web
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -8127,13 +8448,19 @@ https://github.com/karthink/gptel
   
 * Work Configuration
 
+The following should be a symlink to work configuration under version control.
+
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-start 'work "Work Configuration")
 #+END_SRC
 
-The following should be a symlink to work configuration under version control.
-
-#+INCLUDE: "/Users/simonjo/.emacs.d/org-init/work-init.org"
+#+BEGIN_SRC emacs-lisp
+(when (skj/current-feature-required-p)
+  (let ((work-init-path (concat-path skj/org-init "work-init.org")))
+    (if (file-exists-p work-init-path)
+        (org-babel-load-file work-init-path)
+      (init-message "Cannot file work init file: %s" work-init-path))))
+#+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
 (skj/feature-end 'work)
