@@ -18,7 +18,7 @@ The following function gates logging in the rest of the file. It's first so I ca
 this file. Note that this depends on the value of =debug-on-error= but can easily be overridden and set/unset explicitly.
 
 #+BEGIN_SRC emacs-lisp
-(defvar skj/debug-init (and (boundp debug-on-error) debug-on-error)
+(defvar skj/debug-init t; (and (boundp debug-on-error) debug-on-error)
   "Do I want to debug the init process?")
 
 (defun init-message (message &rest args)
@@ -536,7 +536,7 @@ binaries exist alongside your package declarations.
 
 #+BEGIN_SRC emacs-lisp
 (use-package use-package-ensure-system-package
-  :ensure t
+  :ensure nil ;; now a part of use-package
   :if (skj/current-feature-required-p)
   :after (use-package system-packages))
 #+END_SRC
@@ -1246,8 +1246,8 @@ Good to know...
 
 #+BEGIN_SRC emacs-lisp
 (if (image-type-available-p 'imagemagick)
-    (message "Emacs has imagemagick support :)")
-  (message "Emacs does not have imagemagick support :("))
+    (init-message "Emacs has imagemagick support :)")
+  (init-message "Emacs does not have imagemagick support :("))
 #+END_SRC
 
 Note that these should *all* be guarded to install *only* for windowed systems.
@@ -2149,20 +2149,6 @@ Also see the following interesting regex packages:
   :defer t)
 #+END_SRC
 
-This [[https://github.com/kickingvegas/casual-calc][package]] provides an opinionated Transient-based user interface to support the casual usage of Emacs Calc.
-
-#+BEGIN_SRC emacs-lisp
-(use-package casual-calc
-  :if (skj/current-feature-required-p)
-  :after calc
-  :bind (:map
-         calc-mode-map
-         ("C-o" . casual-calc-tmenu)
-         :map
-         calc-alg-map
-         ("C-o" . casual-calc-tmenu)))
-#+END_SRC
-
 This [[https://github.com/sulami/literate-calc-mode.el][package]] enables in-line display of math results in markup buffers.
 
 #+BEGIN_SRC emacs-lisp
@@ -2628,8 +2614,6 @@ without pulling all topics and even without having to clone the respective Git r
 Forge uses the Ghub package to access the APIs of supported Git forges. How this works and how to create and store a
 token is documented in the magit [[https://magit.vc/manual/ghub.html#Getting-Started][Getting Started]] section.
 
-- ~gh-notify~ -- A veneer for Magit/Forge GitHub notifications
-
 Review Github pull requests from Emacs. This package provides the following entrypoint:
 
 - =M-x pr-review=: open a PR with given URL.
@@ -2646,6 +2630,45 @@ Review Github pull requests from Emacs. This package provides the following entr
              '(pr-review-url-parse . pr-review-open-url)))
 #+END_SRC
 
+Package ~github-review~ lets you submit GitHub code review with Emacs. With ~github-review-start~ you can pull the content
+of a pull request into a buffer as a diff with comments corresponding to the PR description. In that buffer you can add
+comment (global and inline) that you want to make on the pull request. You can use ~github-review~ with forge. When your
+cursor is over a pull request, you can call ~github-review-forge-pr-at-point~ to start a code review.
+
+Once done, you can submit these comments as a code review with one of:
+ 
+- ~github-review-approve~
+- ~github-review-comment~
+- ~github-review-reject~
+
+#+BEGIN_SRC emacs-lisp
+(use-package github-review
+  :if (skj/current-feature-required-p)
+  :after (ghub)
+  :custom
+  (github-review-view-comments-in-code-lines t))
+#+END_SRC
+
+;; alternatively: 
+
+Alternatively, this stack uses the ~gh~ foundation instead of ~ghub~.
+
+#+BEGIN_SRC emacs-lisp
+(when nil ;; not yet
+  (use-package gh)
+
+  (use-package gh-notify
+    :after gh)
+ 
+  (use-package github-clone
+    :after gh)
+  
+  (use-package magit-gh-pulls
+    :if (skj/current-feature-required-p)
+    :after (magit gh)
+    :hook (magit-mode . turn-on-magit-gh-pulls)))
+#+END_SRC
+
 Automatically set ~bug-reference-url-format~ and enable ~bug-reference-prog-mode~ buffers from Github repositories.
 
 #+BEGIN_SRC emacs-lisp
@@ -2655,10 +2678,10 @@ Automatically set ~bug-reference-url-format~ and enable ~bug-reference-prog-mode
   :hook (prog-mode . bug-reference-github-set-url-format))
 #+END_SRC
 
+
 #+BEGIN_SRC emacs-lisp
-(use-package magit-file-icons
-  :if (skj/current-feature-required-p)
-  :after magit)
+(use-package github-browse-file
+  :if (skj/current-feature-required-p))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -4463,6 +4486,12 @@ skj-org
     :type '(repeat string)
     :group 'skj-org)
 
+  (defcustom skj/babel-safe-directories '()
+    "A list of directories safe for Babel evaluation."
+    :tag "Babel safe directories"
+    :type '(repeat directory)
+    :group 'skj-org)
+
   (defun skj/check-ob-lang (lang)
     (cond ((stringp lang) lang)
           ((symbolp lang) (symbol-name lang))
@@ -4471,12 +4500,21 @@ skj-org
   (defun skj/org-babel-add-safe-language (lang)
     (add-to-list 'skj/babel-safe-languages (skj/check-ob-lang lang)))
 
+  (defun skj/add-babel-safe-directories (root &optional sub-dirs add-root)
+    (when (or add-root (null sub-dirs))
+        (add-to-list 'skj/babel-safe-directories root))
+    (dolist (dir sub-dirs)
+      (skj/add-babel-safe-directories (concat-path root dir))))
+  
   (defun skj/org-confirm-babel-evaluate (lang body)
     "Return t if LANG not in `skj/babel-safe-languages'."
-    (let ((lang (skj/check-ob-lang lang)))
-      (message "Babel confirm eval of %s; is it in %s? -- %s"
+    (let ((lang (skj/check-ob-lang lang))
+          (dir-name (file-name-parent-directory buffer-file-truename)))
+      (message "Babel confirm eval of %s; is it in %s? is %s a safe directory? -- %s"
                lang skj/babel-safe-languages
-               (member lang skj/babel-safe-languages))
+               dir-name
+               (and (member lang skj/babel-safe-languages)
+                    (member dir-name skj/babel-safe-directories)))
       (not (member lang skj/babel-safe-languages))))
 
   (setq org-confirm-babel-evaluate #'skj/org-confirm-babel-evaluate))
@@ -5812,12 +5850,31 @@ minor mode =tree-sitter-mode= provides a buffer-local syntax tree, which is kept
 text. In this case I only enable support for specific languages and modes in their own configuration below via hooks.
 Alternatively support can be enabled for all languages with =:config (global-tree-sitter-mode)=.
 
+Setup the search path for tree-sitter language libraries. This finds the dynamic libraries that hold the parsers.
+
+- =/usr/local/lib= :: The best place for shared libraries.
+- =~/.local/lib= :: The best place for your local libraries.
+- =~/.tree-sitter/bin= :: An older path recommended by tree-sitter tools.
+- =~/emacs.d/tree-sitter= :: The path used by some Emacs libraries.
+
 #+BEGIN_SRC emacs-lisp
 (when (and (skj/current-feature-required-p)
            (fboundp 'treesit-available-p)
            (treesit-available-p))
 
-  (use-package tree-sitter)
+  (use-package tree-sitter
+    :config
+    (require 'tree-sitter-load)
+    (add-to-list 'tree-sitter-load-path
+                 (expand-file-name "/usr/local/lib"))
+    (add-to-list 'tree-sitter-load-path
+                 (expand-file-name "~/.local/lib"))
+    (add-to-list 'tree-sitter-load-path
+                 (expand-file-name "~/.tree-sitter/bin"))
+    (add-to-list 'tree-sitter-load-path
+                 (expand-file-name
+                  (concat (file-name-as-directory user-emacs-directory)
+                          "tree-sitter"))))
 
   (use-package tree-sitter-langs
     :after tree-sitter))
@@ -5867,6 +5924,9 @@ filesystem.
     :after (ts-fold fringe-helper)
     :diminish ts-fold-indicator-mode
     :load-path "/Users/simonjo/Projects/ts-fold"))
+
+(when (>= emacs-version-number 29)
+  (init-message "ts-fold not available for Emacs >= 29"))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none
@@ -7387,7 +7447,8 @@ This enables flycheck for SDML buffers.
 Code folding is a nice feature as well.
 
 #+BEGIN_SRC emacs-lisp
-(when (skj/current-feature-required-p)
+(when (and (skj/current-feature-required-p)
+           (< emacs-version-number 29))
 
   (require 'ts-fold)
   (require 'ts-fold-indicators)
@@ -8457,6 +8518,7 @@ The following should be a symlink to work configuration under version control.
 #+BEGIN_SRC emacs-lisp
 (when (skj/current-feature-required-p)
   (let ((work-init-path (concat-path skj/org-init "work-init.org")))
+    (init-message "Checking for work org-mode init file ~s" work-init-path)
     (if (file-exists-p work-init-path)
         (org-babel-load-file work-init-path)
       (init-message "Cannot file work init file: %s" work-init-path))))
