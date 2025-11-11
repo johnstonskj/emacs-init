@@ -16,20 +16,23 @@ fi
 
 if [[ ! -L "$EMACS_CONF/init.el" ]] ; then
     ln -s "${MY_PATH}/init.el" "${EMACS_CONF}/init.el"
+    echo "Created local link ${EMACS_CONF}/init.el"
 else
     echo "${EMACS_CONF}/init.el exists" >&2
 fi
 
 if [[ ! -L "${EMACS_CONF}/init_zsh.sh" ]] ; then
     ln -s "${MY_PATH}/init_zsh.sh" "${EMACS_CONF}/init_zsh.sh"
+    echo "Created local link ${EMACS_CONF}/init_zsh.sh"
 else
     echo "${EMACS_CONF}/init_zsh.sh exists" >&2
 fi
 
 if [[ ! -L "${EMACS_CONF}/org-init" ]] ; then
     ln -s "${MY_PATH}/org-init" "${EMACS_CONF}/org-init"
+    echo "Created local link ${EMACS_CONF}/org-init"
 else
-    echo "${EMACS_CONF}/org-init" >&2
+    echo "${EMACS_CONF}/org-init exists" >&2
 fi
 
 if [[ ! -d "${EMACS_CONF}/lib" ]] ; then
@@ -38,6 +41,7 @@ fi
 
 if [[ ! -L "${EMACS_CONF}/lib/skj" ]] ; then
     ln -s "${MY_PATH}/lib/skj" "${EMACS_CONF}/lib/skj"
+    echo "Created local link ${EMACS_CONF}/lib/skj"
 else
     echo "${EMACS_CONF}/lib/skj exists" >&2
 fi
